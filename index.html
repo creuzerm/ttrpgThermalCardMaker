@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTRPG Card Printer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* bg-gray-900 equivalent */
+            color: #e2e8f0; /* text-gray-100 equivalent */
+        }
+        /* Basic markdown-like styling for preview */
+        .card-content strong { font-weight: 700; }
+        .card-content em { font-style: italic; }
+        .card-content a { color: #63b3ed; text-decoration: underline; }
+    </style>
+</head>
+<body class="min-h-screen p-4 flex flex-col items-center">
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Service Worker content as a string
+        const swContent = `
+            const CACHE_NAME = 'ttrpg-card-printer-cache-v1';
+            const urlsToCache = [
+              './', // Cache the current HTML file
+              // If you have other assets (like icons) served relative to this HTML file, list them here:
+              // './icon-192x192.png',
+              // './icon-512x512.png',
+            ];
+
+            self.addEventListener('install', (event) => {
+              event.waitUntil(
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    console.log('Opened cache');
+                    return cache.addAll(urlsToCache);
+                  })
+                  .catch(error => console.error('Service Worker cache addAll failed:', error))
+              );
+            });
+
+            self.addEventListener('fetch', (event) => {
+              event.respondWith(
+                caches.match(event.request)
+                  .then((response) => {
+                    if (response) {
+                      return response;
+                    }
+                    return fetch(event.request);
+                  })
+              );
+            });
+        `;
+
+        // Register service worker using a Blob URL
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swBlob = new Blob([swContent], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(swBlob);
+
+                navigator.serviceWorker.register(swUrl)
+                    .then(registration => console.log('Service Worker registered:', registration))
+                    .catch(error => console.error('Service Worker registration failed:', error));
+            });
+        }
+    </script>
+
+    <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">TTRPG Card Printer</h1>
+
+    <div id="message-display" class="hidden bg-blue-500 text-white p-3 rounded-md mb-4 text-center w-full max-w-md"></div>
+
+    <!-- Card Input Section -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Card Details</h2>
+
+        <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-gray-300 mb-1">Card Title</label>
+            <input type="text" id="title" name="title" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+        </div>
+
+        <div class="mb-4">
+            <label for="type" class="block text-sm font-medium text-gray-300 mb-1">Card Type</label>
+            <input type="text" id="type" name="type" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+        </div>
+
+        <div class="mb-4">
+            <label for="icon" class="block text-sm font-medium text-gray-300 mb-1">Icon/Image URL (Optional)</label>
+            <input type="text" id="icon" name="icon" placeholder="e.g., https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+        </div>
+
+        <div class="mb-4">
+            <label for="color" class="block text-sm font-medium text-gray-300 mb-1">Card Color (Hex, Optional)</label>
+            <input type="color" id="color" name="color" value="#ffffff" class="w-full h-10 rounded-md bg-gray-700 border border-gray-600">
+        </div>
+
+        <!-- Dynamic Sections -->
+        <div class="mb-4 border-t border-gray-700 pt-4">
+            <h3 class="text-xl font-semibold mb-3 text-purple-300">Content Sections</h3>
+            <div id="sections-container">
+                <!-- Sections will be dynamically added here -->
+            </div>
+            <button id="add-section-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Section</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="mb-4 border-t border-gray-700 pt-4">
+            <h3 class="text-xl font-semibold mb-3 text-purple-300">Stats (Key-Value Pairs)</h3>
+            <div id="stats-container">
+                <!-- Stats will be dynamically added here -->
+            </div>
+            <button id="add-stat-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Stat</button>
+        </div>
+
+        <!-- Tags and Footer -->
+        <div class="mb-4 border-t border-gray-700 pt-4">
+            <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags (Comma-separated)</label>
+            <input type="text" id="tags" name="tags" placeholder="e.g., Fire, Spell, Evocation" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+        </div>
+
+        <div class="mb-4">
+            <label for="footer" class="block text-sm font-medium text-gray-300 mb-1">Footer Text (Optional)</label>
+            <input type="text" id="footer" name="footer" placeholder="e.g., Source: PHB" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+        </div>
+
+        <!-- Folded Card Options -->
+        <div class="mb-4 border-t border-gray-700 pt-4">
+            <h3 class="text-xl font-semibold mb-3 text-purple-300">Card Folding</h3>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-purple-600 rounded">
+                <span class="ml-2 text-gray-300">Folded Card</span>
+            </label>
+
+            <div id="fold-content-options" class="mt-4 bg-gray-700 p-4 rounded-md hidden">
+                <h4 class="text-lg font-semibold mb-2 text-purple-200">Back/Bottom Fold Content</h4>
+                <div class="mb-3">
+                    <label for="fold-content-type" class="block text-sm font-medium text-gray-300 mb-1">Content Type</label>
+                    <select id="fold-content-type" name="foldContentType" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500 focus:ring-purple-500 focus:border-purple-500">
+                        <option value="text">Text</option>
+                        <option value="imageUrl">Image URL</option>
+                        <option value="qrCode">QR Code</option>
+                    </select>
+                </div>
+
+                <div id="fold-text-input" class="mb-3">
+                    <label for="fold-content-text" class="block text-sm font-medium text-gray-300 mb-1">Text for Fold</label>
+                    <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Content for the back of the folded card."></textarea>
+                </div>
+                <div id="fold-image-input" class="mb-3 hidden">
+                    <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL for Fold</label>
+                    <input type="text" id="fold-content-image-url" name="foldContentImageUrl" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://example.com/back_design.png">
+                </div>
+                <div id="fold-qr-input" class="mb-3 hidden">
+                    <label for="fold-content-qr-data" class="block text-sm font-medium text-gray-300 mb-1">QR Code Data</label>
+                    <input type="text" id="fold-content-qr-data" name="foldContentQrCodeData" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://your-game-link.com">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Section -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Import Card Data</h2>
+
+        <div class="mb-4">
+            <label for="rpg-cards-json-file" class="block text-sm font-medium text-gray-300 mb-2">Import from rpg-cards.vercel.app (.json file)</label>
+            <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-md p-2 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600">
+        </div>
+
+        <div class="mb-4">
+            <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html</label>
+            <textarea id="5e-tools-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste your 5e.tools JSON here..."></textarea>
+        </div>
+
+        <div class="mb-4">
+            <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic JSON</label>
+            <textarea id="generic-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste any other TTRPG card JSON here..."></textarea>
+        </div>
+    </div>
+
+    <!-- Printer Settings & Preview -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Printer Settings & Preview</h2>
+
+        <div class="mb-4">
+            <label for="printer-type" class="block text-sm font-medium text-gray-300 mb-1">Select Printer Type</label>
+            <select id="printer-type" name="printerType" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <option value="thermal">Thermal Receipt Printer (Monochrome)</option>
+                <option value="color">Color Photo Printer (Kodak Zink / Fujifilm Instax)</option>
+            </select>
+        </div>
+
+        <div id="thermal-paper-size-container" class="mb-4">
+            <label for="thermal-paper-size" class="block text-sm font-medium text-gray-300 mb-1">Thermal Paper Size</label>
+            <select id="thermal-paper-size" name="thermalPaperSize" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <option value="58mm">58mm (Print Width ~48mm)</option>
+                <option value="80mm">80mm (Print Width ~72mm)</option>
+            </select>
+        </div>
+
+        <!-- Card Preview Area -->
+        <div id="card-preview-container" class="p-4 rounded-lg shadow-lg border-2 overflow-hidden">
+            <h3 class="text-xl font-bold mb-2 text-center" id="preview-title">Card Preview (Monochrome)</h3>
+            <div id="card-front-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[150px] flex flex-col justify-between">
+                <!-- Card front content will be rendered here -->
+            </div>
+            <div id="card-back-preview-container" class="mt-4 hidden">
+                <h3 class="text-xl font-bold mb-2 text-center">Folded Back Preview (Rotated 180°)</h3>
+                <div id="card-back-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[100px] flex flex-col justify-center items-center transform rotate-180">
+                    <!-- Card back content will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex flex-col space-y-3">
+            <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Print Thermal Card</button>
+            <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
+            <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Card Image</button>
+            <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card (via Web Share API)</button>
+        </div>
+    </div>
+
+    <script>
+        // Global application state
+        let appState = {
+            card: {
+                id: '',
+                title: 'New Card',
+                type: 'Spell',
+                icon: '',
+                color: '#ffffff',
+                tags: [],
+                sections: [
+                    { heading: 'Description', body: 'This is a magical card.', flavorText: '' }
+                ],
+                cost: '',
+                rarity: '',
+                abilities: [],
+                image: '',
+                stats: {},
+                footer: 'Custom Card',
+                isFolded: false,
+                foldContent: {
+                    type: 'text',
+                    text: 'Folded content goes here.',
+                    imageUrl: '',
+                    qrCodeData: ''
+                }
+            },
+            printerType: 'thermal', // 'thermal' or 'color'
+            thermalPaperSize: '58mm' // '58mm', '80mm'
+        };
+
+        // DOM Elements
+        const messageDisplay = document.getElementById('message-display');
+        const titleInput = document.getElementById('title');
+        const typeInput = document.getElementById('type');
+        const iconInput = document.getElementById('icon');
+        const colorInput = document.getElementById('color');
+        const sectionsContainer = document.getElementById('sections-container');
+        const addSectionBtn = document.getElementById('add-section-btn');
+        const statsContainer = document.getElementById('stats-container');
+        const addStatBtn = document.getElementById('add-stat-btn');
+        const tagsInput = document.getElementById('tags');
+        const footerInput = document.getElementById('footer');
+        const isFoldedCheckbox = document.getElementById('is-folded');
+        const foldContentOptions = document.getElementById('fold-content-options');
+        const foldContentTypeSelect = document.getElementById('fold-content-type');
+        const foldTextInput = document.getElementById('fold-text-input');
+        const foldImageInput = document.getElementById('fold-image-input');
+        const foldQrInput = document.getElementById('fold-qr-input');
+        const foldContentTextarea = document.getElementById('fold-content-text');
+        const foldContentImageUrlInput = document.getElementById('fold-content-image-url');
+        const foldContentQrDataInput = document.getElementById('fold-content-qr-data');
+        const rpgCardsJsonFile = document.getElementById('rpg-cards-json-file');
+        const eToolsJsonPaste = document.getElementById('5e-tools-json-paste');
+        const genericJsonPaste = document.getElementById('generic-json-paste');
+        const printerTypeSelect = document.getElementById('printer-type');
+        const thermalPaperSizeContainer = document.getElementById('thermal-paper-size-container');
+        const thermalPaperSizeSelect = document.getElementById('thermal-paper-size');
+        const cardPreviewContainer = document.getElementById('card-preview-container');
+        const previewTitle = document.getElementById('preview-title');
+        const cardFrontPreview = document.getElementById('card-front-preview');
+        const cardBackPreviewContainer = document.getElementById('card-back-preview-container');
+        const cardBackPreview = document.getElementById('card-back-preview');
+        const printThermalBtn = document.getElementById('print-thermal-btn');
+        const printColorPhotoBtn = document.getElementById('print-color-photo-btn');
+        const downloadImageBtn = document.getElementById('download-image-btn');
+        const shareCardBtn = document.getElementById('share-card-btn');
+
+        // Utility to convert markdown-like text to HTML for rendering
+        function formatText(text) {
+            if (!text) return '';
+            let formattedText = text;
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+            formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'); // Links
+            formattedText = formattedText.replace(/\n/g, '<br />'); // Newlines
+            return formattedText;
+        }
+
+        // Display message to user
+        function showMessage(msg, isError = false) {
+            messageDisplay.textContent = msg;
+            messageDisplay.classList.remove('hidden', 'bg-blue-500', 'bg-red-500');
+            messageDisplay.classList.add(isError ? 'bg-red-500' : 'bg-blue-500');
+            setTimeout(() => {
+                messageDisplay.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Render sections dynamically
+        function renderSections() {
+            sectionsContainer.innerHTML = '';
+            appState.card.sections.forEach((section, index) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'bg-gray-700 p-4 rounded-md mb-3 relative';
+                sectionDiv.innerHTML = `
+                    <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                    <label for="section-heading-${index}" class="block text-sm font-medium text-gray-300 mb-1">Heading (Optional)</label>
+                    <input type="text" id="section-heading-${index}" data-field="heading" data-index="${index}" value="${section.heading}" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500 mb-2">
+                    <label for="section-body-${index}" class="block text-sm font-medium text-gray-300 mb-1">Body Text (Markdown-like)</label>
+                    <textarea id="section-body-${index}" data-field="body" data-index="${index}" rows="4" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500 mb-2" placeholder="Use **bold**, *italic*, and newlines.">${section.body}</textarea>
+                    <label for="section-flavorText-${index}" class="block text-sm font-medium text-gray-300 mb-1">Flavor Text (Optional)</label>
+                    <textarea id="section-flavorText-${index}" data-field="flavorText" data-index="${index}" rows="2" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Optional italicized text.">${section.flavorText}</textarea>
+                `;
+                sectionsContainer.appendChild(sectionDiv);
+            });
+            document.querySelectorAll('.section-input').forEach(input => {
+                input.addEventListener('input', handleSectionChange);
+            });
+            document.querySelectorAll('.remove-section-btn').forEach(button => {
+                button.addEventListener('click', handleRemoveSection);
+            });
+            updateCardPreview();
+        }
+
+        // Handle section input changes
+        function handleSectionChange(event) {
+            const index = parseInt(event.target.dataset.index);
+            const field = event.target.dataset.field;
+            appState.card.sections[index][field] = event.target.value;
+            updateCardPreview();
+        }
+
+        // Handle remove section
+        function handleRemoveSection(event) {
+            const index = parseInt(event.target.dataset.index);
+            appState.card.sections.splice(index, 1);
+            renderSections();
+        }
+
+        // Render stats dynamically
+        function renderStats() {
+            statsContainer.innerHTML = '';
+            Object.entries(appState.card.stats).forEach(([key, value]) => {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'flex items-center mb-2';
+                statDiv.innerHTML = `
+                    <input type="text" value="${key}" readonly class="w-1/3 p-2 rounded-l-md bg-gray-600 border border-gray-500 cursor-not-allowed">
+                    <input type="text" data-key="${key}" value="${value}" class="stat-input w-2/3 p-2 rounded-r-md bg-gray-600 border border-gray-500">
+                    <button data-key="${key}" class="remove-stat-btn ml-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                `;
+                statsContainer.appendChild(statDiv);
+            });
+            document.querySelectorAll('.stat-input').forEach(input => {
+                input.addEventListener('input', handleStatChange);
+            });
+            document.querySelectorAll('.remove-stat-btn').forEach(button => {
+                button.addEventListener('click', handleRemoveStat);
+            });
+            updateCardPreview();
+        }
+
+        // Handle stat input changes
+        function handleStatChange(event) {
+            const key = event.target.dataset.key;
+            appState.card.stats[key] = event.target.value;
+            updateCardPreview();
+        }
+
+        // Handle remove stat
+        function handleRemoveStat(event) {
+            const key = event.target.dataset.key;
+            delete appState.card.stats[key];
+            renderStats();
+        }
+
+        // Update card preview based on current state
+        function updateCardPreview() {
+            const card = appState.card;
+            const printerType = appState.printerType;
+            const thermalPaperSize = appState.thermalPaperSize;
+
+            const widthClass = thermalPaperSize === '58mm' ? 'w-[48mm]' : 'w-[72mm]';
+            const textColor = printerType === 'thermal' ? 'text-black' : 'text-gray-900';
+            const bgColor = printerType === 'thermal' ? 'bg-white' : card.color || 'bg-white';
+            const borderColor = printerType === 'thermal' ? 'border-gray-400' : 'border-gray-300';
+
+            // Update container styling
+            cardPreviewContainer.className = `p-4 rounded-lg shadow-lg ${bgColor} ${textColor} ${borderColor} border-2 overflow-hidden`;
+            previewTitle.textContent = `Card Preview (${printerType === 'thermal' ? 'Monochrome' : 'Color'})`;
+
+            // Render front content
+            cardFrontPreview.className = `relative mx-auto p-2 border border-dashed border-gray-400 rounded-md ${widthClass} min-h-[150px] flex flex-col justify-between`;
+            cardFrontPreview.innerHTML = `
+                <div class="flex flex-col items-center mb-2">
+                    <h1 class="text-2xl font-extrabold text-center mb-1 leading-tight">${card.title}</h1>
+                    ${card.type ? `<p class="text-lg text-center mb-2">${card.type}</p>` : ''}
+                    ${card.icon ? `<img src="${card.icon}" alt="Card Icon" class="w-12 h-12 object-contain mb-2 ${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />` : ''}
+                </div>
+
+                ${Object.keys(card.stats).length > 0 ? `
+                    <div class="flex flex-wrap justify-center text-sm mb-2">
+                        ${Object.entries(card.stats).map(([key, value]) => `
+                            <span class="mx-2 whitespace-nowrap">
+                                <strong class="font-semibold">${key}:</strong> ${value}
+                            </span>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                <div class="flex-grow overflow-hidden">
+                    ${card.sections.map((section, index) => `
+                        <div class="mb-2">
+                            ${section.heading ? `<h2 class="text-lg font-semibold border-b border-gray-300 pb-1 mb-1">${section.heading}</h2>` : ''}
+                            <p class="text-sm leading-snug card-content">${formatText(section.body)}</p>
+                            ${section.flavorText ? `<p class="text-xs italic text-gray-600 mt-1 card-content">${formatText(section.flavorText)}</p>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${card.tags.length > 0 ? `
+                    <p class="text-xs text-center mt-2 border-t border-gray-300 pt-1">Tags: ${card.tags.join(', ')}</p>
+                ` : ''}
+                ${card.footer ? `<p class="text-xs text-center mt-1">${card.footer}</p>` : ''}
+            `;
+
+            // Render back content if folded
+            if (card.isFolded) {
+                cardBackPreviewContainer.classList.remove('hidden');
+                cardBackPreview.className = `relative mx-auto p-2 border border-dashed border-gray-400 rounded-md ${widthClass} min-h-[100px] flex flex-col justify-center items-center transform rotate-180`;
+                let foldContentHtml = '';
+                if (card.foldContent.type === 'text' && card.foldContent.text) {
+                    foldContentHtml = `<p class="text-sm text-center card-content">${formatText(card.foldContent.text)}</p>`;
+                } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                    foldContentHtml = `<img src="${card.foldContent.imageUrl}" alt="Fold Back Image" class="w-24 h-24 object-contain ${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/96x96/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=BACK+IMG';" />`;
+                } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
+                    foldContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(card.foldContent.qrCodeData)}" alt="QR Code" class="w-24 h-24 object-contain" onerror="this.src='https://placehold.co/96x96/000/FFF?text=QR';" />`;
+                }
+                cardBackPreview.innerHTML = foldContentHtml;
+            } else {
+                cardBackPreviewContainer.classList.add('hidden');
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('ttrpgCardPrinterState', JSON.stringify(appState));
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            try {
+                const savedState = localStorage.getItem('ttrpgCardPrinterState');
+                if (savedState) {
+                    appState = JSON.parse(savedState);
+                }
+            } catch (error) {
+                console.error("Error loading state from localStorage:", error);
+                // Reset to default if parsing fails
+                appState = {
+                    card: {
+                        id: '', title: 'New Card', type: 'Spell', icon: '', color: '#ffffff', tags: [],
+                        sections: [{ heading: 'Description', body: 'This is a magical card.', flavorText: '' }],
+                        cost: '', rarity: '', abilities: [], image: '', stats: {}, footer: 'Custom Card',
+                        isFolded: false, foldContent: { type: 'text', text: 'Folded content goes here.', imageUrl: '', qrCodeData: '' }
+                    },
+                    printerType: 'thermal',
+                    thermalPaperSize: '58mm'
+                };
+            }
+            // Update UI with loaded state
+            titleInput.value = appState.card.title;
+            typeInput.value = appState.card.type;
+            iconInput.value = appState.card.icon;
+            colorInput.value = appState.card.color;
+            tagsInput.value = appState.card.tags.join(', ');
+            footerInput.value = appState.card.footer;
+            isFoldedCheckbox.checked = appState.card.isFolded;
+            printerTypeSelect.value = appState.printerType;
+            thermalPaperSizeSelect.value = appState.thermalPaperSize;
+            foldContentTypeSelect.value = appState.card.foldContent.type;
+            foldContentTextarea.value = appState.card.foldContent.text;
+            foldContentImageUrlInput.value = appState.card.foldContent.imageUrl;
+            foldContentQrDataInput.value = appState.card.foldContent.qrCodeData;
+
+            // Trigger rendering for dynamic parts
+            renderSections();
+            renderStats();
+            toggleFoldContentOptions();
+            togglePrinterTypeOptions();
+            updateCardPreview();
+        }
+
+        // Event Listeners for main card inputs
+        titleInput.addEventListener('input', (e) => { appState.card.title = e.target.value; updateCardPreview(); saveState(); });
+        typeInput.addEventListener('input', (e) => { appState.card.type = e.target.value; updateCardPreview(); saveState(); });
+        iconInput.addEventListener('input', (e) => { appState.card.icon = e.target.value; updateCardPreview(); saveState(); });
+        colorInput.addEventListener('input', (e) => { appState.card.color = e.target.value; updateCardPreview(); saveState(); });
+        tagsInput.addEventListener('input', (e) => { appState.card.tags = e.target.value.split(',').map(tag => tag.trim()); updateCardPreview(); saveState(); });
+        footerInput.addEventListener('input', (e) => { appState.card.footer = e.target.value; updateCardPreview(); saveState(); });
+
+        // Add Section button
+        addSectionBtn.addEventListener('click', () => {
+            appState.card.sections.push({ heading: '', body: '', flavorText: '' });
+            renderSections();
+            saveState();
+        });
+
+        // Add Stat button
+        addStatBtn.addEventListener('click', () => {
+            const statKey = prompt("Enter stat name (e.g., HP, STR):");
+            if (statKey) {
+                appState.card.stats[statKey] = '';
+                renderStats();
+                saveState();
+            }
+        });
+
+        // Folded card checkbox
+        isFoldedCheckbox.addEventListener('change', (e) => {
+            appState.card.isFolded = e.target.checked;
+            toggleFoldContentOptions();
+            updateCardPreview();
+            saveState();
+        });
+
+        // Toggle visibility of fold content options
+        function toggleFoldContentOptions() {
+            if (appState.card.isFolded) {
+                foldContentOptions.classList.remove('hidden');
+                updateFoldContentInputs();
+            } else {
+                foldContentOptions.classList.add('hidden');
+            }
+        }
+
+        // Handle fold content type change
+        foldContentTypeSelect.addEventListener('change', (e) => {
+            appState.card.foldContent.type = e.target.value;
+            updateFoldContentInputs();
+            updateCardPreview();
+            saveState();
+        });
+
+        // Update visibility of fold content inputs
+        function updateFoldContentInputs() {
+            foldTextInput.classList.add('hidden');
+            foldImageInput.classList.add('hidden');
+            foldQrInput.classList.add('hidden');
+
+            if (appState.card.foldContent.type === 'text') {
+                foldTextInput.classList.remove('hidden');
+            } else if (appState.card.foldContent.type === 'imageUrl') {
+                foldImageInput.classList.remove('hidden');
+            } else if (appState.card.foldContent.type === 'qrCode') {
+                foldQrInput.classList.remove('hidden');
+            }
+        }
+
+        // Fold content inputs
+        foldContentTextarea.addEventListener('input', (e) => { appState.card.foldContent.text = e.target.value; updateCardPreview(); saveState(); });
+        foldContentImageUrlInput.addEventListener('input', (e) => { appState.card.foldContent.imageUrl = e.target.value; updateCardPreview(); saveState(); });
+        foldContentQrDataInput.addEventListener('input', (e) => { appState.card.foldContent.qrCodeData = e.target.value; updateCardPreview(); saveState(); });
+
+        // JSON Import Handlers
+        rpgCardsJsonFile.addEventListener('change', (e) => handleJsonImport(e, 'rpg-cards'));
+        eToolsJsonPaste.addEventListener('input', (e) => handleJsonPaste(e, '5e-tools'));
+        genericJsonPaste.addEventListener('input', (e) => handleJsonPaste(e, 'generic'));
+
+        function handleJsonImport(e, type) {
+            const file = e.target.files ? e.target.files[0] : null;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        parseAndSetCardData(importedData, type);
+                        showMessage('JSON imported successfully!');
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                        showMessage('Failed to parse JSON. Please check the format.', true);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function handleJsonPaste(e, type) {
+            try {
+                const pastedData = JSON.parse(e.target.value);
+                parseAndSetCardData(pastedData, type);
+                showMessage('JSON pasted successfully!');
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+                showMessage('Failed to parse JSON. Please check the format.', true);
+            }
+        }
+
+        function parseAndSetCardData(data, type) {
+            let newCard = JSON.parse(JSON.stringify(appState.card)); // Deep copy current card
+            newCard.id = crypto.randomUUID(); // Always generate new ID
+
+            if (type === 'rpg-cards') {
+                newCard.title = data.title || newCard.title;
+                newCard.type = data.type || newCard.type;
+                newCard.icon = data.icon || newCard.icon;
+                newCard.color = data.color || newCard.color;
+                newCard.tags = data.tags || newCard.tags;
+                newCard.sections = data.sections || newCard.sections;
+                newCard.cost = data.cost || newCard.cost;
+                newCard.rarity = data.rarity || newCard.rarity;
+                newCard.abilities = data.abilities || newCard.abilities;
+                newCard.image = data.image || newCard.image;
+                newCard.footer = data.footer || newCard.footer;
+                newCard.isFolded = data.isFolded || newCard.isFolded;
+                newCard.foldContent = data.foldContent || newCard.foldContent;
+            } else if (type === '5e-tools') {
+                newCard.title = data.name || newCard.title;
+                newCard.type = data.type || newCard.type;
+                newCard.rarity = data.rarity || newCard.rarity;
+                newCard.cost = data.cost || newCard.cost;
+
+                const newStats = {};
+                if (data.hp) newStats.HP = data.hp.average || data.hp;
+                if (data.str) newStats.STR = data.str;
+                if (data.dex) newStats.DEX = data.dex;
+                if (data.con) newStats.CON = data.con;
+                if (data.int) newStats.INT = data.int;
+                if (data.wis) newStats.WIS = data.wis;
+                if (data.cha) newStats.CHA = data.cha;
+                if (data.cr) newStats.CR = data.cr;
+                newCard.stats = newStats;
+
+                const newSections = [];
+                if (data.trait) {
+                    data.trait.forEach(t => {
+                        newSections.push({ heading: t.name, body: t.entries.join('\n'), flavorText: '' });
+                    });
+                }
+                if (data.action) {
+                    data.action.forEach(a => {
+                        newSections.push({ heading: a.name, body: a.entries.join('\n'), flavorText: '' });
+                    });
+                }
+                if (data.description) {
+                    newSections.push({ heading: 'Description', body: data.description.entries.join('\n'), flavorText: '' });
+                }
+                newCard.sections = newSections.length > 0 ? newSections : newCard.sections;
+
+                newCard.sections.forEach(section => {
+                    section.body = section.body.replace(/\{@.*? (.*?)\}/g, '$1');
+                });
+            } else {
+                newCard = { ...newCard, ...data };
+                if (newCard.sections && !Array.isArray(newCard.sections)) {
+                    newCard.sections = [newCard.sections];
+                }
+            }
+            appState.card = newCard;
+            loadState(); // Re-render UI with new state
+            saveState();
+        }
+
+        // Printer type selection
+        printerTypeSelect.addEventListener('change', (e) => {
+            appState.printerType = e.target.value;
+            togglePrinterTypeOptions();
+            updateCardPreview();
+            saveState();
+        });
+
+        // Toggle printer specific options
+        function togglePrinterTypeOptions() {
+            if (appState.printerType === 'thermal') {
+                thermalPaperSizeContainer.classList.remove('hidden');
+                printThermalBtn.classList.remove('hidden');
+                printColorPhotoBtn.classList.add('hidden');
+            } else {
+                thermalPaperSizeContainer.classList.add('hidden');
+                printThermalBtn.classList.add('hidden');
+                printColorPhotoBtn.classList.remove('hidden');
+            }
+        }
+
+        // Thermal paper size selection
+        thermalPaperSizeSelect.addEventListener('change', (e) => {
+            appState.thermalPaperSize = e.target.value;
+            updateCardPreview();
+            saveState();
+        });
+
+        // Generate HTML for thermal printer
+        function generateThermalHtml() {
+            const card = appState.card;
+            const thermalPaperSize = appState.thermalPaperSize;
+            const widthPx = thermalPaperSize === '58mm' ? 384 : 576; // Approx pixels for 48mm and 72mm print width at 203 DPI
+
+            let htmlContent = `
+                <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff;">
+                    <h1 style="text-align: center; font-size: 24px; margin-bottom: 4px; line-height: 1.2;">${card.title}</h1>
+                    ${card.type ? `<p style="text-align: center; font-size: 16px; margin-bottom: 8px;">${card.type}</p>` : ''}
+                    ${card.icon ? `<img src="${card.icon}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />` : ''}
+
+                    ${Object.keys(card.stats).length > 0 ? `
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; font-size: 14px;">
+                            ${Object.entries(card.stats).map(([key, value]) => `
+                                <span style="margin: 0 8px; white-space: nowrap;"><strong>${key}:</strong> ${value}</span>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${card.sections.map(section => `
+                        <div style="margin-bottom: 8px;">
+                            ${section.heading ? `<h2 style="font-size: 18px; margin-bottom: 4px; border-bottom: 1px dashed #999; padding-bottom: 2px;">${section.heading}</h2>` : ''}
+                            <p style="font-size: 14px; margin-bottom: 4px; line-height: 1.4;">${formatText(section.body)}</p>
+                            ${section.flavorText ? `<p style="font-size: 12px; font-style: italic; color: #555; margin-top: 4px;">${formatText(section.flavorText)}</p>` : ''}
+                        </div>
+                    `).join('')}
+
+                    ${card.tags.length > 0 ? `
+                        <p style="font-size: 12px; text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 4px;">Tags: ${card.tags.join(', ')}</p>
+                    ` : ''}
+
+                    ${card.footer ? `<p style="font-size: 12px; text-align: center; margin-top: 8px;">${card.footer}</p>` : ''}
+                </div>
+            `;
+
+            if (card.isFolded) {
+                htmlContent += `
+                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center;">
+                        ${card.foldContent.type === 'text' && card.foldContent.text ? `
+                            <p style="font-size: 14px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
+                        ` : ''}
+                        ${card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl ? `
+                            <img src="${card.foldContent.imageUrl}" style="display: block; margin: 0 auto; max-width: 80%; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
+                        ` : ''}
+                        ${card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData ? `
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: 80px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
+                        ` : ''}
+                    </div>
+                `;
+            }
+            return htmlContent;
+        }
+
+        // Print Thermal button handler
+        printThermalBtn.addEventListener('click', () => {
+            showMessage('Preparing print data...');
+            const htmlContent = generateThermalHtml();
+            const encodedHtml = encodeURIComponent(htmlContent);
+
+            // Mobile Print Util (iOS) URL scheme
+            const mobilePrintUtilUrl = `mobileprintutil://?html=${encodedHtml}`;
+
+            window.open(mobilePrintUtilUrl, '_blank');
+            showMessage('Opening Mobile Print Util...');
+
+            setTimeout(() => {
+                showMessage('If the printer app did not open, please ensure "Mobile Print Util" (iOS) is installed.');
+            }, 3000);
+        });
+
+        // Print Color Photo button handler
+        printColorPhotoBtn.addEventListener('click', async () => {
+            showMessage('Generating image for color photo printer...');
+
+            const card = appState.card;
+            // Create a temporary container for rendering the card(s) at target resolution
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px'; // Off-screen
+            tempContainer.style.width = '600px'; // Target width for 2x3 inch at 300 DPI (2 inches * 300 DPI)
+            tempContainer.style.height = card.isFolded ? '1800px' : '900px'; // 3 inches * 300 DPI for single, 6 inches for folded
+            tempContainer.style.overflow = 'hidden';
+            tempContainer.style.backgroundColor = card.color || '#ffffff'; // Use card background color
+
+            // Render the front/top page
+            const frontHtml = `
+              <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title}</h1>
+                ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
+                ${card.icon ? `<img src="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />` : ''}
+
+                <div style="flex-grow: 1; overflow: hidden; width: 100%;">
+                  ${Object.keys(card.stats).length > 0 ? `
+                    <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
+                      ${Object.entries(card.stats).map(([key, value]) => `
+                        <span style="margin: 0 15px; white-space: nowrap;"><strong>${key}:</strong> ${value}</span>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+
+                  ${card.sections.map(section => `
+                    <div style="margin-bottom: 15px; text-align: left;">
+                      ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
+                      <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body)}</p>
+                      ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText)}</p>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+
+                ${card.tags.length > 0 ? `
+                  <p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>
+                ` : ''}
+                ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer}</p>` : ''}
+              </div>
+            `;
+
+            tempContainer.innerHTML = frontHtml;
+
+            if (card.isFolded) {
+              // Render the back/bottom page, rotated
+              const backHtml = `
+                <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
+                  ${card.foldContent.type === 'text' && card.foldContent.text ? `
+                    <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
+                  ` : ''}
+                  ${card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl ? `
+                    <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
+                  ` : ''}
+                  ${card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData ? `
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
+                  ` : ''}
+                </div>
+              `;
+              tempContainer.innerHTML += backHtml;
+            }
+
+            document.body.appendChild(tempContainer);
+
+            try {
+                const canvas = await html2canvas(tempContainer, {
+                    scale: 1, // Render at actual size
+                    useCORS: true, // Important for images from other domains
+                    logging: false, // Suppress logs
+                    width: 600, // Explicitly set width
+                    height: card.isFolded ? 1800 : 900, // Explicitly set height
+                });
+
+                const imageDataUrl = canvas.toDataURL('image/png'); // Or 'image/jpeg'
+
+                // Clean up the temporary container
+                document.body.removeChild(tempContainer);
+
+                // Attempt to share the image
+                if (navigator.share && navigator.canShare({ files: [] })) { // Check if Web Share API supports files
+                    try {
+                        // Convert data URL to Blob
+                        const response = await fetch(imageDataUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' });
+
+                        await navigator.share({
+                            files: [file],
+                            title: `${card.title} TTRPG Card`,
+                            text: `Here's my custom TTRPG card: ${card.title}`,
+                        });
+                        showMessage('Card shared successfully!');
+                    } catch (error) {
+                        console.error('Error sharing file:', error);
+                        showMessage('Failed to share card. Please ensure your device supports sharing images to printer apps.', true);
+                    }
+                } else {
+                    // Fallback for browsers/devices that don't support Web Share API with files
+                    showMessage('Web Share API not fully supported. Please download the image and share manually with your printer app (e.g., INSTAX Biz™ App, Kodak Step Prints App).');
+                    // Trigger download as a fallback
+                    downloadImage(imageDataUrl);
+                }
+            } catch (error) {
+                console.error('Error generating image:', error);
+                showMessage('Failed to generate card image. Please try again.', true);
+                if (tempContainer.parentNode) {
+                    document.body.removeChild(tempContainer); // Ensure cleanup on error
+                }
+            }
+        });
+
+        // Download Image button handler
+        downloadImageBtn.addEventListener('click', () => {
+            // Re-render the card to a canvas for download, using the current preview settings
+            const card = appState.card;
+            const printerType = appState.printerType;
+            const thermalPaperSize = appState.thermalPaperSize;
+
+            // Create a temporary container for rendering the card(s) at target resolution
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px'; // Off-screen
+
+            let targetWidthPx;
+            let targetHeightPx;
+
+            if (printerType === 'thermal') {
+                targetWidthPx = thermalPaperSize === '58mm' ? 384 : 576; // Match thermal preview resolution
+                // For thermal, height is dynamic based on content, so just let html2canvas determine
+                tempContainer.style.width = `${targetWidthPx}px`;
+                tempContainer.innerHTML = generateThermalHtml(); // Use thermal HTML generation
+            } else { // Color photo
+                targetWidthPx = 600; // 2 inches * 300 DPI
+                targetHeightPx = card.isFolded ? 1800 : 900; // 3 inches * 300 DPI for single, 6 inches for folded
+                tempContainer.style.width = `${targetWidthPx}px`;
+                tempContainer.style.height = `${targetHeightPx}px`;
+                tempContainer.style.overflow = 'hidden';
+                tempContainer.style.backgroundColor = card.color || '#ffffff'; // Use card background color
+
+                // Render the front/top page (similar to handlePrintColorPhoto)
+                const frontHtml = `
+                    <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                    <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title}</h1>
+                    ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
+                    ${card.icon ? `<img src="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />` : ''}
+
+                    <div style="flex-grow: 1; overflow: hidden; width: 100%;">
+                        ${Object.keys(card.stats).length > 0 ? `
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
+                            ${Object.entries(card.stats).map(([key, value]) => `
+                            <span style="margin: 0 15px; white-space: nowrap;"><strong>${key}:</strong> ${value}</span>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+
+                        ${card.sections.map(section => `
+                        <div style="margin-bottom: 15px; text-align: left;">
+                            ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
+                            <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body)}</p>
+                            ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText)}</p>` : ''}
+                        </div>
+                        `).join('')}
+                    </div>
+
+                    ${card.tags.length > 0 ? `
+                        <p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>
+                    ` : ''}
+                    ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer}</p>` : ''}
+                    </div>
+                `;
+                tempContainer.innerHTML = frontHtml;
+
+                if (card.isFolded) {
+                    const backHtml = `
+                        <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
+                        ${card.foldContent.type === 'text' && card.foldContent.text ? `
+                            <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
+                        ` : ''}
+                        ${card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl ? `
+                            <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
+                        ` : ''}
+                        ${card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData ? `
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
+                        ` : ''}
+                        </div>
+                    `;
+                    tempContainer.innerHTML += backHtml;
+                }
+            }
+
+
+            document.body.appendChild(tempContainer);
+
+            html2canvas(tempContainer, {
+                scale: 1,
+                useCORS: true,
+                logging: false,
+                width: targetWidthPx,
+                height: targetHeightPx // Only apply height if defined (for color photo)
+            }).then(canvas => {
+                const imageDataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imageDataUrl;
+                link.download = `${appState.card.title.replace(/\s/g, '_')}_card_${appState.printerType}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showMessage('Card image downloaded!');
+                document.body.removeChild(tempContainer); // Clean up
+            }).catch(error => {
+                console.error('Error generating image for download:', error);
+                showMessage('Failed to generate image for download.', true);
+                if (tempContainer.parentNode) {
+                    document.body.removeChild(tempContainer); // Ensure cleanup on error
+                }
+            });
+        });
+
+        // Share Card button handler
+        shareCardBtn.addEventListener('click', async () => {
+            if (navigator.share && navigator.canShare({ files: [] })) {
+                showMessage('Preparing card for sharing...');
+                // Generate image for sharing (similar to color photo print)
+                const card = appState.card;
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.width = '600px';
+                tempContainer.style.height = card.isFolded ? '1800px' : '900px';
+                tempContainer.style.overflow = 'hidden';
+                tempContainer.style.backgroundColor = card.color || '#ffffff';
+
+                const frontHtml = `
+                    <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                    <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title}</h1>
+                    ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
+                    ${card.icon ? `<img src="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />` : ''}
+
+                    <div style="flex-grow: 1; overflow: hidden; width: 100%;">
+                        ${Object.keys(card.stats).length > 0 ? `
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
+                            ${Object.entries(card.stats).map(([key, value]) => `
+                            <span style="margin: 0 15px; white-space: nowrap;"><strong>${key}:</strong> ${value}</span>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+
+                        ${card.sections.map(section => `
+                        <div style="margin-bottom: 15px; text-align: left;">
+                            ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
+                            <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body)}</p>
+                            ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText)}</p>` : ''}
+                        </div>
+                        `).join('')}
+                    </div>
+
+                    ${card.tags.length > 0 ? `
+                        <p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>
+                    ` : ''}
+                    ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer}</p>` : ''}
+                    </div>
+                `;
+                tempContainer.innerHTML = frontHtml;
+
+                if (card.isFolded) {
+                    const backHtml = `
+                        <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
+                        ${card.foldContent.type === 'text' && card.foldContent.text ? `
+                            <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
+                        ` : ''}
+                        ${card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl ? `
+                            <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
+                        ` : ''}
+                        ${card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData ? `
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
+                        ` : ''}
+                        </div>
+                    `;
+                    tempContainer.innerHTML += backHtml;
+                }
+
+                document.body.appendChild(tempContainer);
+
+                try {
+                    const canvas = await html2canvas(tempContainer, {
+                        scale: 1,
+                        useCORS: true,
+                        logging: false,
+                        width: 600,
+                        height: card.isFolded ? 1800 : 900,
+                    });
+                    const imageDataUrl = canvas.toDataURL('image/png');
+                    const response = await fetch(imageDataUrl);
+                    const blob = await response.blob();
+                    const file = new File([blob], `${appState.card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' });
+
+                    await navigator.share({
+                        files: [file],
+                        title: `${appState.card.title} TTRPG Card`,
+                        text: `Here's my custom TTRPG card: ${appState.card.title}`,
+                    });
+                    showMessage('Card shared successfully!');
+                } catch (error) {
+                    console.error('Error sharing file:', error);
+                    showMessage('Failed to share card. Please ensure your device supports sharing images to printer apps.', true);
+                } finally {
+                    if (tempContainer.parentNode) {
+                        document.body.removeChild(tempContainer); // Ensure cleanup
+                    }
+                }
+            } else {
+                showMessage('Web Share API not supported on this device/browser. Please download the image and share manually.', true);
+            }
+        });
+
+        // Initial load and render
+        window.addEventListener('load', () => {
+            loadState();
+        });
+    </script>
+</body>
+</html>

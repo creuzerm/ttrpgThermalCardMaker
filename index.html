@@ -280,7 +280,7 @@
                 </div>
 
                 <button id="view-card-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">View Card</button>
-                <a id="print-thermal-btn" href="#" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Preview & Print</a>
+                <a id="print-thermal-btn" href="#" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Print to Thermal Printer</a>
                 <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
                 <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Image</button>
                 <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
@@ -1186,31 +1186,30 @@
         });
 
         function updatePrintLink() {
-            const cardToPrint = appState.cards[appState.currentCardIndex];
-            const dataToSend = {
-                card: cardToPrint,
-                settings: {
-                    thermalPaperSize: appState.thermalPaperSize,
-                    thermalDpi: appState.thermalDpi,
-                    numCopies: appState.numCopies
-                }
-            };
-            const encodedData = btoa(JSON.stringify(dataToSend));
-
-            const cardViewUrl = new URL('index.html', window.location.href);
-            cardViewUrl.searchParams.set('view', 'card');
-            cardViewUrl.searchParams.set('data', encodedData);
-
             const printButton = document.getElementById('print-thermal-btn');
             const isAndroid = /android/i.test(navigator.userAgent);
 
             if (isAndroid) {
+                const cardToPrint = appState.cards[appState.currentCardIndex];
+                const dataToSend = {
+                    card: cardToPrint,
+                    settings: {
+                        thermalPaperSize: appState.thermalPaperSize,
+                        thermalDpi: appState.thermalDpi,
+                        numCopies: appState.numCopies
+                    }
+                };
+                const encodedData = btoa(JSON.stringify(dataToSend));
+
+                const cardViewUrl = new URL('index.html', window.location.href);
+                cardViewUrl.searchParams.set('view', 'card');
+                cardViewUrl.searchParams.set('data', encodedData);
+
                 const printUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='${cardViewUrl.toString()}'`;
                 printButton.href = printUrl;
-                printButton.target = '_self'; // Or remove target attribute
+                printButton.classList.remove('hidden');
             } else {
-                printButton.href = cardViewUrl.toString();
-                printButton.target = '_blank';
+                printButton.classList.add('hidden');
             }
         }
 

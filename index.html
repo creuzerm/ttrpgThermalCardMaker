@@ -1597,9 +1597,13 @@
         // Initial load and render
         window.addEventListener('load', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('view') === 'card') {
+            const viewMode = urlParams.get('view');
+            const dataParam = urlParams.get('data');
+
+            if (viewMode === 'card') {
                 initCardView();
             } else {
+                // This handles both normal page loads and bookmarked links with data
                 initGeneratorView();
             }
         });

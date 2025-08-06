@@ -690,22 +690,23 @@
                 const numCopiesParam = urlParams.get('numCopies');
 
                 if (cardDataParam) {
-                    const decodedCardData = JSON.parse(atob(cardDataParam));
-                    // If loading from URL, it's always a single card for now
-                    appState.cards = [decodedCardData];
+                    const decodedData = JSON.parse(atob(cardDataParam));
+
+                    // Correctly unpack the data from the URL
+                    if (decodedData.card) {
+                        appState.cards = [decodedData.card];
+                    } else {
+                        // Fallback for old format or direct card data
+                        appState.cards = [decodedData];
+                    }
                     appState.currentCardIndex = 0;
 
-                    if (printerTypeParam) appState.printerType = printerTypeParam;
-                    if (thermalPaperSizeParam) appState.thermalPaperSize = thermalPaperSizeParam;
-
-                    let loadedNumCopies = 1;
-                    if (numCopiesParam && numCopiesParam !== 'undefined') {
-                        const parsedNum = parseInt(numCopiesParam, 10);
-                        if (!isNaN(parsedNum) && parsedNum >= 1 && parsedNum <= 10) {
-                            loadedNumCopies = parsedNum;
-                        }
+                    if (decodedData.settings) {
+                        appState.printerType = decodedData.settings.printerType || appState.printerType;
+                        appState.thermalPaperSize = decodedData.settings.thermalPaperSize || appState.thermalPaperSize;
+                        appState.thermalDpi = decodedData.settings.thermalDpi || appState.thermalDpi;
+                        appState.numCopies = decodedData.settings.numCopies || appState.numCopies;
                     }
-                    appState.numCopies = loadedNumCopies;
 
                     showMessage('Card loaded from URL bookmark!');
                 } else {

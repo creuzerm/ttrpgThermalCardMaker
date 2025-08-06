@@ -1211,7 +1211,7 @@
                 let iconHtml = '';
                 if (card.icon) {
                     const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/48x48/E0E0E0/888?text=ICON`);
-                    iconHtml = `<img class="card-export-icon" src="${iconUrl}" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; object-fit: contain;" />`;
+                    iconHtml = `<div id="card-export-icon-placeholder" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px;"></div>`;
                 }
 
                 const frontHtml = `
@@ -1244,7 +1244,7 @@
                         backContentHtml = `<p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(foldContent.text)}</p>`;
                     } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
                         const backImgUrl = iconManifest[foldContent.imageUrl] || foldContent.imageUrl;
-                        backContentHtml = `<img class="card-export-back-img" src="${backImgUrl}" style="max-width: 90%; max-height: 90%; object-fit: contain;" />`;
+                        backContentHtml = `<div id="card-export-back-placeholder" style="width: 90%; height: 90%;"></div>`;
                     } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
                         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(foldContent.qrCodeData)}`;
                         backContentHtml = `<img class="card-export-qr" src="${qrUrl}" style="max-width: 300px; height: auto;" />`;
@@ -1261,29 +1261,6 @@
             tempContainer.innerHTML = htmlContent;
             document.body.appendChild(tempContainer);
 
-            // Pre-load all images inside the temporary container
-            const images = tempContainer.querySelectorAll('img');
-            const promises = [];
-            images.forEach(img => {
-                img.crossOrigin = 'Anonymous';
-                promises.push(new Promise((resolve) => {
-                    img.onload = resolve;
-                    img.onerror = () => {
-                        console.warn(`Could not load image: ${img.src}. It might not render correctly.`);
-                        const width = img.style.width || '100px';
-                        const height = img.style.height || '100px';
-                        img.src = `https://placehold.co/${parseInt(width)}x${parseInt(height)}/E0E0E0/888?text=LOAD_ERR`;
-                        resolve(); // Resolve even on error
-                    };
-                    // Force reload for cached images
-                    const currentSrc = img.src;
-                    img.src = '';
-                    img.src = currentSrc;
-                }));
-            });
-
-            await Promise.all(promises);
-
             // Add a small delay to allow fonts to render if needed
             await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -1294,6 +1271,66 @@
                 width: tempContainer.offsetWidth,
                 height: tempContainer.offsetHeight,
             });
+
+            // Manually draw images onto the canvas to bypass html2canvas rendering bugs
+            const ctx = canvas.getContext('2d');
+            const scale = 2; // The scale factor used in html2canvas
+
+            // 1. Draw the icon
+            if (card.icon) {
+                const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+                if (iconUrl) {
+                    try {
+                        const img = await loadImage(iconUrl);
+                        const placeholder = tempContainer.querySelector('#card-export-icon-placeholder');
+                        const rect = placeholder.getBoundingClientRect();
+                        const containerRect = tempContainer.getBoundingClientRect();
+
+                        const x = (rect.left - containerRect.left) * scale;
+                        const y = (rect.top - containerRect.top) * scale;
+                        const width = rect.width * scale;
+                        const height = rect.height * scale;
+
+                        const hRatio = width / img.width;
+                        const vRatio = height / img.height;
+                        const ratio = Math.min(hRatio, vRatio);
+                        const centerShiftX = (width - img.width * ratio) / 2;
+                        const centerShiftY = (height - img.height * ratio) / 2;
+
+                        ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
+                    } catch (e) {
+                        console.error("Could not draw icon:", e);
+                    }
+                }
+            }
+
+            // 2. Draw the back image if it exists
+            if (card.isFolded && card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                if (backImgUrl) {
+                    try {
+                        const img = await loadImage(backImgUrl);
+                        const placeholder = tempContainer.querySelector('#card-export-back-placeholder');
+                        const rect = placeholder.getBoundingClientRect();
+                        const containerRect = tempContainer.getBoundingClientRect();
+
+                        const x = (rect.left - containerRect.left) * scale;
+                        const y = (rect.top - containerRect.top) * scale;
+                        const width = rect.width * scale;
+                        const height = rect.height * scale;
+
+                        const hRatio = width / img.width;
+                        const vRatio = height / img.height;
+                        const ratio = Math.min(hRatio, vRatio);
+                        const centerShiftX = (width - img.width * ratio) / 2;
+                        const centerShiftY = (height - img.height * ratio) / 2;
+
+                        ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
+                    } catch (e) {
+                        console.error("Could not draw back image:", e);
+                    }
+                }
+            }
 
             document.body.removeChild(tempContainer);
             return canvas;

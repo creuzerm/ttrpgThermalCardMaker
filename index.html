@@ -894,6 +894,23 @@
                                 if (parts.length >= 2) {
                                     newCard.stats[parts[0].trim()] = parts[1].trim();
                                 }
+                            } else if (line.startsWith('description | ')) {
+                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
+                                    newCard.sections.push({ ...currentSection });
+                                }
+                                const parts = line.substring('description | '.length).split(' | ');
+                                if (parts.length >= 2) {
+                                    currentSection = { heading: parts[0].trim(), body: parts[1].trim(), flavorText: '' };
+                                } else {
+                                    currentSection = { heading: '', body: parts[0].trim(), flavorText: '' };
+                                }
+                            } else if (line.startsWith('bullet | ')) {
+                                const bulletText = '• ' + line.substring('bullet | '.length).trim();
+                                if (currentSection.body) {
+                                    currentSection.body += '\n' + bulletText;
+                                } else {
+                                    currentSection.body = bulletText;
+                                }
                             } else if (line.startsWith('section | ')) {
                                 if (currentSection.body || currentSection.heading || currentSection.flavorText) {
                                     newCard.sections.push({ ...currentSection });

@@ -1197,7 +1197,7 @@
             try {
                 const files = [];
                 for (const card of cardsToProcess) {
-                    const canvas = await generateCardCanvas(card, 'color', appState.thermalPaperSize); // Force 'color'
+                    const canvas = await generateCardCanvas(card);
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                     files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
                 }
@@ -1219,7 +1219,12 @@
         });
 
         // Refactored function to generate a canvas for a given card
-        async function generateCardCanvas(card, printerType, thermalPaperSize) {
+        async function generateCardCanvas(card) {
+            console.log('--- Generating Card Canvas ---');
+            console.log('Printer Type:', appState.printerType);
+            console.log('Thermal Paper Size:', appState.thermalPaperSize);
+            console.log('Thermal DPI:', appState.thermalDpi);
+
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
@@ -1230,8 +1235,8 @@
             let htmlContent = '';
 
             // This logic is mostly extracted from the original download/share buttons
-            if (printerType === 'thermal') {
-                targetWidthPx = getPixelWidth(thermalPaperSize, appState.thermalDpi);
+            if (appState.printerType === 'thermal') {
+                targetWidthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
                 targetHeightPx = targetWidthPx * (card.isFolded ? 2.8 : 1.4); // Maintain aspect ratio, account for fold
                 // For thermal, we let the content define the height. The container will have two divs.
                 tempContainer.style.width = `${targetWidthPx}px`;
@@ -1246,6 +1251,7 @@
 
                 // Simplified HTML generation for color cards
                 let iconHtml = '';
+                console.log('Calculated Dimensions (WxH):', targetWidthPx, 'x', targetHeightPx);
                 if (card.icon) {
                     const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/48x48/E0E0E0/888?text=ICON`);
                     iconHtml = `<div id="card-export-icon-placeholder" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px;"></div>`;
@@ -1400,7 +1406,7 @@
             for (const card of cardsToProcess) {
                 // This loop doesn't need to update the main UI, just process cards.
                 try {
-                    const canvas = await generateCardCanvas(card, appState.printerType, appState.thermalPaperSize);
+                    const canvas = await generateCardCanvas(card);
                     const imageDataUrl = canvas.toDataURL('image/png');
                     downloadImage(imageDataUrl, card.title); // Use existing helper to download
                 } catch (error) {
@@ -1430,7 +1436,7 @@
                 const files = [];
 
                 for (const card of cardsToProcess) {
-                    const canvas = await generateCardCanvas(card, appState.printerType, appState.thermalPaperSize);
+                    const canvas = await generateCardCanvas(card);
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                     files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
                 }

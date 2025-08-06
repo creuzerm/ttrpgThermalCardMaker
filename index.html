@@ -1265,7 +1265,6 @@
             await new Promise(resolve => setTimeout(resolve, 100));
 
             const canvas = await html2canvas(tempContainer, {
-                scale: 2, // Use a higher scale for better resolution
                 useCORS: true,
                 logging: false,
                 width: tempContainer.offsetWidth,
@@ -1274,7 +1273,6 @@
 
             // Manually draw images onto the canvas to bypass html2canvas rendering bugs
             const ctx = canvas.getContext('2d');
-            const scale = 2; // The scale factor used in html2canvas
 
             // 1. Draw the icon
             if (card.icon) {
@@ -1286,10 +1284,10 @@
                         const rect = placeholder.getBoundingClientRect();
                         const containerRect = tempContainer.getBoundingClientRect();
 
-                        const x = (rect.left - containerRect.left) * scale;
-                        const y = (rect.top - containerRect.top) * scale;
-                        const width = rect.width * scale;
-                        const height = rect.height * scale;
+                        const x = rect.left - containerRect.left;
+                        const y = rect.top - containerRect.top;
+                        const width = rect.width;
+                        const height = rect.height;
 
                         const hRatio = width / img.width;
                         const vRatio = height / img.height;
@@ -1314,10 +1312,10 @@
                         const rect = placeholder.getBoundingClientRect();
                         const containerRect = tempContainer.getBoundingClientRect();
 
-                        const x = (rect.left - containerRect.left) * scale;
-                        const y = (rect.top - containerRect.top) * scale;
-                        const width = rect.width * scale;
-                        const height = rect.height * scale;
+                        const x = rect.left - containerRect.left;
+                        const y = rect.top - containerRect.top;
+                        const width = rect.width;
+                        const height = rect.height;
 
                         const hRatio = width / img.width;
                         const vRatio = height / img.height;

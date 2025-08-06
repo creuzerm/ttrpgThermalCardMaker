@@ -369,7 +369,7 @@
         const cardBackPreview = document.getElementById('card-back-preview');
         const printThermalBtn = document.getElementById('print-thermal-btn');
         const viewCardBtn = document.getElementById('view-card-btn');
-        const printColorPhotoBtn = document = document.getElementById('print-color-photo-btn');
+        const printColorPhotoBtn = document.getElementById('print-color-photo-btn');
         const downloadImageBtn = document.getElementById('download-image-btn');
         const shareCardBtn = document.getElementById('share-card-btn');
         const copyBookmarkLinkBtn = document.getElementById('copy-bookmark-link-btn');
@@ -678,16 +678,14 @@
         // Save state to localStorage
         function saveState() {
             localStorage.setItem('ttrpgCardPrinterState', JSON.stringify(appState));
+            updatePrintLink();
         }
 
         // Load state from localStorage or URL parameters
         function loadState() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
-                const cardDataParam = urlParams.get('data');
-                const printerTypeParam = urlParams.get('printerType');
-                const thermalPaperSizeParam = urlParams.get('thermalPaperSize');
-                const numCopiesParam = urlParams.get('numCopies');
+                const cardDataParam = urlParams.get('data') || urlParams.get('cardData');
 
                 if (cardDataParam) {
                     const decodedData = JSON.parse(atob(cardDataParam));
@@ -1214,12 +1212,6 @@
             }
         }
 
-        // Call updatePrintLink whenever the state changes
-        function saveState() {
-            localStorage.setItem('ttrpgCardPrinterState', JSON.stringify(appState));
-            updatePrintLink(); // Add this call
-        }
-
         // Print Color Photo button handler
         printColorPhotoBtn.addEventListener('click', async () => {
             // This button's primary function is to share with a printer app.
@@ -1543,13 +1535,12 @@
 
         async function initCardView() {
             // Clean up the UI for a print-only view
-            document.getElementById('main-generator-view').style.display = 'none';
+            const mainView = document.getElementById('main-generator-view');
+            if (mainView) mainView.remove();
             const cardView = document.getElementById('card-view');
-            document.body.innerHTML = ''; // Clear the entire body
             document.body.style.backgroundColor = '#ffffff';
             document.body.style.padding = '0';
             document.body.style.margin = '0';
-            document.body.appendChild(cardView);
             cardView.classList.remove('hidden');
             cardView.innerHTML = '<div id="card-render-area"></div>';
 
@@ -1596,16 +1587,15 @@
         }
 
         // Initial load and render
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const viewMode = urlParams.get('view');
-            const dataParam = urlParams.get('data');
 
             if (viewMode === 'card') {
-                initCardView();
+                await initCardView();
             } else {
                 // This handles both normal page loads and bookmarked links with data
-                initGeneratorView();
+                await initGeneratorView();
             }
         });
     </script>

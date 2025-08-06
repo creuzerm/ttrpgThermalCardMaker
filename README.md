@@ -1,302 +1,101 @@
-\# Thermal Printer TTRPG Card Generator
-
-
+# Thermal Printer TTRPG Card Generator
 
 This web application provides a seamless, mobile-first experience for Tabletop Role-Playing Game (TTRPG) players and Game Masters (GMs) to generate and print custom game cards using thermal or color photo printers. It bridges the gap between digital content and physical play, allowing you to create tangible tokens, reminders, or quick references for your games.
 
+## Features
 
+*   **Custom Card Creation:** Design your own TTRPG cards with various fields.
+*   **Dynamic Content Sections:** Add multiple sections for descriptions, abilities, or flavor text, supporting Markdown-like formatting.
+*   **Customizable Stats:** Include key-value pair statistics relevant to your card.
+*   **Icon Support:** Use icon names from the included manifest or direct image URLs for card visuals.
+*   **Card Color Selection:** Choose a background color for your cards (for color printers).
+*   **Folded Card Option:** Create cards with content on the back for a folded design, supporting text, image URLs, or QR codes.
+*   **Multi-Card Management:** Load, navigate, and manage multiple cards within the application.
+*   **JSON Import:** Easily import card data from `rpg-cards.vercel.app` JSON format, `5e.tools` JSON, or generic JSON structures.
+*   **Live Preview:** See a real-time preview of your card as you design it, adapting to chosen printer type.
+*   **Direct Android Printing:** On Android, a "Print to Thermal Printer" button appears, allowing for direct printing via the Looped Labs ESC/POS Print Service.
+*   **Card View:** A clean, clutter-free view of your card, perfect for sharing or manual printing.
+*   **Color Photo Printer Export:** Generate high-resolution images suitable for color photo printers (e.g., Kodak Zink, Fujifilm Instax).
+*   **Image Download:** Download card images (single or all) for offline use or manual printing.
+*   **Web Share API Integration:** Share generated card images directly to compatible apps on your mobile device.
+*   **Bookmarkable Links:** Generate a unique URL for your current card's data, allowing you to save and share specific card designs easily.
+*   **Local Storage Persistence:** Your current card data and settings are automatically saved in your browser's local storage.
 
-\## Features
+## How to Use
 
-
-
-\* \*\*Custom Card Creation:\*\* Design your own TTRPG cards with various fields.
-
-
-
-\* \*\*Dynamic Content Sections:\*\* Add multiple sections for descriptions, abilities, or flavor text, supporting Markdown-like formatting.
-
-
-
-\* \*\*Customizable Stats:\*\* Include key-value pair statistics relevant to your card.
-
-
-
-\* \*\*Icon Support:\*\* Use Font Awesome icon names or direct image URLs for card visuals.
-
-
-
-\* \*\*Card Color Selection:\*\* Choose a background color for your cards (for color printers).
-
-
-
-\* \*\*Folded Card Option:\*\* Create cards with content on the back for a folded design, supporting text, image URLs, or QR codes.
-
-
-
-\* \*\*Multi-Card Management:\*\* Load, navigate, and manage multiple cards within the application.
-
-
-
-\* \*\*JSON Import:\*\* Easily import card data from `rpg-cards.vercel.app` JSON format, `5e.tools` JSON, or generic JSON structures.
-
-
-
-\* \*\*Live Preview:\*\* See a real-time preview of your card as you design it, adapting to chosen printer type.
-
-
-
-\* \*\*Thermal Printer Integration:\*\* Generate print-ready HTML for thermal receipt printers (58mm and 80mm).
-
-
-
-\* \*\*Color Photo Printer Export:\*\* Generate high-resolution images suitable for color photo printers (e.g., Kodak Zink, Fujifilm Instax).
-
-
-
-\* \*\*Image Download:\*\* Download card images (single or all) for offline use or manual printing.
-
-
-
-\* \*\*Web Share API Integration:\*\* Share generated card images directly to compatible apps on your mobile device.
-
-
-
-\* \*\*Bookmarkable Links:\*\* Generate a unique URL for your current card's data, allowing you to save and share specific card designs easily.
-
-
-
-\* \*\*Local Storage Persistence:\*\* Your current card data and settings are automatically saved in your browser's local storage.
-
-
-
-\## How to Use
-
-
-
-\### 1. Editing Card Details
-
-
+### 1. Editing Card Details
 
 The "Card Details" section allows you to customize the front of your card:
 
-
-
-\* \*\*Card Title:\*\* The main title of your card.
-
-
-
-\* \*\*Card Type:\*\* A subtitle or category for your card (e.g., "Spell," "Item," "Creature").
-
-
-
-\* \*\*Icon Name or Image URL:\*\*
-
-
-
-&nbsp;   \* Enter a Font Awesome icon name (e.g., `magic-swirl`, `crossed-swords`) to display a scalable icon.
-
-
-
-&nbsp;   \* Alternatively, paste a direct URL to an image (e.g., `https://example.com/my-icon.png`).
-
-
-
-\* \*\*Card Color (Hex, Optional):\*\* Select a color for the card's background. This is primarily for color photo printing; thermal printers will convert to grayscale.
-
-
-
-\* \*\*Content Sections:\*\*
-
-
-
-&nbsp;   \* Click "Add Section" to add new content blocks.
-
-
-
-&nbsp;   \* Each section can have an optional \*\*Heading\*\*, \*\*Body Text\*\* (supports `\*\*bold\*\*`, `\*italic\*`, and `\[links](url)`), and optional \*\*Flavor Text\*\* (displayed in italic).
-
-
-
-&nbsp;   \* Use the "X" button to remove a section.
-
-
-
-\* \*\*Stats (Key-Value Pairs):\*\*
-
-
-
-&nbsp;   \* Click "Add Stat" and enter a stat name (e.g., "HP", "STR", "Damage").
-
-
-
-&nbsp;   \* Enter the corresponding value for the stat.
-
-
-
-&nbsp;   \* Use the "X" button to remove a stat.
-
-
-
-\* \*\*Tags (Comma-separated):\*\* Enter keywords related to your card, separated by commas (e.g., `Fire, Spell, Evocation`).
-
-
-
-\* \*\*Footer Text (Optional):\*\* Small text displayed at the bottom of the card (e.g., "Source: PHB").
-
-
-
-\### 2. Card Folding Options
-
-
-
-\* \*\*Folded Card Checkbox:\*\* Check this box to enable the back/bottom content for a folded card design.
-
-
-
-\* \*\*Content Type:\*\* Choose what appears on the back of the card:
-
-
-
-&nbsp;   \* \*\*Text:\*\* Enter plain text.
-
-
-
-&nbsp;   \* \*\*Image URL:\*\* Paste a URL to an image for the back.
-
-
-
-&nbsp;   \* \*\*QR Code:\*\* Enter data (e.g., a URL) to generate a QR code on the back.
-
-
-
-\### 3. Navigating Multiple Cards
-
-
+*   **Card Title:** The main title of your card.
+*   **Card Type:** A subtitle or category for your card (e.g., "Spell," "Item," "Creature").
+*   **Icon Name or Image URL:**
+    *   Enter an icon name (e.g., `magic-swirl`, `crossed-swords`) to display a scalable icon. A list of available icons is provided in a datalist.
+    *   Alternatively, paste a direct URL to an image (e.g., `https://example.com/my-icon.png`).
+*   **Card Color (Hex, Optional):** Select a color for the card's background. This is primarily for color photo printing; thermal printers will convert to grayscale.
+*   **Content Sections:**
+    *   Click "Add Section" to add new content blocks.
+    *   Each section can have an optional **Heading**, **Body Text** (supports `**bold**`, `*italic*`, and `[links](url)`), and optional **Flavor Text** (displayed in italic).
+    *   Use the "X" button to remove a section.
+*   **Stats (Key-Value Pairs):**
+    *   Click "Add Stat" and enter a stat name (e.g., "HP", "STR", "Damage").
+    *   Enter the corresponding value for the stat.
+    *   Use the "X" button to remove a stat.
+*   **Tags (Comma-separated):** Enter keywords related to your card, separated by commas (e.g., `Fire, Spell, Evocation`).
+*   **Footer Text (Optional):** Small text displayed at the bottom of the card (e.g., "Source: PHB").
+
+### 2. Card Folding Options
+
+*   **Folded Card Checkbox:** Check this box to enable the back/bottom content for a folded card design.
+*   **Content Type:** Choose what appears on the back of the card:
+    *   **Text:** Enter plain text.
+    *   **Image URL:** Paste a URL to an image for the back.
+    *   **QR Code:** Enter data (e.g., a URL) to generate a QR code on the back.
+
+### 3. Navigating Multiple Cards
 
 The "Navigate Cards" section helps you manage multiple card entries:
 
+*   **Previous / Next Buttons:** Cycle through the loaded cards.
+*   **Card Select Dropdown:** Choose a specific card by its title from the list.
+*   **Add New Empty Card:** Create a blank card to start a new design.
 
-
-\* \*\*Previous / Next Buttons:\*\* Cycle through the loaded cards.
-
-
-
-\* \*\*Card Select Dropdown:\*\* Choose a specific card by its title from the list.
-
-
-
-\* \*\*Add New Empty Card:\*\* Create a blank card to start a new design.
-
-
-
-\### 4. Importing Card Data
-
-
+### 4. Importing Card Data
 
 You can import existing card data from JSON files or pasted JSON:
 
-
-
-\* \*\*Import from rpg-cards.vercel.app (.json file):\*\* Upload a JSON file generated by or compatible with the `rpg-cards.vercel.app` tool.
-
-
-
-\* \*\*Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html:\*\* Paste JSON data copied directly from these 5e.tools utilities.
-
-
-
-\* \*\*Paste Generic JSON:\*\* Paste any other JSON data that roughly matches the internal card structure. The application will attempt to map fields.
-
-
-
-\*\*Note:\*\* When importing multiple cards from a JSON file, all cards will be loaded into the application, and you can navigate them using the "Navigate Cards" section.
-
-
-
-\### 5. Printer Settings \& Preview
-
-
-
-\* \*\*Select Printer Type:\*\*
-
-
-
-&nbsp;   \* \*\*Thermal Receipt Printer (Monochrome):\*\* Optimizes the preview and output for black-and-white thermal printers.
-
-
-
-&nbsp;   \* \*\*Color Photo Printer (Kodak Zink / Fujifilm Instax):\*\* Optimizes the preview and output for color photo printers.
-
-
-
-\* \*\*Thermal Paper Size:\*\* (Only visible for Thermal Printer type) Select the paper width (58mm or 80mm) to adjust the preview and print output.
-
-
-
-\* \*\*Number of Copies (1-10):\*\* Specify how many copies of the card(s) you want to print or download.
-
-
-
-\* \*\*Card Preview:\*\* A live representation of your card, updating as you make changes.
-
-
-
-\* \*\*Print/Export Scope:\*\*
-
-
-
-&nbsp;   \* \*\*Current Card:\*\* Only the currently displayed card will be processed for printing or downloading.
-
-
-
-&nbsp;   \* \*\*All Cards:\*\* All cards loaded in the application will be processed.
-
-
-
-\### 6. Printing and Exporting
-
-
-
-\* \*\*Print Thermal Card:\*\* (Visible for Thermal Printer type) Sends a print command to a compatible thermal printer application on your mobile device (e.g., via Android App Link or iOS Mobile Print Util).
-
-
-
-\* \*\*Print Color Photo Card:\*\* (Visible for Color Printer type) Generates a high-resolution image of the card(s) and attempts to share it with compatible photo printer apps via the Web Share API. If not supported, it will prompt you to download.
-
-
-
-\* \*\*Download Card Image(s):\*\* Downloads the current card (or all cards, based on scope) as a PNG image file(s).
-
-
-
-\* \*\*Share Card (via Web Share API):\*\* Attempts to share the current card's image with other applications on your device (e.g., messaging apps, cloud storage).
-
-
-
-\* \*\*Copy Bookmarkable Link:\*\* Generates a unique URL that encodes the current card's data and settings. You can save this link to easily return to your design later or share it with others.
-
-
-
-\## Important Notes
-
-
-
-\* \*\*Printer Compatibility:\*\* Direct printing from a web browser to a thermal or photo printer is generally not possible without a dedicated mobile application that supports URL schemes or image sharing. This web app generates data/images in a format compatible with such mobile printing utility apps.
-
-
-
-\* \*\*Font Awesome Icons:\*\* The application uses Font Awesome for many of its icons. If you enter an icon name (e.g., `magic-swirl`) that is not a full URL, it will attempt to render it as a Font Awesome icon.
-
-
-
-\* \*\*Offline Access (PWA):\*\* This application is designed as a Progressive Web App (PWA). If accessed via HTTPS or localhost, it should prompt you to install it to your home screen, allowing for offline use.
-
-
-
-\* \*\*Data Persistence:\*\* Your card data and application settings are saved in your browser's local storage, so they will persist even if you close and reopen the browser tab.
-
-
+*   **Import from rpg-cards.vercel.app (.json file):** Upload a JSON file generated by or compatible with the `rpg-cards.vercel.app` tool.
+*   **Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html:** Paste JSON data copied directly from these 5e.tools utilities.
+*   **Paste Generic JSON:** Paste any other JSON data that roughly matches the internal card structure. The application will attempt to map fields.
+
+**Note:** When importing multiple cards from a JSON file, all cards will be loaded into the application, and you can navigate them using the "Navigate Cards" section.
+
+### 5. Printer Settings & Preview
+
+*   **Select Printer Type:**
+    *   **Thermal Receipt Printer (Monochrome):** Optimizes the preview and output for black-and-white thermal printers.
+    *   **Color Photo Printer (Kodak Zink / Fujifilm Instax):** Optimizes the preview and output for color photo printers.
+*   **Thermal Paper Size:** (Only visible for Thermal Printer type) Select the paper width (58mm or 80mm) to adjust the preview and print output.
+*   **Number of Copies (1-10):** Specify how many copies of the card(s) you want to print or download.
+*   **Card Preview:** A live representation of your card, updating as you make changes.
+*   **Print/Export Scope:**
+    *   **Current Card:** Only the currently displayed card will be processed for printing or downloading.
+    *   **All Cards:** All cards loaded in the application will be processed.
+
+### 6. Printing and Exporting
+
+*   **View Card:** Opens a clean, print-friendly preview of the card in a new tab. This is ideal for sharing a link to a specific card or for manual printing from a desktop browser.
+*   **Print to Thermal Printer:** (Android devices only) This button will appear if you are on an Android device. It uses a special `print://` link to send the card directly to the Looped Labs ESC/POS Print Service app for thermal printing.
+*   **Print Color Photo Card:** (Visible for Color Printer type) Generates a high-resolution image of the card(s) and attempts to share it with compatible photo printer apps via the Web Share API.
+*   **Download Card Image(s):** Downloads the current card (or all cards, based on scope) as a PNG image file(s).
+*   **Share Card (via Web Share API):** Attempts to share the current card's image with other applications on your device (e.g., messaging apps, cloud storage).
+*   **Copy Bookmarkable Link:** Generates a unique URL that encodes the current card's data and settings. You can save this link to easily return to your design in the editor later or share it with others.
+
+## Important Notes
+
+*   **Direct Printing:** Direct printing from a web browser to a thermal printer requires a companion mobile app. This web app is specifically designed to integrate with the Looped Labs ESC/POS Print Service on Android.
+*   **Offline Access (PWA):** This application is a Progressive Web App (PWA). If accessed via HTTPS or on localhost, it can be "installed" to your device's home screen for offline use.
+*   **Data Persistence:** Your card data and application settings are saved in your browser's local storage, so they will persist even if you close and reopen the browser tab.
 
 Enjoy generating your TTRPG cards!
 

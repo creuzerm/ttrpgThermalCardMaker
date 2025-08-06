@@ -434,6 +434,8 @@
             let formattedText = text;
             formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
             formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+            formattedText = formattedText.replace(/<i>/g, '<em>');
+            formattedText = formattedText.replace(/<\/i>/g, '</em>');
             formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'); // Links
             formattedText = formattedText.replace(/\n/g, '<br />'); // Newlines
             return formattedText;
@@ -843,6 +845,34 @@
             }
         }
 
+        function processTextGroup(textGroup) {
+            const isTable = textGroup.length > 1 && textGroup.every(line => line.includes('｜'));
+            if (isTable) {
+                let tableHtml = '<table class="w-full text-left border-collapse">';
+                textGroup.forEach((line, index) => {
+                    const cells = line.split('｜').map(cell => cell.trim());
+                    if (index === 0) {
+                        tableHtml += '<thead><tr>';
+                        cells.forEach(cell => {
+                            tableHtml += `<th class="p-1 border-b-2 border-gray-400">${cell}</th>`;
+                        });
+                        tableHtml += '</tr></thead>';
+                        tableHtml += '<tbody>';
+                    } else {
+                        tableHtml += '<tr>';
+                        cells.forEach(cell => {
+                            tableHtml += `<td class="p-1 border-b border-gray-500">${cell}</td>`;
+                        });
+                        tableHtml += '</tr>';
+                    }
+                });
+                tableHtml += '</tbody></table>';
+                return tableHtml;
+            } else {
+                return textGroup.join('\n');
+            }
+        }
+
         function parseAndSetCardData(dataArray, type) {
             appState.cards = []; // Clear existing cards
             dataArray.forEach(data => {
@@ -870,34 +900,53 @@
 
                     if (data.contents && Array.isArray(data.contents)) {
                         let currentSection = { heading: '', body: '', flavorText: '' };
-                        data.contents.forEach(line => {
+
+                        function pushCurrentSection() {
+                            if (currentSection.body || currentSection.heading || currentSection.flavorText) {
+                                newCard.sections.push({ ...currentSection });
+                            }
+                            currentSection = { heading: '', body: '', flavorText: '' };
+                        }
+
+                        for (let i = 0; i < data.contents.length; i++) {
+                            const line = data.contents[i];
+
                             if (line.startsWith('subtitle | ')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
-                                }
-                                currentSection = { heading: '', body: '', flavorText: '' };
+                                pushCurrentSection();
                                 newCard.type = line.substring('subtitle | '.length).trim();
                             } else if (line.startsWith('rule')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
-                                }
-                                currentSection = { heading: '', body: '', flavorText: '' };
+                                pushCurrentSection();
                             } else if (line.startsWith('text | ')) {
-                                const textBody = line.substring('text | '.length).trim();
+                                const textGroup = [];
+                                while (i < data.contents.length && data.contents[i].startsWith('text | ')) {
+                                    textGroup.push(data.contents[i].substring('text | '.length).trim());
+                                    i++;
+                                }
+                                i--; // Decrement to account for the loop's increment
+
+                                const processedText = processTextGroup(textGroup);
                                 if (currentSection.body) {
-                                    currentSection.body += '\n' + textBody;
+                                    currentSection.body += '\n' + processedText;
                                 } else {
-                                    currentSection.body = textBody;
+                                    currentSection.body = processedText;
                                 }
                             } else if (line.startsWith('property | ')) {
                                 const parts = line.substring('property | '.length).split(' | ');
                                 if (parts.length >= 2) {
                                     newCard.stats[parts[0].trim()] = parts[1].trim();
                                 }
-                            } else if (line.startsWith('description | ')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
+                            } else if (line.startsWith('dndstats | ')) {
+                                const stats = line.substring('dndstats | '.length).split(' | ').map(s => s.trim());
+                                if (stats.length === 6) {
+                                    newCard.stats['STR'] = stats[0];
+                                    newCard.stats['DEX'] = stats[1];
+                                    newCard.stats['CON'] = stats[2];
+                                    newCard.stats['INT'] = stats[3];
+                                    newCard.stats['WIS'] = stats[4];
+                                    newCard.stats['CHA'] = stats[5];
                                 }
+                            } else if (line.startsWith('description | ')) {
+                                pushCurrentSection();
                                 const parts = line.substring('description | '.length).split(' | ');
                                 if (parts.length >= 2) {
                                     currentSection = { heading: parts[0].trim(), body: parts[1].trim(), flavorText: '' };
@@ -912,15 +961,11 @@
                                     currentSection.body = bulletText;
                                 }
                             } else if (line.startsWith('section | ')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
-                                }
-                                currentSection = { heading: line.substring('section | '.length).trim(), body: '', flavorText: '' };
+                                pushCurrentSection();
+                                currentSection.heading = line.substring('section | '.length).trim();
                             }
-                        });
-                        if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                            newCard.sections.push({ ...currentSection });
                         }
+                        pushCurrentSection();
                     }
 
                     if (newCard.sections.length === 0) {

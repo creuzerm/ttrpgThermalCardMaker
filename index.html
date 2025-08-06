@@ -100,7 +100,10 @@
                 </select>
                 <button id="next-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
             </div>
-            <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md w-full">Add New Empty Card</button>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Add New Empty Card</button>
+                <button id="open-import-modal-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg">Import Cards</button>
+            </div>
         </div>
 
         <!-- Card Input Section -->
@@ -197,26 +200,6 @@
             </div>
         </div>
 
-        <!-- Import Section -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Import Card Data</h2>
-
-            <div class="mb-4">
-                <label for="rpg-cards-json-file" class="block text-sm font-medium text-gray-300 mb-2">Import from rpg-cards.vercel.app (.json file)</label>
-                <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-md p-2 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600">
-            </div>
-
-            <div class="mb-4">
-                <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html</label>
-                <textarea id="5e-tools-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste your 5e.tools JSON here..."></textarea>
-            </div>
-
-            <div class="mb-4">
-                <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic JSON</label>
-                <textarea id="generic-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste any other TTRPG card JSON here..."></textarea>
-            </div>
-        </div>
-
         <!-- Printer Settings & Preview -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
             <h2 class="text-2xl font-semibold mb-4 text-purple-300">Printer Settings & Preview</h2>
@@ -285,6 +268,39 @@
                 <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Image</button>
                 <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
                 <button id="copy-bookmark-link-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative">
+            <button id="close-import-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            <h2 class="text-3xl font-bold mb-6 text-center text-purple-400">Import Card Data</h2>
+
+            <div class="space-y-6">
+                <div>
+                    <label for="rpg-cards-json-file" class="block text-sm font-medium text-gray-300 mb-2">Import from rpg-cards.vercel.app (.json file)</label>
+                    <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-lg p-3 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 transition-colors">
+                </div>
+
+                <div>
+                    <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools</label>
+                    <textarea id="5e-tools-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste your 5e.tools JSON here..."></textarea>
+                    <p class="mt-2 text-xs text-gray-400">
+                        <strong>Expected format:</strong> A single JSON object for a creature or an array of creature objects. Typically includes keys like `name`, `hp`, `ac`, `trait`, `action`, etc.
+                        <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"name": "Goblin", "hp": {"average": 7, "formula": "2d6"}, ...}</code>
+                    </p>
+                </div>
+
+                <div>
+                    <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic Card JSON</label>
+                    <textarea id="generic-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste any other TTRPG card JSON here..."></textarea>
+                    <p class="mt-2 text-xs text-gray-400">
+                        <strong>Expected format:</strong> A JSON object (or array of objects) that matches the internal card structure. Key fields include `title`, `type`, `icon`, `color`, `tags`, `footer`, `stats` (as an object), and `sections` (as an array of objects with `heading`, `body`, `flavorText`).
+                        <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"title": "Fireball", "type": "Spell", "sections": [{"heading": "Description", "body": "A fiery explosion..."}]}</code>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -379,6 +395,11 @@
         const nextCardBtn = document.getElementById('next-card-btn');
         const cardSelect = document.getElementById('card-select');
         const addNewCardBtn = document.getElementById('add-new-card-btn');
+        const openImportModalBtn = document.getElementById('open-import-modal-btn');
+
+        // Import Modal Elements
+        const importModal = document.getElementById('import-modal');
+        const closeImportModalBtn = document.getElementById('close-import-modal-btn');
 
         // Print Scope Radio Buttons
         const printScopeRadios = document.querySelectorAll('input[name="printScope"]');
@@ -1073,6 +1094,22 @@
             updateUIFromAppState();
             saveState();
             showMessage('New empty card added!');
+        });
+
+        // Import Modal Listeners
+        openImportModalBtn.addEventListener('click', () => {
+            importModal.classList.remove('hidden');
+        });
+
+        closeImportModalBtn.addEventListener('click', () => {
+            importModal.classList.add('hidden');
+        });
+
+        // Close modal if clicking on the background
+        importModal.addEventListener('click', (e) => {
+            if (e.target === importModal) {
+                importModal.classList.add('hidden');
+            }
         });
 
 

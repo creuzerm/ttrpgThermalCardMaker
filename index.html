@@ -1066,10 +1066,12 @@
             }
 
             let htmlContent = `
-                <div style="position: relative; width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff;">
+                <div style="position: relative; width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
                     ${iconRenderHtml}
-                    <h1 style="text-align: center; font-size: 24px; margin-bottom: 4px; line-height: 1.2;">${card.title || ''}</h1>
-                    ${card.type ? `<p style="text-align: center; font-size: 16px; margin-bottom: 8px;">${card.type}</p>` : ''}
+                    <div>
+                        <h1 style="text-align: center; font-size: 24px; margin-bottom: 4px; line-height: 1.2;">${card.title || ''}</h1>
+                        ${card.type ? `<p style="text-align: center; font-size: 16px; margin-bottom: 8px;">${card.type}</p>` : ''}
+                    </div>
 
                     ${(card.stats && Object.keys(card.stats).length > 0) ? `
                         <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; font-size: 14px;">
@@ -1079,7 +1081,7 @@
                         </div>
                     ` : ''}
 
-                    <div class="flex-grow overflow-hidden">
+                    <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around;">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
                                 ${section.heading ? `<h2 style="font-size: 18px; margin-bottom: 4px; border-bottom: 1px dashed #999; padding-bottom: 2px;">${section.heading}</h2>` : ''}
@@ -1089,11 +1091,13 @@
                         `).join('') : ''}
                     </div>
 
-                    ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                        <p style="font-size: 12px; text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 4px;">Tags: ${card.tags.join(', ')}</p>
-                    ` : ''}
+                    <div>
+                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
+                            <p style="font-size: 12px; text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 4px;">Tags: ${card.tags.join(', ')}</p>
+                        ` : ''}
 
-                    ${card.footer ? `<p style="font-size: 12px; text-align: center; margin-top: 8px;">${card.footer || ''}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: 12px; text-align: center; margin-top: 8px;">${card.footer || ''}</p>` : ''}
+                    </div>
                 </div>
             `;
 
@@ -1311,11 +1315,13 @@
 
                 if (printerType === 'thermal') {
                     targetWidthPx = thermalPaperSize === '58mm' ? 384 : 576;
+                    targetHeightPx = targetWidthPx * 1.4; // Maintain aspect ratio
                     tempContainer.style.width = `${targetWidthPx}px`;
+                    tempContainer.style.height = `${targetHeightPx}px`;
                     tempContainer.innerHTML = await generateThermalHtmlForCard(card);
                 } else {
                     targetWidthPx = 600;
-                    targetHeightPx = card.isFolded ? 1800 : 900;
+                    targetHeightPx = card.isFolded ? (targetWidthPx * 1.4 * 2) : (targetWidthPx * 1.4);
                     tempContainer.style.width = `${targetWidthPx}px`;
                     tempContainer.style.height = `${targetHeightPx}px`;
                     tempContainer.style.overflow = 'hidden';
@@ -1430,11 +1436,13 @@
 
                         if (appState.printerType === 'thermal') {
                             targetWidthPx = appState.thermalPaperSize === '58mm' ? 384 : 576;
+                            targetHeightPx = targetWidthPx * 1.4; // Maintain aspect ratio
                             tempContainer.style.width = `${targetWidthPx}px`;
+                            tempContainer.style.height = `${targetHeightPx}px`;
                             tempContainer.innerHTML = await generateThermalHtmlForCard(card);
                         } else {
                             targetWidthPx = 600;
-                            targetHeightPx = card.isFolded ? 1800 : 900;
+                            targetHeightPx = card.isFolded ? (targetWidthPx * 1.4 * 2) : (targetWidthPx * 1.4);
                             tempContainer.style.width = `${targetWidthPx}px`;
                             tempContainer.style.height = `${targetHeightPx}px`;
                             tempContainer.style.overflow = 'hidden';

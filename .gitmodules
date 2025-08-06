@@ -1,0 +1,3 @@
+[submodule "game-icons"]
+	path = game-icons
+	url = https://github.com/game-icons/icons

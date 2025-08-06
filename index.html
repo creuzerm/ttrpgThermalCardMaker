@@ -275,7 +275,6 @@
         <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative">
             <button id="close-import-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
             <h2 id="import-modal-title" class="text-3xl font-bold mb-6 text-center text-purple-400">Import Card Data</h2>
-            <div id="message-display" class="hidden bg-blue-500 text-white p-3 rounded-md mb-4 text-center w-full"></div>
             <div class="space-y-6">
                 <!-- 5e.tools File Accordion -->
                 <div class="border-b border-gray-700">
@@ -325,6 +324,9 @@
         <!-- This area is populated by the initCardView function -->
     </div>
 
+    <!-- Global Message Toast -->
+    <div id="message-display" class="hidden fixed top-5 right-5 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-[60]"></div>
+
     <script>
         // Global application state
         let iconManifest = {}; // To be populated from icon-lookup.json
@@ -365,7 +367,6 @@
         };
 
         // DOM Elements (defined after appState for clarity, but before functions that use them)
-        const messageDisplay = document.getElementById('message-display');
         const titleInput = document.getElementById('title');
         const typeInput = document.getElementById('type');
         const iconInput = document.getElementById('icon');
@@ -439,9 +440,14 @@
         }
 
         function showMessage(msg, isError = false) {
+            const messageDisplay = document.getElementById('message-display');
+            if (!messageDisplay) return;
+
             messageDisplay.textContent = msg;
             messageDisplay.classList.remove('hidden', 'bg-blue-500', 'bg-red-500');
             messageDisplay.classList.add(isError ? 'bg-red-500' : 'bg-blue-500');
+
+            // Automatically hide after 5 seconds
             setTimeout(() => {
                 messageDisplay.classList.add('hidden');
             }, 5000);

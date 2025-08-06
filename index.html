@@ -739,7 +739,8 @@
                 const cardDataParam = urlParams.get('data') || urlParams.get('cardData');
 
                 if (cardDataParam) {
-                    const decodedData = JSON.parse(atob(cardDataParam));
+                    const decodedString = decodeURIComponent(escape(atob(cardDataParam)));
+                    const decodedData = JSON.parse(decodedString);
 
                     // Correctly unpack the data from the URL
                     if (decodedData.card) {
@@ -1651,7 +1652,8 @@
                     numCopies: appState.numCopies
                 }
             };
-            const encodedData = btoa(JSON.stringify(dataToSend));
+            const jsonString = JSON.stringify(dataToSend);
+            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
 
             const currentUrl = new URL(window.location.href);
             // Clear existing params to create a clean link for the editor view
@@ -1716,7 +1718,7 @@
             }
 
             try {
-                const decodedString = atob(dataParam);
+                const decodedString = decodeURIComponent(escape(atob(dataParam)));
                 const decodedData = JSON.parse(decodedString);
 
                 const card = decodedData.card || decodedData;

@@ -28,26 +28,6 @@
             color: #4a6898; /* Example color, adjust as needed */
             margin-bottom: 8px;
         }
-
-        @media print {
-            body > * {
-                display: none;
-            }
-            body > #card-view, body > #card-view > #card-render-area {
-                display: block !important;
-            }
-            body {
-                background-color: #ffffff;
-                padding: 0;
-                margin: 0;
-            }
-            #card-render-area {
-                margin: 0;
-                padding: 0;
-                border: none;
-                border-radius: 0;
-            }
-        }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
@@ -1586,16 +1566,6 @@
 
                 const cardRenderArea = document.getElementById('card-render-area');
                 cardRenderArea.innerHTML = await generateThermalHtmlForCard(card);
-
-                const isAndroid = /Android/i.test(navigator.userAgent);
-                if (isAndroid) {
-                    const htmlContent = document.body.innerHTML;
-                    const numCopies = settings.numCopies || 1;
-                    const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
-                    window.location.href = appLinkUrl;
-                } else {
-                    window.print();
-                }
 
             } catch (error) {
                 console.error('Error processing card view data:', error);

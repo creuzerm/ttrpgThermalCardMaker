@@ -1211,7 +1211,7 @@
                 let iconHtml = '';
                 if (card.icon) {
                     const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/48x48/E0E0E0/888?text=ICON`);
-                    iconHtml = `<img class="card-export-icon" src="${iconUrl}" style="position: absolute; top: 0.2in; right: 0.2in; width: 0.35in; height: 0.35in; object-fit: contain;" />`;
+                    iconHtml = `<img class="card-export-icon" src="${iconUrl}" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; object-fit: contain;" />`;
                 }
 
                 const frontHtml = `
@@ -1244,7 +1244,7 @@
                         backContentHtml = `<p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(foldContent.text)}</p>`;
                     } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
                         const backImgUrl = iconManifest[foldContent.imageUrl] || foldContent.imageUrl;
-                        backContentHtml = `<img class="card-export-back-img" src="${backImgUrl}" style="max-width: 80%; max-height: 80%; object-fit: contain;" />`;
+                        backContentHtml = `<img class="card-export-back-img" src="${backImgUrl}" style="max-width: 90%; max-height: 90%; object-fit: contain;" />`;
                     } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
                         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(foldContent.qrCodeData)}`;
                         backContentHtml = `<img class="card-export-qr" src="${qrUrl}" style="max-width: 300px; height: auto;" />`;

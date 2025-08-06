@@ -265,7 +265,7 @@
             <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Print Thermal Card</button>
             <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
             <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Card Image(s)</button>
-            <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card (via Web Share API)</button>
+            <button id="print-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Print Card</button>
             <button id="copy-bookmark-link-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
         </div>
     </div>
@@ -342,7 +342,7 @@
         const printThermalBtn = document.getElementById('print-thermal-btn');
         const printColorPhotoBtn = document = document.getElementById('print-color-photo-btn');
         const downloadImageBtn = document.getElementById('download-image-btn');
-        const shareCardBtn = document.getElementById('share-card-btn');
+        const printCardBtn = document.getElementById('print-card-btn');
         const copyBookmarkLinkBtn = document.getElementById('copy-bookmark-link-btn');
 
         // Card Navigation Elements
@@ -1349,19 +1349,15 @@
             showMessage('Image download process completed for selected cards.');
         });
 
-        // Share Card button handler
-        shareCardBtn.addEventListener('click', async () => {
-            if (navigator.share && navigator.canShare({ files: [] })) {
-                showMessage('Preparing card(s) for sharing...');
+        // Print Card button handler
+        printCardBtn.addEventListener('click', async () => {
+            showMessage('Preparing card(s) for printing...');
+            try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
-
-                const originalCardIndex = appState.currentCardIndex; // Store original index
-
-                for (let i = 0; i < cardsToProcess.length; i++) {
-                    const card = cardsToProcess[i];
-                    appState.currentCardIndex = appState.cards.indexOf(card); // Set current card for rendering
-                    updateCardPreview(); // Update preview to reflect the current card being processed
-
+                const originalCardIndex = appState.currentCardIndex;
+                const imagePromises = cardsToProcess.map(async (card) => {
+                    // This logic is a simplified version of the one in download/share buttons,
+                    // focusing on generating the image for printing.
                     const tempContainer = document.createElement('div');
                     tempContainer.style.position = 'absolute';
                     tempContainer.style.left = '-9999px';
@@ -1369,7 +1365,6 @@
                     tempContainer.style.height = card.isFolded ? '1800px' : '900px';
                     tempContainer.style.overflow = 'hidden';
                     tempContainer.style.backgroundColor = card.color || '#ffffff';
-
                     let iconRenderHtml = '';
                     if (card.icon) {
                         if (isURL(card.icon)) {
@@ -1378,92 +1373,54 @@
                             iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
                         }
                     }
-
                     const frontHtml = `
                         <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
                         <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
                         ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
                         ${iconRenderHtml}
-
-                        <div style="flex-grow: 1; overflow: hidden; width: 100%;">
-                            ${(card.stats && Object.keys(card.stats).length > 0) ? `
-                            <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
-                                ${Object.entries(card.stats).map(([key, value]) => `
-                                <span style="margin: 0 15px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>
-                                `).join('')}
-                            </div>
-                            ` : ''}
-
-                            ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
-                            <div style="margin-bottom: 15px; text-align: left;">
-                                ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
-                                <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText || '')}</p>` : ''}
-                            </div>
-                            `).join('') : ''}
-                        </div>
-
-                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>
-                        ` : ''}
-                        ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer || ''}</p>` : ''}
-                        </div>
-                    `;
+                        <div style="flex-grow: 1; overflow: hidden; width: 100%;">${(card.stats && Object.keys(card.stats).length > 0) ? `<div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">${Object.entries(card.stats).map(([key, value]) => `<span style="margin: 0 15px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>`).join('')}</div>` : ''}
+                        ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `<div style="margin-bottom: 15px; text-align: left;">${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}<p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body || '')}</p>${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText || '')}</p>` : ''}</div>`).join('') : ''}</div>
+                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `<p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer || ''}</p>` : ''}</div>`;
                     tempContainer.innerHTML = frontHtml;
-
                     if (card.isFolded) {
-                        const backHtml = `
-                            <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
-                            ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
-                                <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
-                            ` : ''}
-                            ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                                <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
-                            ` : ''}
-                            ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
-                            ` : ''}
-                            </div>
-                        `;
+                        const backHtml = `<div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `<p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>` : ''}${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `<img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />` : ''}${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `<img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />` : ''}</div>`;
                         tempContainer.innerHTML += backHtml;
                     }
-
                     document.body.appendChild(tempContainer);
-
                     try {
-                        const canvas = await html2canvas(tempContainer, {
-                            scale: 1,
-                            useCORS: true,
-                            logging: false,
-                            width: 600,
-                            height: card.isFolded ? 1800 : 900,
-                        });
-                        const imageDataUrl = canvas.toDataURL('image/png');
-                        const response = await fetch(imageDataUrl);
-                        const blob = await response.blob();
-                        const file = new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' });
-
-                        await navigator.share({
-                            files: [file],
-                            title: `${card.title} TTRPG Card`,
-                            text: `Here's my custom TTRPG card: ${card.title}`,
-                        });
-                        showMessage(`Card "${card.title}" shared successfully!`);
-                    } catch (error) {
-                        console.error(`Error sharing file for "${card.title}":`, error);
-                        showMessage(`Failed to share card "${card.title}". Please ensure your device supports sharing images to printer apps.`, true);
+                        const canvas = await html2canvas(tempContainer, { scale: 1, useCORS: true, logging: false, width: 600, height: card.isFolded ? 1800 : 900 });
+                        return canvas.toDataURL('image/png');
                     } finally {
-                        if (tempContainer.parentNode) {
-                            document.body.removeChild(tempContainer);
-                        }
+                        document.body.removeChild(tempContainer);
                     }
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between processing cards
-                }
-                appState.currentCardIndex = originalCardIndex; // Restore original index
-                updateCardPreview(); // Restore original preview
-                showMessage('Share process completed for selected cards.');
-            } else {
-                showMessage('Web Share API not supported on this device/browser. Please download the image and share manually.', true);
+                });
+
+                const imageDataUrls = await Promise.all(imagePromises);
+                const printFrame = document.createElement('iframe');
+                printFrame.style.position = 'absolute';
+                printFrame.style.width = '0';
+                printFrame.style.height = '0';
+                printFrame.style.border = '0';
+                document.body.appendChild(printFrame);
+
+                const imagesHtml = imageDataUrls.map(url => `<img src="${url}" style="width: 100%; page-break-after: always;" />`).join('');
+                printFrame.contentDocument.write(`<html><head><title>Print Card</title><style>@media print { @page { size: auto; margin: 0mm; } body { margin: 0; } }</style></head><body>${imagesHtml}</body></html>`);
+                printFrame.contentDocument.close();
+
+                printFrame.onload = function() {
+                    printFrame.contentWindow.focus();
+                    printFrame.contentWindow.print();
+                    // Clean up after a delay to allow the print dialog to open.
+                    setTimeout(() => {
+                        document.body.removeChild(printFrame);
+                    }, 1000);
+                };
+
+                showMessage('Print dialog opened.');
+            } catch (error) {
+                console.error('Error preparing for print:', error);
+                showMessage('Failed to prepare card for printing.', true);
             }
         });
 

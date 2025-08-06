@@ -284,22 +284,34 @@
                     <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-lg p-3 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 transition-colors">
                 </div>
 
-                <div>
-                    <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools</label>
-                    <textarea id="5e-tools-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste your 5e.tools JSON here..."></textarea>
-                    <p class="mt-2 text-xs text-gray-400">
-                        <strong>Expected format:</strong> A single JSON object for a creature or an array of creature objects. Typically includes keys like `name`, `hp`, `ac`, `trait`, `action`, etc.
-                        <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"name": "Goblin", "hp": {"average": 7, "formula": "2d6"}, ...}</code>
-                    </p>
+                <!-- 5e.tools Accordion -->
+                <div class="border-b border-gray-700">
+                    <button id="accordion-5e-tools-heading" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200">
+                        <span>Paste JSON from 5e.tools</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="accordion-5e-tools-content" class="hidden pt-2 pb-4">
+                        <textarea id="5e-tools-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste your 5e.tools JSON here..."></textarea>
+                        <p class="mt-2 text-xs text-gray-400">
+                            <strong>Expected format:</strong> A single JSON object for a creature or an array of creature objects. Typically includes keys like `name`, `hp`, `ac`, `trait`, `action`, etc.
+                            <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"name": "Goblin", "hp": {"average": 7, "formula": "2d6"}, ...}</code>
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic Card JSON</label>
-                    <textarea id="generic-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste any other TTRPG card JSON here..."></textarea>
-                    <p class="mt-2 text-xs text-gray-400">
-                        <strong>Expected format:</strong> A JSON object (or array of objects) that matches the internal card structure. Key fields include `title`, `type`, `icon`, `color`, `tags`, `footer`, `stats` (as an object), and `sections` (as an array of objects with `heading`, `body`, `flavorText`).
-                        <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"title": "Fireball", "type": "Spell", "sections": [{"heading": "Description", "body": "A fiery explosion..."}]}</code>
-                    </p>
+                <!-- Generic JSON Accordion -->
+                <div class="border-b border-gray-700">
+                    <button id="accordion-generic-json-heading" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200">
+                        <span>Paste Generic Card JSON</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="accordion-generic-json-content" class="hidden pt-2 pb-4">
+                        <textarea id="generic-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste any other TTRPG card JSON here..."></textarea>
+                        <p class="mt-2 text-xs text-gray-400">
+                            <strong>Expected format:</strong> A JSON object (or array of objects) that matches the internal card structure. Key fields include `title`, `type`, `icon`, `color`, `tags`, `footer`, `stats` (as an object), and `sections` (as an array of objects with `heading`, `body`, `flavorText`).
+                            <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"title": "Fireball", "type": "Spell", "sections": [{"heading": "Description", "body": "A fiery explosion..."}]}</code>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -400,6 +412,10 @@
         // Import Modal Elements
         const importModal = document.getElementById('import-modal');
         const closeImportModalBtn = document.getElementById('close-import-modal-btn');
+        const accordion5eToolsHeading = document.getElementById('accordion-5e-tools-heading');
+        const accordion5eToolsContent = document.getElementById('accordion-5e-tools-content');
+        const accordionGenericJsonHeading = document.getElementById('accordion-generic-json-heading');
+        const accordionGenericJsonContent = document.getElementById('accordion-generic-json-content');
 
         // Print Scope Radio Buttons
         const printScopeRadios = document.querySelectorAll('input[name="printScope"]');
@@ -1111,6 +1127,18 @@
                 importModal.classList.add('hidden');
             }
         });
+
+        // Accordion Logic
+        function setupAccordion(button, content) {
+            button.addEventListener('click', () => {
+                const isHidden = content.classList.toggle('hidden');
+                const icon = button.querySelector('i');
+                icon.classList.toggle('rotate-180', !isHidden);
+            });
+        }
+
+        setupAccordion(accordion5eToolsHeading, accordion5eToolsContent);
+        setupAccordion(accordionGenericJsonHeading, accordionGenericJsonContent);
 
 
         function getPixelWidth(paperSize, dpi) {

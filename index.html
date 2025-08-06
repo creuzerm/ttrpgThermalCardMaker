@@ -88,8 +88,6 @@
 
         <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">Thermal Printer TTRPG Card Generator</h1>
 
-        <div id="message-display" class="hidden bg-blue-500 text-white p-3 rounded-md mb-4 text-center w-full max-w-md"></div>
-
         <!-- Card Navigation Section -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
             <h2 class="text-2xl font-semibold mb-4 text-purple-300">Navigate Cards</h2>
@@ -100,7 +98,10 @@
                 </select>
                 <button id="next-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
             </div>
-            <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md w-full">Add New Empty Card</button>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Add New Empty Card</button>
+                <button id="open-import-modal-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg">Import Cards</button>
+            </div>
         </div>
 
         <!-- Card Input Section -->
@@ -197,26 +198,6 @@
             </div>
         </div>
 
-        <!-- Import Section -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Import Card Data</h2>
-
-            <div class="mb-4">
-                <label for="rpg-cards-json-file" class="block text-sm font-medium text-gray-300 mb-2">Import from rpg-cards.vercel.app (.json file)</label>
-                <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-md p-2 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600">
-            </div>
-
-            <div class="mb-4">
-                <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html</label>
-                <textarea id="5e-tools-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste your 5e.tools JSON here..."></textarea>
-            </div>
-
-            <div class="mb-4">
-                <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic JSON</label>
-                <textarea id="generic-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste any other TTRPG card JSON here..."></textarea>
-            </div>
-        </div>
-
         <!-- Printer Settings & Preview -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
             <h2 class="text-2xl font-semibold mb-4 text-purple-300">Printer Settings & Preview</h2>
@@ -289,9 +270,62 @@
         </div>
     </div>
 
+    <!-- Import Modal -->
+    <div id="import-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative">
+            <button id="close-import-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            <h2 id="import-modal-title" class="text-3xl font-bold mb-6 text-center text-purple-400">Import Card Data</h2>
+            <div class="space-y-6">
+                <!-- 5e.tools File Accordion -->
+                <div class="border-b border-gray-700">
+                    <button id="accordion-file-import-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200" aria-expanded="true" aria-controls="accordion-file-import-content">
+                        <span>Import from 5e.tools (.json file)</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300 rotate-180" aria-hidden="true"></i>
+                    </button>
+                    <div id="accordion-file-import-content" class="pt-2 pb-4">
+                        <input type="file" id="rpg-cards-json-file" accept=".json,application/json,application/octet-stream,text/plain" class="w-full text-gray-300 bg-gray-900 rounded-lg p-3 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 transition-colors">
+                    </div>
+                </div>
+
+                <!-- 5e.tools Accordion -->
+                <div class="border-b border-gray-700">
+                    <button id="accordion-5e-tools-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200" aria-expanded="false" aria-controls="accordion-5e-tools-content">
+                        <span>Paste JSON from 5e.tools</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300" aria-hidden="true"></i>
+                    </button>
+                    <div id="accordion-5e-tools-content" class="hidden pt-2 pb-4">
+                        <textarea id="5e-tools-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste your 5e.tools JSON here..."></textarea>
+                        <p class="mt-2 text-xs text-gray-400">
+                            <strong>Expected format:</strong> A single JSON object for a creature or an array of creature objects. Typically includes keys like `name`, `hp`, `ac`, `trait`, `action`, etc.
+                            <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"name": "Goblin", "hp": {"average": 7, "formula": "2d6"}, ...}</code>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Generic JSON Accordion -->
+                <div class="border-b border-gray-700">
+                    <button id="accordion-generic-json-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200" aria-expanded="false" aria-controls="accordion-generic-json-content">
+                        <span>Paste Generic Card JSON</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300" aria-hidden="true"></i>
+                    </button>
+                    <div id="accordion-generic-json-content" class="hidden pt-2 pb-4">
+                        <textarea id="generic-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste any other TTRPG card JSON here..."></textarea>
+                        <p class="mt-2 text-xs text-gray-400">
+                            <strong>Expected format:</strong> A JSON object (or array of objects) that matches the internal card structure. Key fields include `title`, `type`, `icon`, `color`, `tags`, `footer`, `stats` (as an object), and `sections` (as an array of objects with `heading`, `body`, `flavorText`).
+                            <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"title": "Fireball", "type": "Spell", "sections": [{"heading": "Description", "body": "A fiery explosion..."}]}</code>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="card-view" class="hidden">
         <!-- This area is populated by the initCardView function -->
     </div>
+
+    <!-- Global Message Toast -->
+    <div id="message-display" class="hidden fixed top-5 right-5 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-[60]"></div>
 
     <script>
         // Global application state
@@ -333,7 +367,6 @@
         };
 
         // DOM Elements (defined after appState for clarity, but before functions that use them)
-        const messageDisplay = document.getElementById('message-display');
         const titleInput = document.getElementById('title');
         const typeInput = document.getElementById('type');
         const iconInput = document.getElementById('icon');
@@ -379,6 +412,17 @@
         const nextCardBtn = document.getElementById('next-card-btn');
         const cardSelect = document.getElementById('card-select');
         const addNewCardBtn = document.getElementById('add-new-card-btn');
+        const openImportModalBtn = document.getElementById('open-import-modal-btn');
+
+        // Import Modal Elements
+        const importModal = document.getElementById('import-modal');
+        const closeImportModalBtn = document.getElementById('close-import-modal-btn');
+        const accordionFileImportHeading = document.getElementById('accordion-file-import-heading');
+        const accordionFileImportContent = document.getElementById('accordion-file-import-content');
+        const accordion5eToolsHeading = document.getElementById('accordion-5e-tools-heading');
+        const accordion5eToolsContent = document.getElementById('accordion-5e-tools-content');
+        const accordionGenericJsonHeading = document.getElementById('accordion-generic-json-heading');
+        const accordionGenericJsonContent = document.getElementById('accordion-generic-json-content');
 
         // Print Scope Radio Buttons
         const printScopeRadios = document.querySelectorAll('input[name="printScope"]');
@@ -396,9 +440,14 @@
         }
 
         function showMessage(msg, isError = false) {
+            const messageDisplay = document.getElementById('message-display');
+            if (!messageDisplay) return;
+
             messageDisplay.textContent = msg;
             messageDisplay.classList.remove('hidden', 'bg-blue-500', 'bg-red-500');
             messageDisplay.classList.add(isError ? 'bg-red-500' : 'bg-blue-500');
+
+            // Automatically hide after 5 seconds
             setTimeout(() => {
                 messageDisplay.classList.add('hidden');
             }, 5000);
@@ -1074,6 +1123,47 @@
             saveState();
             showMessage('New empty card added!');
         });
+
+        // Import Modal Listeners
+        openImportModalBtn.addEventListener('click', () => {
+            importModal.classList.remove('hidden');
+            closeImportModalBtn.focus(); // Move focus to a logical element inside the modal
+        });
+
+        const closeModal = () => {
+            importModal.classList.add('hidden');
+            openImportModalBtn.focus(); // Return focus to the button that opened the modal
+        };
+
+        closeImportModalBtn.addEventListener('click', closeModal);
+
+        // Close modal if clicking on the background
+        importModal.addEventListener('click', (e) => {
+            if (e.target === importModal) {
+                closeModal();
+            }
+        });
+
+        // Add listener for the Escape key to close the modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !importModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
+        // Accordion Logic
+        function setupAccordion(button, content) {
+            button.addEventListener('click', () => {
+                const isHidden = content.classList.toggle('hidden');
+                const icon = button.querySelector('i');
+                icon.classList.toggle('rotate-180', !isHidden);
+                button.setAttribute('aria-expanded', !isHidden);
+            });
+        }
+
+        setupAccordion(accordionFileImportHeading, accordionFileImportContent);
+        setupAccordion(accordion5eToolsHeading, accordion5eToolsContent);
+        setupAccordion(accordionGenericJsonHeading, accordionGenericJsonContent);
 
 
         function getPixelWidth(paperSize, dpi) {

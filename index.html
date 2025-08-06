@@ -272,6 +272,7 @@
 
     <script>
         // Global application state
+        let iconManifest = {}; // To be populated from icon-lookup.json
         let appState = {
             cards: [ // Array to hold all cards
                 {
@@ -482,10 +483,15 @@
 
             let iconHtml = '';
             if (card.icon) {
-                if (isURL(card.icon)) {
+                // New logic: First check the manifest for a local icon path
+                if (iconManifest[card.icon]) {
+                    const iconPath = iconManifest[card.icon];
+                    iconHtml = `<img src="${iconPath}" alt="${card.icon}" class="w-12 h-12 object-contain mb-2 ${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
+                } else if (isURL(card.icon)) {
+                    // Fallback to URL if it's a valid URL
                     iconHtml = `<img src="${card.icon}" alt="Card Icon" class="w-12 h-12 object-contain mb-2 ${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
                 } else {
-                    // Assume it's a Font Awesome class name
+                    // Finally, assume it's a Font Awesome class name
                     iconHtml = `<i class="fa-solid fa-${card.icon} card-icon-fa ${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
                 }
             }
@@ -1008,9 +1014,14 @@
 
             let iconRenderHtml = '';
             if (card.icon) {
-                if (isURL(card.icon)) {
+                // New logic: Check manifest first, then URL, then fallback
+                if (iconManifest[card.icon]) {
+                    const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                    iconRenderHtml = `<img src="${iconPath}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                } else if (isURL(card.icon)) {
                     iconRenderHtml = `<img src="${card.icon}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
+                    // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
                     iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" />`;
                 }
             }
@@ -1114,7 +1125,11 @@
 
                 let iconRenderHtml = '';
                 if (card.icon) {
-                    if (isURL(card.icon)) {
+                    // New logic: Check manifest first, then URL, then Font Awesome
+                    if (iconManifest[card.icon]) {
+                        const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                        iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
+                    } else if (isURL(card.icon)) {
                         iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
                     } else {
                         iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
@@ -1265,7 +1280,11 @@
 
                     let iconRenderHtml = '';
                     if (card.icon) {
-                        if (isURL(card.icon)) {
+                        // New logic: Check manifest first, then URL, then Font Awesome
+                        if (iconManifest[card.icon]) {
+                            const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                            iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
+                        } else if (isURL(card.icon)) {
                             iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
                         } else {
                             iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
@@ -1369,7 +1388,11 @@
 
                         let iconRenderHtml = '';
                         if (card.icon) {
-                            if (isURL(card.icon)) {
+                            // New logic: Check manifest first, then URL, then Font Awesome
+                            if (iconManifest[card.icon]) {
+                                const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                                iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
+                            } else if (isURL(card.icon)) {
                                 iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
                             } else {
                                 iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
@@ -1487,7 +1510,21 @@
         });
 
         // Initial load and render
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            // Fetch the icon manifest first
+            try {
+                const response = await fetch('./icon-lookup.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                iconManifest = await response.json();
+                console.log('Icon manifest loaded successfully.');
+            } catch (error) {
+                console.error('Could not load icon manifest:', error);
+                showMessage('Could not load local icons. Please check the console for details.', true);
+            }
+
+            // Then load the rest of the application state
             loadState();
         });
     </script>

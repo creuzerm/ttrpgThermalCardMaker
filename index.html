@@ -185,8 +185,8 @@
                     <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Content for the back of the folded card."></textarea>
                 </div>
                 <div id="fold-image-input" class="mb-3 hidden">
-                    <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL for Fold</label>
-                    <input type="text" id="fold-content-image-url" name="foldContentImageUrl" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://example.com/back_design.png">
+                    <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL or Icon Name for Fold</label>
+                    <input type="text" id="fold-content-image-url" name="foldContentImageUrl" list="icon-suggestions" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="e.g., swords or https://example.com/back_design.png">
                 </div>
                 <div id="fold-qr-input" class="mb-3 hidden">
                     <label for="fold-content-qr-data" class="block text-sm font-medium text-gray-300 mb-1">QR Code Data</label>
@@ -979,7 +979,12 @@
 
         // Fold content inputs
         foldContentTextarea.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].foldContent.text = e.target.value; updateCardPreview(); saveState(); });
-        foldContentImageUrlInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].foldContent.imageUrl = e.target.value; updateCardPreview(); saveState(); });
+        foldContentImageUrlInput.addEventListener('input', (e) => {
+            appState.cards[appState.currentCardIndex].foldContent.imageUrl = e.target.value;
+            rememberIcon(e.target.value);
+            updateCardPreview();
+            saveState();
+        });
         foldContentQrDataInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].foldContent.qrCodeData = e.target.value; updateCardPreview(); saveState(); });
 
         // Printer type selection

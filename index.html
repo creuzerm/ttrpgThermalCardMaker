@@ -1325,7 +1325,8 @@
                     numCopies: appState.numCopies
                 }
             };
-            const encodedData = btoa(JSON.stringify(dataToSend));
+            const jsonString = JSON.stringify(dataToSend);
+            const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
             const url = `index.html?view=card&data=${encodedData}`;
             window.open(url, '_blank');
         }

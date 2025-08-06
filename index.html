@@ -1282,6 +1282,16 @@
         });
 
         // Download Image button handler
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Handle CORS
+                img.onload = () => resolve(img);
+                img.onerror = (err) => reject(err);
+                img.src = src;
+            });
+        }
+
         function downloadImage(imageDataUrl, cardTitle = 'card') {
             const link = document.createElement('a');
             link.href = imageDataUrl;
@@ -1400,6 +1410,39 @@
                         width: targetWidthPx,
                         height: targetHeightPx
                     });
+
+                    // Post-process the canvas to draw images correctly
+                    const ctx = canvas.getContext('2d');
+                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+
+                    if (iconUrl) {
+                        const img = await loadImage(iconUrl);
+                        const iconSize = 0.25 * 96; // 0.25 inch at 96 DPI
+                        const margin = 0.125 * 96;
+                        const aspectRatio = img.width / img.height;
+                        let newWidth = iconSize;
+                        let newHeight = iconSize / aspectRatio;
+                        if (newHeight > iconSize) {
+                            newHeight = iconSize;
+                            newWidth = iconSize * aspectRatio;
+                        }
+                        ctx.drawImage(img, targetWidthPx - margin - newWidth, margin, newWidth, newHeight);
+                    }
+
+                    if (card.isFolded && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                        const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                        const backImg = await loadImage(backImgUrl);
+                        const backAspectRatio = backImg.width / backImg.height;
+                        let backWidth = targetWidthPx;
+                        let backHeight = targetWidthPx / backAspectRatio;
+                        if (backHeight > targetHeightPx / 2) {
+                            backHeight = targetHeightPx / 2;
+                            backWidth = backHeight * backAspectRatio;
+                        }
+                        const backY = targetHeightPx - backHeight;
+                        ctx.drawImage(backImg, (targetWidthPx - backWidth) / 2, backY, backWidth, backHeight);
+                    }
+
                     const imageDataUrl = canvas.toDataURL('image/png');
                     downloadImage(imageDataUrl, card.title);
                 } catch (error) {
@@ -1525,6 +1568,39 @@
                                 width: targetWidthPx,
                                 height: targetHeightPx,
                             });
+
+                            // Post-process the canvas to draw images correctly
+                            const ctx = canvas.getContext('2d');
+                            const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+
+                            if (iconUrl) {
+                                const img = await loadImage(iconUrl);
+                                const iconSize = 0.25 * 96; // 0.25 inch at 96 DPI
+                                const margin = 0.125 * 96;
+                                const aspectRatio = img.width / img.height;
+                                let newWidth = iconSize;
+                                let newHeight = iconSize / aspectRatio;
+                                if (newHeight > iconSize) {
+                                    newHeight = iconSize;
+                                    newWidth = iconSize * aspectRatio;
+                                }
+                                ctx.drawImage(img, targetWidthPx - margin - newWidth, margin, newWidth, newHeight);
+                            }
+
+                            if (card.isFolded && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                                const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                                const backImg = await loadImage(backImgUrl);
+                                const backAspectRatio = backImg.width / backImg.height;
+                                let backWidth = targetWidthPx;
+                                let backHeight = targetWidthPx / backAspectRatio;
+                                if (backHeight > targetHeightPx / 2) {
+                                    backHeight = targetHeightPx / 2;
+                                    backWidth = backHeight * backAspectRatio;
+                                }
+                                const backY = targetHeightPx - backHeight;
+                                ctx.drawImage(backImg, (targetWidthPx - backWidth) / 2, backY, backWidth, backHeight);
+                            }
+
                             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                             files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
                         } finally {

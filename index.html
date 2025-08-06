@@ -1071,11 +1071,11 @@
             const cardsToPrint = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
 
             for (const card of cardsToPrint) {
-                const htmlContent = await generateThermalHtmlForCard(card); // Await if async
-                const dataUrl = `data:text/html;charset=utf-8;base64,${btoa(htmlContent)}`;
-                const numCopies = appState.numCopies; // Use global numCopies for each card
+                const htmlContent = await generateThermalHtmlForCard(card);
+                const numCopies = appState.numCopies;
 
-                const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&url=${encodeURIComponent(dataUrl)}&copies=${numCopies}&contentType=HTML`;
+                // Corrected URL format based on documentation
+                const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
                 const mobilePrintUtilUrl = `mobileprintutil://?html=${encodeURIComponent(htmlContent)}`;
 
                 window.open(appLinkUrl, '_blank');

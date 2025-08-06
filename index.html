@@ -265,7 +265,7 @@
             <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Print Thermal Card</button>
             <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
             <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Card Image(s)</button>
-            <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card (via Web Share API)</button>
+            <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
             <button id="copy-bookmark-link-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
         </div>
     </div>
@@ -1071,11 +1071,11 @@
             const cardsToPrint = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
 
             for (const card of cardsToPrint) {
-                const htmlContent = await generateThermalHtmlForCard(card); // Await if async
-                const dataUrl = `data:text/html;charset=utf-8;base64,${btoa(htmlContent)}`;
-                const numCopies = appState.numCopies; // Use global numCopies for each card
+                const htmlContent = await generateThermalHtmlForCard(card);
+                const numCopies = appState.numCopies;
 
-                const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&url=${encodeURIComponent(dataUrl)}&copies=${numCopies}&contentType=HTML`;
+                // Corrected URL format based on documentation
+                const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
                 const mobilePrintUtilUrl = `mobileprintutil://?html=${encodeURIComponent(htmlContent)}`;
 
                 window.open(appLinkUrl, '_blank');
@@ -1351,35 +1351,32 @@
 
         // Share Card button handler
         shareCardBtn.addEventListener('click', async () => {
-            if (navigator.share && navigator.canShare({ files: [] })) {
+            const dummyFile = new File(["dummy"], "dummy.png", { type: "image/png" });
+            if (navigator.share && navigator.canShare({ files: [dummyFile] })) {
                 showMessage('Preparing card(s) for sharing...');
-                const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+                try {
+                    const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+                    const files = [];
 
-                const originalCardIndex = appState.currentCardIndex; // Store original index
+                    for (const card of cardsToProcess) {
+                        const tempContainer = document.createElement('div');
+                        tempContainer.style.position = 'absolute';
+                        tempContainer.style.left = '-9999px';
+                        tempContainer.style.width = '600px';
+                        tempContainer.style.height = card.isFolded ? '1800px' : '900px';
+                        tempContainer.style.overflow = 'hidden';
+                        tempContainer.style.backgroundColor = card.color || '#ffffff';
 
-                for (let i = 0; i < cardsToProcess.length; i++) {
-                    const card = cardsToProcess[i];
-                    appState.currentCardIndex = appState.cards.indexOf(card); // Set current card for rendering
-                    updateCardPreview(); // Update preview to reflect the current card being processed
-
-                    const tempContainer = document.createElement('div');
-                    tempContainer.style.position = 'absolute';
-                    tempContainer.style.left = '-9999px';
-                    tempContainer.style.width = '600px';
-                    tempContainer.style.height = card.isFolded ? '1800px' : '900px';
-                    tempContainer.style.overflow = 'hidden';
-                    tempContainer.style.backgroundColor = card.color || '#ffffff';
-
-                    let iconRenderHtml = '';
-                    if (card.icon) {
-                        if (isURL(card.icon)) {
-                            iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
-                        } else {
-                            iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
+                        let iconRenderHtml = '';
+                        if (card.icon) {
+                            if (isURL(card.icon)) {
+                                iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
+                            } else {
+                                iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
+                            }
                         }
-                    }
 
-                    const frontHtml = `
+                        const frontHtml = `
                         <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
                         <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
                         ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
@@ -1409,10 +1406,10 @@
                         ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer || ''}</p>` : ''}
                         </div>
                     `;
-                    tempContainer.innerHTML = frontHtml;
+                        tempContainer.innerHTML = frontHtml;
 
-                    if (card.isFolded) {
-                        const backHtml = `
+                        if (card.isFolded) {
+                            const backHtml = `
                             <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
                             ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
                                 <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
@@ -1425,45 +1422,45 @@
                             ` : ''}
                             </div>
                         `;
-                        tempContainer.innerHTML += backHtml;
-                    }
+                            tempContainer.innerHTML += backHtml;
+                        }
 
-                    document.body.appendChild(tempContainer);
+                        document.body.appendChild(tempContainer);
 
-                    try {
-                        const canvas = await html2canvas(tempContainer, {
-                            scale: 1,
-                            useCORS: true,
-                            logging: false,
-                            width: 600,
-                            height: card.isFolded ? 1800 : 900,
-                        });
-                        const imageDataUrl = canvas.toDataURL('image/png');
-                        const response = await fetch(imageDataUrl);
-                        const blob = await response.blob();
-                        const file = new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' });
-
-                        await navigator.share({
-                            files: [file],
-                            title: `${card.title} TTRPG Card`,
-                            text: `Here's my custom TTRPG card: ${card.title}`,
-                        });
-                        showMessage(`Card "${card.title}" shared successfully!`);
-                    } catch (error) {
-                        console.error(`Error sharing file for "${card.title}":`, error);
-                        showMessage(`Failed to share card "${card.title}". Please ensure your device supports sharing images to printer apps.`, true);
-                    } finally {
-                        if (tempContainer.parentNode) {
+                        try {
+                            const canvas = await html2canvas(tempContainer, {
+                                scale: 1,
+                                useCORS: true,
+                                logging: false,
+                                width: 600,
+                                height: card.isFolded ? 1800 : 900,
+                            });
+                            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                            files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
+                        } finally {
                             document.body.removeChild(tempContainer);
                         }
                     }
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between processing cards
+
+                    showMessage('Ready to share. Opening share dialog...');
+                    await navigator.share({
+                        files: files,
+                        title: 'TTRPG Cards',
+                        text: 'Here are the TTRPG cards I made.',
+                    });
+                    showMessage('Card(s) shared successfully!');
+
+                } catch (error) {
+                    console.error('Error sharing files:', error);
+                    // Check for AbortError, which occurs when the user cancels the share sheet
+                    if (error.name === 'AbortError') {
+                        showMessage('Share cancelled.', false);
+                    } else {
+                        showMessage(`Error sharing: ${error.message}`, true);
+                    }
                 }
-                appState.currentCardIndex = originalCardIndex; // Restore original index
-                updateCardPreview(); // Restore original preview
-                showMessage('Share process completed for selected cards.');
             } else {
-                showMessage('Web Share API not supported on this device/browser. Please download the image and share manually.', true);
+                showMessage('Web Share API for files not supported on this device/browser. Please download the image and share manually.', true);
             }
         });
 

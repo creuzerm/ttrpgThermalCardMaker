@@ -117,8 +117,14 @@
         </div>
 
         <div class="mb-4">
-            <label for="icon" class="block text-sm font-medium text-gray-300 mb-1">Icon Name (e.g., magic-swirl, crossed-swords) or Image URL</label>
-            <input type="text" id="icon" name="icon" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            <div class="flex justify-between items-center mb-1">
+                <label for="icon" class="block text-sm font-medium text-gray-300">Icon Name or Image URL</label>
+                <a href="https://game-icons.net/" target="_blank" class="text-xs text-purple-400 hover:underline">Full list of icons...</a>
+            </div>
+            <input type="text" id="icon" name="icon" list="icon-suggestions" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            <datalist id="icon-suggestions">
+                <!-- Options will be populated by JS -->
+            </datalist>
         </div>
 
         <div class="mb-4">
@@ -304,7 +310,8 @@
             printerType: 'thermal', // 'thermal' or 'color'
             thermalPaperSize: '58mm', // '58mm', '80mm'
             numCopies: 1, // Number of copies for the current card
-            printScope: 'current' // 'current' or 'all'
+            printScope: 'current', // 'current' or 'all'
+            rememberedIcons: []
         };
 
         // DOM Elements (defined after appState for clarity, but before functions that use them)
@@ -699,6 +706,7 @@
                             }
                         }
                         if (parsedState.printScope) appState.printScope = parsedState.printScope;
+                        if (parsedState.rememberedIcons) appState.rememberedIcons = parsedState.rememberedIcons;
 
                     }
                 }
@@ -721,6 +729,7 @@
                 showMessage('Failed to load card data. Starting with a new card.', true);
             }
             updateUIFromAppState();
+            populateIconSuggestions();
         }
 
         // JSON Import Handlers
@@ -898,10 +907,31 @@
             saveState();
         }
 
+        function populateIconSuggestions() {
+            const suggestionsDatalist = document.getElementById('icon-suggestions');
+            const defaultIcons = ['imp-laugh', 'crossed-swords', 'magic-swirl', 'family-tree', 'farmer', 'checkbox-tree'];
+            const allSuggestions = [...new Set([...defaultIcons, ...appState.rememberedIcons])];
+
+            suggestionsDatalist.innerHTML = allSuggestions.map(icon => `<option value="${icon}"></option>`).join('');
+        }
+
+        function rememberIcon(iconName) {
+            if (iconName && !isURL(iconName) && !appState.rememberedIcons.includes(iconName)) {
+                appState.rememberedIcons.push(iconName);
+                populateIconSuggestions();
+                saveState();
+            }
+        }
+
         // Event Listeners for main card inputs
         titleInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].title = e.target.value; saveState(); updateCardPreview(); updateCardNavigationUI(); });
         typeInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].type = e.target.value; saveState(); updateCardPreview(); });
-        iconInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].icon = e.target.value; saveState(); updateCardPreview(); });
+        iconInput.addEventListener('input', (e) => {
+            appState.cards[appState.currentCardIndex].icon = e.target.value;
+            rememberIcon(e.target.value);
+            saveState();
+            updateCardPreview();
+        });
         colorInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].color = e.target.value; saveState(); updateCardPreview(); });
         tagsInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].tags = e.target.value.split(',').map(tag => tag.trim()); saveState(); updateCardPreview(); });
         footerInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].footer = e.target.value; saveState(); updateCardPreview(); });

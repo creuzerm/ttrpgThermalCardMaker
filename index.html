@@ -684,7 +684,7 @@
         function loadState() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
-                const cardDataParam = urlParams.get('cardData');
+                const cardDataParam = urlParams.get('data');
                 const printerTypeParam = urlParams.get('printerType');
                 const thermalPaperSizeParam = urlParams.get('thermalPaperSize');
                 const numCopiesParam = urlParams.get('numCopies');
@@ -1511,7 +1511,7 @@
             const currentUrl = new URL(window.location.href);
             // Clear existing params to create a clean link for the editor view
             currentUrl.search = '';
-            currentUrl.searchParams.set('cardData', encodedData); // Use 'cardData' to be handled by loadState
+            currentUrl.searchParams.set('data', encodedData); // Use 'data' to be handled by loadState
 
             const bookmarkLink = currentUrl.toString();
 

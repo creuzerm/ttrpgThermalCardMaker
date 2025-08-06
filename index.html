@@ -236,6 +236,16 @@
             </select>
         </div>
 
+        <div id="thermal-dpi-container" class="mb-4">
+            <label for="thermal-dpi" class="block text-sm font-medium text-gray-300 mb-1">Thermal Printer DPI</label>
+            <select id="thermal-dpi" name="thermalDpi" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <option value="203">203 DPI (Standard)</option>
+                <option value="180">180 DPI</option>
+                <option value="200">200 DPI</option>
+                <option value="300">300 DPI</option>
+            </select>
+        </div>
+
         <div class="mb-4">
             <label for="num-copies" class="block text-sm font-medium text-gray-300 mb-1">Number of Copies (1-10)</label>
             <input type="number" id="num-copies" name="numCopies" min="1" max="10" value="1" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
@@ -311,6 +321,7 @@
             thermalPaperSize: '58mm', // '58mm', '80mm'
             numCopies: 1, // Number of copies for the current card
             printScope: 'current', // 'current' or 'all'
+            thermalDpi: 203, // 180, 200, 203, 300
             rememberedIcons: []
         };
 
@@ -340,7 +351,9 @@
         const genericJsonPaste = document.getElementById('generic-json-paste');
         const printerTypeSelect = document.getElementById('printer-type');
         const thermalPaperSizeContainer = document.getElementById('thermal-paper-size-container');
+        const thermalDpiContainer = document.getElementById('thermal-dpi-container');
         const thermalPaperSizeSelect = document.getElementById('thermal-paper-size');
+        const thermalDpiSelect = document.getElementById('thermal-dpi');
         const numCopiesInput = document.getElementById('num-copies'); // New
         const cardPreviewContainer = document.getElementById('card-preview-container');
         const previewTitle = document.getElementById('preview-title');
@@ -589,10 +602,12 @@
         function togglePrinterTypeOptions() {
             if (appState.printerType === 'thermal') {
                 thermalPaperSizeContainer.classList.remove('hidden');
+                thermalDpiContainer.classList.remove('hidden');
                 printThermalBtn.classList.remove('hidden');
                 printColorPhotoBtn.classList.add('hidden');
             } else {
                 thermalPaperSizeContainer.classList.add('hidden');
+                thermalDpiContainer.classList.add('hidden');
                 printThermalBtn.classList.add('hidden');
                 printColorPhotoBtn.classList.remove('hidden');
             }
@@ -626,6 +641,7 @@
             isFoldedCheckbox.checked = currentCard.isFolded;
             printerTypeSelect.value = appState.printerType;
             thermalPaperSizeSelect.value = appState.thermalPaperSize;
+            thermalDpiSelect.value = appState.thermalDpi;
             numCopiesInput.value = appState.numCopies;
 
             if (!currentCard.foldContent || typeof currentCard.foldContent !== 'object') {
@@ -697,6 +713,7 @@
                         }
                         if (parsedState.printerType) appState.printerType = parsedState.printerType;
                         if (parsedState.thermalPaperSize) appState.thermalPaperSize = parsedState.thermalPaperSize;
+                        if (parsedState.thermalDpi) appState.thermalDpi = parsedState.thermalDpi;
                         if (parsedState.numCopies) {
                             let loadedNumCopies = parseInt(parsedState.numCopies, 10);
                             if (!isNaN(loadedNumCopies) && loadedNumCopies >= 1 && loadedNumCopies <= 10) {
@@ -969,6 +986,12 @@
             saveState();
         });
 
+        thermalDpiSelect.addEventListener('change', (e) => {
+            appState.thermalDpi = parseInt(e.target.value, 10);
+            updateCardPreview();
+            saveState();
+        });
+
         // Handle fold content type change
         foldContentTypeSelect.addEventListener('change', (e) => {
             appState.cards[appState.currentCardIndex].foldContent.type = e.target.value;
@@ -1046,37 +1069,50 @@
         });
 
 
+        function getPixelWidth(paperSize, dpi) {
+            // Based on the table provided in README.md
+            // 1 inch = 25.4 mm
+            const printableWidthMm = {
+                '58mm': 48,
+                '80mm': 72
+            };
+            const printableWidthIn = printableWidthMm[paperSize] / 25.4;
+            return Math.round(printableWidthIn * dpi);
+        }
+
         // Generate HTML for thermal printer
         async function generateThermalHtmlForCard(card) {
-            const thermalPaperSize = appState.thermalPaperSize;
-            const widthPx = thermalPaperSize === '58mm' ? 384 : 576;
+            const widthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
+            const baseWidth = 384; // Use 58mm @ 203 DPI as the baseline for scaling
+            const scaleFactor = widthPx / baseWidth;
 
             let iconRenderHtml = '';
             if (card.icon) {
+                const iconSize = 24 * scaleFactor; // 0.25in at base resolution
                 // New logic: Check manifest first, then URL, then fallback
                 if (iconManifest[card.icon]) {
                     const iconPath = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${iconPath}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                    iconRenderHtml = `<img src="${iconPath}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                    iconRenderHtml = `<img src="${card.icon}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
                     // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
-                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain; filter: grayscale(100%);" />`;
+                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
                 }
             }
 
             let htmlContent = `
-                <div style="position: relative; width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
+                <div style="position: relative; width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
                     ${iconRenderHtml}
                     <div>
-                        <h1 style="text-align: center; font-size: 24px; margin-bottom: 4px; line-height: 1.2;">${card.title || ''}</h1>
-                        ${card.type ? `<p style="text-align: center; font-size: 16px; margin-bottom: 8px;">${card.type}</p>` : ''}
+                        <h1 style="text-align: center; font-size: ${24 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.2;">${card.title || ''}</h1>
+                        ${card.type ? `<p style="text-align: center; font-size: ${16 * scaleFactor}px; margin-bottom: ${8 * scaleFactor}px;">${card.type}</p>` : ''}
                     </div>
 
                     ${(card.stats && Object.keys(card.stats).length > 0) ? `
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; font-size: 14px;">
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${8 * scaleFactor}px; font-size: ${14 * scaleFactor}px;">
                             ${Object.entries(card.stats).map(([key, value]) => `
-                                <span style="margin: 0 8px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>
+                                <span style="margin: 0 ${8 * scaleFactor}px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>
                             `).join('')}
                         </div>
                     ` : ''}
@@ -1084,34 +1120,34 @@
                     <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around;">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
-                                ${section.heading ? `<h2 style="font-size: 18px; margin-bottom: 4px; border-bottom: 1px dashed #999; padding-bottom: 2px;">${section.heading}</h2>` : ''}
-                                <p style="font-size: 14px; margin-bottom: 4px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: 12px; font-style: italic; color: #555; margin-top: 4px;">${formatText(section.flavorText || '')}</p>` : ''}
+                                ${section.heading ? `<h2 style="font-size: ${18 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; border-bottom: 1px dashed #999; padding-bottom: ${2 * scaleFactor}px;">${section.heading}</h2>` : ''}
+                                <p style="font-size: ${14 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.4;">${formatText(section.body || '')}</p>
+                                ${section.flavorText ? `<p style="font-size: ${12 * scaleFactor}px; font-style: italic; color: #555; margin-top: ${4 * scaleFactor}px;">${formatText(section.flavorText || '')}</p>` : ''}
                             </div>
                         `).join('') : ''}
                     </div>
 
                     <div>
                         ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: 12px; text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 4px;">Tags: ${card.tags.join(', ')}</p>
+                            <p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px; border-top: 1px dashed #999; padding-top: ${4 * scaleFactor}px;">Tags: ${card.tags.join(', ')}</p>
                         ` : ''}
 
-                        ${card.footer ? `<p style="font-size: 12px; text-align: center; margin-top: 8px;">${card.footer || ''}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px;">${card.footer || ''}</p>` : ''}
                     </div>
                 </div>
             `;
 
             if (card.isFolded) {
                 htmlContent += `
-                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center; display: flex; justify-content: center; align-items: center;">
+                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center; display: flex; justify-content: center; align-items: center;">
                         ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
-                            <p style="font-size: 14px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
+                            <p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
                             <img src="${iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: 80px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
                         ` : ''}
                     </div>
                 `;
@@ -1199,7 +1235,7 @@
 
             // This logic is mostly extracted from the original download/share buttons
             if (printerType === 'thermal') {
-                targetWidthPx = thermalPaperSize === '58mm' ? 384 : 576;
+                targetWidthPx = getPixelWidth(thermalPaperSize, appState.thermalDpi);
                 // For thermal, we let the content define the height. The container will have two divs.
                 tempContainer.style.width = `${targetWidthPx}px`;
                 htmlContent = await generateThermalHtmlForCard(card); // This function already produces a complete HTML string

@@ -28,6 +28,26 @@
             color: #4a6898; /* Example color, adjust as needed */
             margin-bottom: 8px;
         }
+
+        @media print {
+            body > * {
+                display: none;
+            }
+            body > #card-view, body > #card-view > #card-render-area {
+                display: block !important;
+            }
+            body {
+                background-color: #ffffff;
+                padding: 0;
+                margin: 0;
+            }
+            #card-render-area {
+                margin: 0;
+                padding: 0;
+                border: none;
+                border-radius: 0;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
@@ -290,21 +310,7 @@
     </div>
 
     <div id="card-view" class="hidden">
-        <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">Card Preview & Print</h1>
-
-        <div id="card-render-area" class="p-4 rounded-lg shadow-lg border-2 border-dashed border-gray-600 bg-gray-800">
-            <!-- The generated card HTML will be injected here by JavaScript -->
-            <p>Loading card preview...</p>
-        </div>
-
-        <div class="mt-6 flex gap-4">
-            <button id="card-view-print-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                Print Card
-            </button>
-            <button id="card-view-close-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                Close
-            </button>
-        </div>
+        <!-- This area is populated by the initCardView function -->
     </div>
 
     <script>
@@ -1534,22 +1540,33 @@
         }
 
         async function initCardView() {
+            // Clean up the UI for a print-only view
             document.getElementById('main-generator-view').style.display = 'none';
             const cardView = document.getElementById('card-view');
+            document.body.innerHTML = ''; // Clear the entire body
+            document.body.style.backgroundColor = '#ffffff';
+            document.body.style.padding = '0';
+            document.body.style.margin = '0';
+            document.body.appendChild(cardView);
             cardView.classList.remove('hidden');
+            cardView.innerHTML = '<div id="card-render-area"></div>';
 
+
+            // Fetch the icon manifest, which is necessary for rendering the card
             try {
                 const response = await fetch('./icon-lookup.json');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 iconManifest = await response.json();
             } catch (error) {
                 console.error('Could not load icon manifest:', error);
+                document.body.innerHTML = '<p>Error: Could not load icon manifest.</p>';
+                return;
             }
 
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data') || urlParams.get('cardData');
             if (!dataParam) {
-                cardView.innerHTML = '<p class="text-red-400">Error: No card data provided in URL.</p>';
+                document.body.innerHTML = '<p>Error: No card data provided in URL.</p>';
                 return;
             }
 
@@ -1569,31 +1586,20 @@
 
                 const cardRenderArea = document.getElementById('card-render-area');
                 cardRenderArea.innerHTML = await generateThermalHtmlForCard(card);
-                cardRenderArea.style.padding = '0';
-                cardRenderArea.style.border = 'none';
-                cardRenderArea.style.background = 'none';
 
-                document.getElementById('card-view-close-btn').addEventListener('click', () => window.close());
-
-                document.getElementById('card-view-print-btn').addEventListener('click', () => {
-                    const isAndroid = /Android/i.test(navigator.userAgent);
-                    const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-                    const htmlContent = cardRenderArea.innerHTML;
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                if (isAndroid) {
+                    const htmlContent = document.body.innerHTML;
                     const numCopies = settings.numCopies || 1;
+                    const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
+                    window.location.href = appLinkUrl;
+                } else {
+                    window.print();
+                }
 
-                    if (isAndroid) {
-                        const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
-                        window.open(appLinkUrl, '_blank');
-                    } else if (isIos) {
-                        const mobilePrintUtilUrl = `mobileprintutil://?html=${encodeURIComponent(htmlContent)}`;
-                        window.open(mobilePrintUtilUrl, '_blank');
-                    } else {
-                        window.print();
-                    }
-                });
             } catch (error) {
                 console.error('Error processing card view data:', error);
-                cardView.innerHTML = `<p class="text-red-400">Error: Could not read card data. ${error.message}</p>`;
+                document.body.innerHTML = `<p>Error: Could not read card data. ${error.message}</p>`;
             }
         }
 

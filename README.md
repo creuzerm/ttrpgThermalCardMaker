@@ -300,3 +300,18 @@ You can import existing card data from JSON files or pasted JSON:
 
 Enjoy generating your TTRPG cards!
 
+-----
+## Supported Paper Sizes
+
+The tool supports various thermal paper sizes and printer resolutions. The final output is padded to the *printable width* to ensure accurate sizing.
+
+| Paper Size (Total Width) | Printable Width (Approx.) | DPI (Dots Per Inch) | Calculation (in Inches) | Actual Pixels (Dots/Line) | Typical Use Case                                          |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 58mm (2.28 in)           | 48mm (1.89 in)            | 180 DPI             | 1.89" × 180         | 340 pixels                | Older or more basic receipt printers.                     |
+| 58mm (2.28 in)           | 48mm (1.89 in)            | 200 DPI             | 1.89" × 200         | 378 pixels                | Common for many modern entry-level models.                |
+| 58mm (2.28 in)           | 48mm (1.89 in)            | 203 DPI             | 1.89" × 203         | 384 pixels                | The most common standard for receipts and basic labels.   |
+| 58mm (2.28 in)           | 48mm (1.89 in)            | 300 DPI             | 1.89" × 300         | 567 pixels                | Specialized for high-quality receipts or small labels.    |
+| 80mm (3.15 in)           | 72mm (2.83 in)            | 180 DPI             | 2.83" × 180         | 509 pixels                | Older or more basic POS printers.                         |
+| 80mm (3.15 in)           | 72mm (2.83 in)            | 200 DPI             | 2.83" × 200         | 566 pixels                | Common for many modern entry-level models.                |
+| 80mm (3.15 in)           | 72mm (2.83 in)            | 203 DPI             | 2.83" × 203         | 576 pixels                | The most prevalent standard for retail and hospitality POS. |
+| 80mm (3.15 in)           | 72mm (2.83 in)            | 300 DPI             | 2.83" × 300         | 849 pixels                | Used for high-detail receipts, logos, and intricate barcodes. |

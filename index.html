@@ -28,261 +28,306 @@
             color: #4a6898; /* Example color, adjust as needed */
             margin-bottom: 8px;
         }
+
+        @media print {
+            /* When printing, hide everything except the card render area */
+            body > *:not(#card-view) {
+                display: none;
+            }
+            #card-view > *:not(#card-render-area) {
+                display: none;
+            }
+            #card-view {
+                display: block !important;
+            }
+             body {
+                background-color: #ffffff;
+                justify-content: flex-start;
+                padding: 0;
+                margin: 0;
+            }
+            #card-render-area {
+                margin: 0;
+                padding: 0;
+                border: none;
+                border-radius: 0;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
 
-    <!-- Service Worker Registration -->
-    <script>
-        // Service Worker content as a string
-        const swContent = `
-            const CACHE_NAME = 'ttrpg-card-printer-cache-v1';
-            const urlsToCache = [
-              './', // Cache the current HTML file
-              // If you have other assets (like icons) served relative to this HTML file, list them here:
-              // './icon-192x192.png',
-              // './icon-512x512.png',
-            ];
+    <div id="main-generator-view">
+        <!-- Service Worker Registration -->
+        <script>
+            // Service Worker content as a string
+            const swContent = `
+                const CACHE_NAME = 'ttrpg-card-printer-cache-v1';
+                const urlsToCache = [
+                  './', // Cache the current HTML file
+                  // If you have other assets (like icons) served relative to this HTML file, list them here:
+                  // './icon-192x192.png',
+                  // './icon-512x512.png',
+                ];
 
-            self.addEventListener('install', (event) => {
-              event.waitUntil(
-                caches.open(CACHE_NAME)
-                  .then((cache) => {
-                    console.log('Opened cache');
-                    return cache.addAll(urlsToCache);
-                  })
-                  .catch(error => console.error('Service Worker cache addAll failed:', error))
-              );
-            });
+                self.addEventListener('install', (event) => {
+                  event.waitUntil(
+                    caches.open(CACHE_NAME)
+                      .then((cache) => {
+                        console.log('Opened cache');
+                        return cache.addAll(urlsToCache);
+                      })
+                      .catch(error => console.error('Service Worker cache addAll failed:', error))
+                  );
+                });
 
-            self.addEventListener('fetch', (event) => {
-              event.respondWith(
-                caches.match(event.request)
-                  .then((response) => {
-                    if (response) {
-                      return response;
+                self.addEventListener('fetch', (event) => {
+                  event.respondWith(
+                    caches.match(event.request)
+                      .then((response) => {
+                        if (response) {
+                          return response;
+                        }
+                        return fetch(event.request);
+                      })
+                  );
+                });
+            `;
+
+            // Register service worker using a Blob URL, only if in a secure context or localhost
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+                        const swBlob = new Blob([swContent], { type: 'application/javascript' });
+                        const swUrl = URL.createObjectURL(swBlob);
+
+                        navigator.serviceWorker.register(swUrl)
+                            .then(registration => console.log('Service Worker registered:', registration))
+                            .catch(error => console.error('Service Worker registration failed:', error));
+                    } else {
+                        console.warn('Service Worker not registered: PWA features (like offline mode) require HTTPS or localhost.');
                     }
-                    return fetch(event.request);
-                  })
-              );
-            });
-        `;
+                });
+            }
+        </script>
 
-        // Register service worker using a Blob URL, only if in a secure context or localhost
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
-                    const swBlob = new Blob([swContent], { type: 'application/javascript' });
-                    const swUrl = URL.createObjectURL(swBlob);
+        <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">Thermal Printer TTRPG Card Generator</h1>
 
-                    navigator.serviceWorker.register(swUrl)
-                        .then(registration => console.log('Service Worker registered:', registration))
-                        .catch(error => console.error('Service Worker registration failed:', error));
-                } else {
-                    console.warn('Service Worker not registered: PWA features (like offline mode) require HTTPS or localhost.');
-                }
-            });
-        }
-    </script>
+        <div id="message-display" class="hidden bg-blue-500 text-white p-3 rounded-md mb-4 text-center w-full max-w-md"></div>
 
-    <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">Thermal Printer TTRPG Card Generator</h1>
-
-    <div id="message-display" class="hidden bg-blue-500 text-white p-3 rounded-md mb-4 text-center w-full max-w-md"></div>
-
-    <!-- Card Navigation Section -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Navigate Cards</h2>
-        <div class="flex items-center space-x-4 mb-4">
-            <button id="prev-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
-            <select id="card-select" class="flex-grow p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-                <!-- Options will be populated by JS -->
-            </select>
-            <button id="next-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
-        </div>
-        <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md w-full">Add New Empty Card</button>
-    </div>
-
-    <!-- Card Input Section -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Card Details</h2>
-
-        <div class="mb-4">
-            <label for="title" class="block text-sm font-medium text-gray-300 mb-1">Card Title</label>
-            <input type="text" id="title" name="title" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-        </div>
-
-        <div class="mb-4">
-            <label for="type" class="block text-sm font-medium text-gray-300 mb-1">Card Type</label>
-            <input type="text" id="type" name="type" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-        </div>
-
-        <div class="mb-4">
-            <div class="flex justify-between items-center mb-1">
-                <label for="icon" class="block text-sm font-medium text-gray-300">Icon Name or Image URL</label>
-                <a href="https://game-icons.net/" target="_blank" class="text-xs text-purple-400 hover:underline">Full list of icons...</a>
+        <!-- Card Navigation Section -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Navigate Cards</h2>
+            <div class="flex items-center space-x-4 mb-4">
+                <button id="prev-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                <select id="card-select" class="flex-grow p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                    <!-- Options will be populated by JS -->
+                </select>
+                <button id="next-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
             </div>
-            <input type="text" id="icon" name="icon" list="icon-suggestions" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-            <datalist id="icon-suggestions">
-                <!-- Options will be populated by JS -->
-            </datalist>
+            <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md w-full">Add New Empty Card</button>
         </div>
 
-        <div class="mb-4">
-            <label for="color" class="block text-sm font-medium text-gray-300 mb-1">Card Color (Hex, Optional)</label>
-            <input type="color" id="color" name="color" value="#ffffff" class="w-full h-10 rounded-md bg-gray-700 border border-gray-600">
-        </div>
+        <!-- Card Input Section -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Card Details</h2>
 
-        <!-- Dynamic Sections -->
-        <div class="mb-4 border-t border-gray-700 pt-4">
-            <h3 class="text-xl font-semibold mb-3 text-purple-300">Content Sections</h3>
-            <div id="sections-container">
-                <!-- Sections will be dynamically added here -->
+            <div class="mb-4">
+                <label for="title" class="block text-sm font-medium text-gray-300 mb-1">Card Title</label>
+                <input type="text" id="title" name="title" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
             </div>
-            <button id="add-section-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Section</button>
-        </div>
 
-        <!-- Stats -->
-        <div class="mb-4 border-t border-gray-700 pt-4">
-            <h3 class="text-xl font-semibold mb-3 text-purple-300">Stats (Key-Value Pairs)</h3>
-            <div id="stats-container">
-                <!-- Stats will be dynamically added here -->
+            <div class="mb-4">
+                <label for="type" class="block text-sm font-medium text-gray-300 mb-1">Card Type</label>
+                <input type="text" id="type" name="type" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
             </div>
-            <button id="add-stat-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Stat</button>
-        </div>
 
-        <!-- Tags and Footer -->
-        <div class="mb-4 border-t border-gray-700 pt-4">
-            <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags (Comma-separated)</label>
-            <input type="text" id="tags" name="tags" placeholder="e.g., Fire, Spell, Evocation" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-        </div>
-
-        <div class="mb-4">
-            <label for="footer" class="block text-sm font-medium text-gray-300 mb-1">Footer Text (Optional)</label>
-            <input type="text" id="footer" name="footer" placeholder="e.g., Source: PHB" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-        </div>
-
-        <!-- Folded Card Options -->
-        <div class="mb-4 border-t border-gray-700 pt-4">
-            <h3 class="text-xl font-semibold mb-3 text-purple-300">Card Folding</h3>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-purple-600 rounded">
-                <span class="ml-2 text-gray-300">Folded Card</span>
-            </label>
-
-            <div id="fold-content-options" class="mt-4 bg-gray-700 p-4 rounded-md hidden">
-                <h4 class="text-lg font-semibold mb-2 text-purple-200">Back/Bottom Fold Content</h4>
-                <div class="mb-3">
-                    <label for="fold-content-type" class="block text-sm font-medium text-gray-300 mb-1">Content Type</label>
-                    <select id="fold-content-type" name="foldContentType" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500 focus:ring-purple-500 focus:border-purple-500">
-                        <option value="text">Text</option>
-                        <option value="imageUrl">Image URL</option>
-                        <option value="qrCode">QR Code</option>
-                    </select>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="icon" class="block text-sm font-medium text-gray-300">Icon Name or Image URL</label>
+                    <a href="https://game-icons.net/" target="_blank" class="text-xs text-purple-400 hover:underline">Full list of icons...</a>
                 </div>
-
-                <div id="fold-text-input" class="mb-3">
-                    <label for="fold-content-text" class="block text-sm font-medium text-gray-300 mb-1">Text for Fold</label>
-                    <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Content for the back of the folded card."></textarea>
-                </div>
-                <div id="fold-image-input" class="mb-3 hidden">
-                    <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL or Icon Name for Fold</label>
-                    <input type="text" id="fold-content-image-url" name="foldContentImageUrl" list="icon-suggestions" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="e.g., swords or https://example.com/back_design.png">
-                </div>
-                <div id="fold-qr-input" class="mb-3 hidden">
-                    <label for="fold-content-qr-data" class="block text-sm font-medium text-gray-300 mb-1">QR Code Data</label>
-                    <input type="text" id="fold-content-qr-data" name="foldContentQrCodeData" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://your-game-link.com">
-                </div>
+                <input type="text" id="icon" name="icon" list="icon-suggestions" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <datalist id="icon-suggestions">
+                    <!-- Options will be populated by JS -->
+                </datalist>
             </div>
-        </div>
-    </div>
 
-    <!-- Import Section -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Import Card Data</h2>
-
-        <div class="mb-4">
-            <label for="rpg-cards-json-file" class="block text-sm font-medium text-gray-300 mb-2">Import from rpg-cards.vercel.app (.json file)</label>
-            <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-md p-2 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600">
-        </div>
-
-        <div class="mb-4">
-            <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html</label>
-            <textarea id="5e-tools-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste your 5e.tools JSON here..."></textarea>
-        </div>
-
-        <div class="mb-4">
-            <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic JSON</label>
-            <textarea id="generic-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste any other TTRPG card JSON here..."></textarea>
-        </div>
-    </div>
-
-    <!-- Printer Settings & Preview -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-        <h2 class="text-2xl font-semibold mb-4 text-purple-300">Printer Settings & Preview</h2>
-
-        <div class="mb-4">
-            <label for="printer-type" class="block text-sm font-medium text-gray-300 mb-1">Select Printer Type</label>
-            <select type="text" id="printer-type" name="printerType" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-                <option value="thermal">Thermal Receipt Printer (Monochrome)</option>
-                <option value="color">Color Photo Printer (Kodak Zink / Fujifilm Instax)</option>
-            </select>
-        </div>
-
-        <div id="thermal-paper-size-container" class="mb-4">
-            <label for="thermal-paper-size" class="block text-sm font-medium text-gray-300 mb-1">Thermal Paper Size</label>
-            <select id="thermal-paper-size" name="thermalPaperSize" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-                <option value="58mm">58mm (Print Width ~48mm)</option>
-                <option value="80mm">80mm (Print Width ~72mm)</option>
-            </select>
-        </div>
-
-        <div id="thermal-dpi-container" class="mb-4">
-            <label for="thermal-dpi" class="block text-sm font-medium text-gray-300 mb-1">Thermal Printer DPI</label>
-            <select id="thermal-dpi" name="thermalDpi" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-                <option value="203">203 DPI (Standard)</option>
-                <option value="180">180 DPI</option>
-                <option value="200">200 DPI</option>
-                <option value="300">300 DPI</option>
-            </select>
-        </div>
-
-        <div class="mb-4">
-            <label for="num-copies" class="block text-sm font-medium text-gray-300 mb-1">Number of Copies (1-10)</label>
-            <input type="number" id="num-copies" name="numCopies" min="1" max="10" value="1" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-        </div>
-
-        <!-- Card Preview Area -->
-        <div id="card-preview-container" class="p-4 rounded-lg shadow-lg border-2 overflow-hidden">
-            <h3 class="text-xl font-bold mb-2 text-center" id="preview-title">Card Preview (Monochrome)</h3>
-            <div id="card-front-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[150px] flex flex-col justify-between">
-                <!-- Card front content will be rendered here -->
+            <div class="mb-4">
+                <label for="color" class="block text-sm font-medium text-gray-300 mb-1">Card Color (Hex, Optional)</label>
+                <input type="color" id="color" name="color" value="#ffffff" class="w-full h-10 rounded-md bg-gray-700 border border-gray-600">
             </div>
-            <div id="card-back-preview-container" class="mt-4 hidden">
-                <h3 class="text-xl font-bold mb-2 text-center">Folded Back Preview (Rotated 180°)</h3>
-                <div id="card-back-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[100px] flex flex-col justify-center items-center transform rotate-180">
-                    <!-- Card back content will be rendered here -->
+
+            <!-- Dynamic Sections -->
+            <div class="mb-4 border-t border-gray-700 pt-4">
+                <h3 class="text-xl font-semibold mb-3 text-purple-300">Content Sections</h3>
+                <div id="sections-container">
+                    <!-- Sections will be dynamically added here -->
                 </div>
+                <button id="add-section-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Section</button>
             </div>
-        </div>
 
-        <div class="mt-6 flex flex-col space-y-3">
-            <label class="block text-sm font-medium text-gray-300">Print/Export Scope:</label>
-            <div class="flex space-x-4 mb-4">
+            <!-- Stats -->
+            <div class="mb-4 border-t border-gray-700 pt-4">
+                <h3 class="text-xl font-semibold mb-3 text-purple-300">Stats (Key-Value Pairs)</h3>
+                <div id="stats-container">
+                    <!-- Stats will be dynamically added here -->
+                </div>
+                <button id="add-stat-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Stat</button>
+            </div>
+
+            <!-- Tags and Footer -->
+            <div class="mb-4 border-t border-gray-700 pt-4">
+                <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags (Comma-separated)</label>
+                <input type="text" id="tags" name="tags" placeholder="e.g., Fire, Spell, Evocation" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="footer" class="block text-sm font-medium text-gray-300 mb-1">Footer Text (Optional)</label>
+                <input type="text" id="footer" name="footer" placeholder="e.g., Source: PHB" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+
+            <!-- Folded Card Options -->
+            <div class="mb-4 border-t border-gray-700 pt-4">
+                <h3 class="text-xl font-semibold mb-3 text-purple-300">Card Folding</h3>
                 <label class="inline-flex items-center">
-                    <input type="radio" name="printScope" value="current" checked class="form-radio h-4 w-4 text-purple-600">
-                    <span class="ml-2 text-gray-300">Current Card</span>
+                    <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-purple-600 rounded">
+                    <span class="ml-2 text-gray-300">Folded Card</span>
                 </label>
-                <label class="inline-flex items-center">
-                    <input type="radio" name="printScope" value="all" class="form-radio h-4 w-4 text-purple-600">
-                    <span class="ml-2 text-gray-300">All Cards</span>
-                </label>
+
+                <div id="fold-content-options" class="mt-4 bg-gray-700 p-4 rounded-md hidden">
+                    <h4 class="text-lg font-semibold mb-2 text-purple-200">Back/Bottom Fold Content</h4>
+                    <div class="mb-3">
+                        <label for="fold-content-type" class="block text-sm font-medium text-gray-300 mb-1">Content Type</label>
+                        <select id="fold-content-type" name="foldContentType" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500 focus:ring-purple-500 focus:border-purple-500">
+                            <option value="text">Text</option>
+                            <option value="imageUrl">Image URL</option>
+                            <option value="qrCode">QR Code</option>
+                        </select>
+                    </div>
+
+                    <div id="fold-text-input" class="mb-3">
+                        <label for="fold-content-text" class="block text-sm font-medium text-gray-300 mb-1">Text for Fold</label>
+                        <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Content for the back of the folded card."></textarea>
+                    </div>
+                    <div id="fold-image-input" class="mb-3 hidden">
+                        <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL or Icon Name for Fold</label>
+                        <input type="text" id="fold-content-image-url" name="foldContentImageUrl" list="icon-suggestions" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="e.g., swords or https://example.com/back_design.png">
+                    </div>
+                    <div id="fold-qr-input" class="mb-3 hidden">
+                        <label for="fold-content-qr-data" class="block text-sm font-medium text-gray-300 mb-1">QR Code Data</label>
+                        <input type="text" id="fold-content-qr-data" name="foldContentQrCodeData" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://your-game-link.com">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Section -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Import Card Data</h2>
+
+            <div class="mb-4">
+                <label for="rpg-cards-json-file" class="block text-sm font-medium text-gray-300 mb-2">Import from rpg-cards.vercel.app (.json file)</label>
+                <input type="file" id="rpg-cards-json-file" accept=".json" class="w-full text-gray-300 bg-gray-700 rounded-md p-2 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600">
             </div>
 
-            <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Print Thermal Card</button>
-            <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
-            <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Card Image(s)</button>
-            <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
-            <button id="copy-bookmark-link-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
+            <div class="mb-4">
+                <label for="5e-tools-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html</label>
+                <textarea id="5e-tools-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste your 5e.tools JSON here..."></textarea>
+            </div>
+
+            <div class="mb-4">
+                <label for="generic-json-paste" class="block text-sm font-medium text-gray-300 mb-2">Paste Generic JSON</label>
+                <textarea id="generic-json-paste" rows="6" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500" placeholder="Paste any other TTRPG card JSON here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Printer Settings & Preview -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Printer Settings & Preview</h2>
+
+            <div class="mb-4">
+                <label for="printer-type" class="block text-sm font-medium text-gray-300 mb-1">Select Printer Type</label>
+                <select type="text" id="printer-type" name="printerType" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="thermal">Thermal Receipt Printer (Monochrome)</option>
+                    <option value="color">Color Photo Printer (Kodak Zink / Fujifilm Instax)</option>
+                </select>
+            </div>
+
+            <div id="thermal-paper-size-container" class="mb-4">
+                <label for="thermal-paper-size" class="block text-sm font-medium text-gray-300 mb-1">Thermal Paper Size</label>
+                <select id="thermal-paper-size" name="thermalPaperSize" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="58mm">58mm (Print Width ~48mm)</option>
+                    <option value="80mm">80mm (Print Width ~72mm)</option>
+                </select>
+            </div>
+
+            <div id="thermal-dpi-container" class="mb-4">
+                <label for="thermal-dpi" class="block text-sm font-medium text-gray-300 mb-1">Thermal Printer DPI</label>
+                <select id="thermal-dpi" name="thermalDpi" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="203">203 DPI (Standard)</option>
+                    <option value="180">180 DPI</option>
+                    <option value="200">200 DPI</option>
+                    <option value="300">300 DPI</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="num-copies" class="block text-sm font-medium text-gray-300 mb-1">Number of Copies (1-10)</label>
+                <input type="number" id="num-copies" name="numCopies" min="1" max="10" value="1" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+
+            <!-- Card Preview Area -->
+            <div id="card-preview-container" class="p-4 rounded-lg shadow-lg border-2 overflow-hidden">
+                <h3 class="text-xl font-bold mb-2 text-center" id="preview-title">Card Preview (Monochrome)</h3>
+                <div id="card-front-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[150px] flex flex-col justify-between">
+                    <!-- Card front content will be rendered here -->
+                </div>
+                <div id="card-back-preview-container" class="mt-4 hidden">
+                    <h3 class="text-xl font-bold mb-2 text-center">Folded Back Preview (Rotated 180°)</h3>
+                    <div id="card-back-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[100px] flex flex-col justify-center items-center transform rotate-180">
+                        <!-- Card back content will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-col space-y-3">
+                <label class="block text-sm font-medium text-gray-300">Print/Export Scope:</label>
+                <div class="flex space-x-4 mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="printScope" value="current" checked class="form-radio h-4 w-4 text-purple-600">
+                        <span class="ml-2 text-gray-300">Current Card</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="printScope" value="all" class="form-radio h-4 w-4 text-purple-600">
+                        <span class="ml-2 text-gray-300">All Cards</span>
+                    </label>
+                </div>
+
+                <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Preview & Print Thermal Card</button>
+                <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
+                <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Card Image(s)</button>
+                <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
+                <button id="copy-bookmark-link-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="card-view" class="hidden">
+        <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">Card Preview & Print</h1>
+
+        <div id="card-render-area" class="p-4 rounded-lg shadow-lg border-2 border-dashed border-gray-600 bg-gray-800">
+            <!-- The generated card HTML will be injected here by JavaScript -->
+            <p>Loading card preview...</p>
+        </div>
+
+        <div class="mt-6 flex gap-4">
+            <button id="card-view-print-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                Print Card
+            </button>
+            <button id="card-view-close-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                Close
+            </button>
         </div>
     </div>
 
@@ -1156,30 +1201,31 @@
         }
 
         // Print Thermal button handler
-        printThermalBtn.addEventListener('click', async () => {
-            showMessage('Preparing print data...');
-            const cardsToPrint = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+        printThermalBtn.addEventListener('click', () => {
+            showMessage('Opening card preview...');
+            const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
 
-            for (const card of cardsToPrint) {
-                const htmlContent = await generateThermalHtmlForCard(card);
-                const numCopies = appState.numCopies;
+            cardsToProcess.forEach((card, index) => {
+                // Stagger opening new tabs to avoid popup blockers
+                setTimeout(() => {
+                    const dataToSend = {
+                        card: card,
+                        settings: {
+                            thermalPaperSize: appState.thermalPaperSize,
+                            thermalDpi: appState.thermalDpi,
+                            numCopies: appState.numCopies
+                        }
+                    };
 
-                // Corrected URL format based on documentation
-                const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
-                const mobilePrintUtilUrl = `mobileprintutil://?html=${encodeURIComponent(htmlContent)}`;
+                    const encodedData = btoa(JSON.stringify(dataToSend));
+                    const url = `index.html?view=card&data=${encodedData}`;
+                    window.open(url, '_blank');
+                }, index * 150);
+            });
 
-                window.open(appLinkUrl, '_blank');
-                showMessage(`Attempting to open print app for "${card.title}" (Android App Link)...`);
-
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Small delay between prints
-
-                if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
-                    window.open(mobilePrintUtilUrl, '_blank');
-                    showMessage(`Attempting to open Mobile Print Util for "${card.title}" (iOS fallback)...`);
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                }
+            if (appState.printScope === 'all') {
+                showMessage(`Opening ${cardsToProcess.length} card(s) in new tabs.`);
             }
-            showMessage('Print commands sent for selected cards.');
         });
 
         // Print Color Photo button handler
@@ -1482,7 +1528,10 @@
 
         // Initial load and render
         window.addEventListener('load', async () => {
-            // Fetch the icon manifest first
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewMode = urlParams.get('view');
+
+            // Fetch the icon manifest first, as it's needed in both modes
             try {
                 const response = await fetch('./icon-lookup.json');
                 if (!response.ok) {
@@ -1495,8 +1544,64 @@
                 showMessage('Could not load local icons. Please check the console for details.', true);
             }
 
-            // Then load the rest of the application state
-            loadState();
+            if (viewMode === 'card') {
+                // --- CARD VIEW MODE ---
+                document.getElementById('main-generator-view').style.display = 'none';
+                const cardView = document.getElementById('card-view');
+                cardView.classList.remove('hidden');
+
+                const dataParam = urlParams.get('data');
+                if (!dataParam) {
+                    cardView.innerHTML = '<p class="text-red-400">Error: No card data provided in URL.</p>';
+                    return;
+                }
+
+                try {
+                    const decodedData = JSON.parse(atob(dataParam));
+                    const card = decodedData.card;
+                    const settings = decodedData.settings;
+
+                    // Temporarily update appState for rendering functions
+                    appState.thermalPaperSize = settings.thermalPaperSize;
+                    appState.thermalDpi = settings.thermalDpi;
+
+                    const cardRenderArea = document.getElementById('card-render-area');
+                    cardRenderArea.innerHTML = await generateThermalHtmlForCard(card);
+                    cardRenderArea.style.padding = '0';
+                    cardRenderArea.style.border = 'none';
+                    cardRenderArea.style.background = 'none';
+
+
+                    document.getElementById('card-view-close-btn').addEventListener('click', () => {
+                        window.close();
+                    });
+
+                    document.getElementById('card-view-print-btn').addEventListener('click', () => {
+                        const isAndroid = /Android/i.test(navigator.userAgent);
+                        const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                        const htmlContent = cardRenderArea.innerHTML;
+                        const numCopies = settings.numCopies || 1;
+
+                        if (isAndroid) {
+                            const appLinkUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${numCopies}&src='data:text/html,${encodeURIComponent(htmlContent)}'`;
+                            window.open(appLinkUrl, '_blank');
+                        } else if (isIos) {
+                            const mobilePrintUtilUrl = `mobileprintutil://?html=${encodeURIComponent(htmlContent)}`;
+                            window.open(mobilePrintUtilUrl, '_blank');
+                        } else {
+                            window.print();
+                        }
+                    });
+
+                } catch (error) {
+                    console.error('Error processing card view data:', error);
+                    cardView.innerHTML = `<p class="text-red-400">Error: Could not read card data. It may be corrupted. ${error.message}</p>`;
+                }
+
+            } else {
+                // --- DEFAULT GENERATOR VIEW MODE ---
+                loadState();
+            }
         });
     </script>
 </body>

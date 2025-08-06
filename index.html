@@ -1430,9 +1430,9 @@
                             // New logic: Check manifest first, then URL, then Font Awesome
                             if (iconManifest[card.icon]) {
                                 const iconPath = iconManifest[card.icon];
-                                iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
+                                iconRenderHtml = `<div style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in;"><img src="${iconPath}" alt="${card.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" /></div>`;
                             } else if (isURL(card.icon)) {
-                                iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
+                                iconRenderHtml = `<div style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in;"><img src="${card.icon}" alt="Card Icon" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" /></div>`;
                             } else {
                                 iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in; display: flex; justify-content: center; align-items: center;"></i>`;
                             }

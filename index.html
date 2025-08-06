@@ -1487,10 +1487,9 @@
             const encodedData = btoa(JSON.stringify(dataToSend));
 
             const currentUrl = new URL(window.location.href);
-            // Clear existing params to create a clean link
+            // Clear existing params to create a clean link for the editor view
             currentUrl.search = '';
-            currentUrl.searchParams.set('view', 'card');
-            currentUrl.searchParams.set('data', encodedData);
+            currentUrl.searchParams.set('cardData', encodedData); // Use 'cardData' to be handled by loadState
 
             const bookmarkLink = currentUrl.toString();
 

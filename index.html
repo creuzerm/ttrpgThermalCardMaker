@@ -1226,19 +1226,20 @@
             // Use a specific class to scope the styles and queries
             tempContainer.className = 'card-export-render-container';
 
-            let targetWidthPx;
+            let targetWidthPx, targetHeightPx;
             let htmlContent = '';
 
             // This logic is mostly extracted from the original download/share buttons
             if (printerType === 'thermal') {
                 targetWidthPx = getPixelWidth(thermalPaperSize, appState.thermalDpi);
+                targetHeightPx = targetWidthPx * (card.isFolded ? 2.8 : 1.4); // Maintain aspect ratio, account for fold
                 // For thermal, we let the content define the height. The container will have two divs.
                 tempContainer.style.width = `${targetWidthPx}px`;
                 htmlContent = await generateThermalHtmlForCard(card); // This function already produces a complete HTML string
             } else { // 'color' printer type
                 targetWidthPx = 600;
                 // For folded color cards, the canvas is twice the height of the front (1:1.5 ratio)
-                const targetHeightPx = card.isFolded ? (targetWidthPx * 1.5 * 2) : (targetWidthPx * 1.5);
+                targetHeightPx = card.isFolded ? (targetWidthPx * 1.5 * 2) : (targetWidthPx * 1.5);
                 tempContainer.style.width = `${targetWidthPx}px`;
                 tempContainer.style.height = `${targetHeightPx}px`;
                 tempContainer.style.overflow = 'hidden';
@@ -1303,8 +1304,8 @@
             const canvas = await html2canvas(tempContainer, {
                 useCORS: true,
                 logging: false,
-                width: tempContainer.offsetWidth,
-                height: tempContainer.offsetHeight,
+                width: targetWidthPx,
+                height: targetHeightPx,
             });
 
             // Manually draw images onto the canvas to bypass html2canvas rendering bugs

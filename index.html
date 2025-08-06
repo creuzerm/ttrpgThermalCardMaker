@@ -117,8 +117,14 @@
         </div>
 
         <div class="mb-4">
-            <label for="icon" class="block text-sm font-medium text-gray-300 mb-1">Icon Name (e.g., magic-swirl, crossed-swords) or Image URL</label>
-            <input type="text" id="icon" name="icon" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            <div class="flex justify-between items-center mb-1">
+                <label for="icon" class="block text-sm font-medium text-gray-300">Icon Name or Image URL</label>
+                <a href="https://game-icons.net/" target="_blank" class="text-xs text-purple-400 hover:underline">Full list of icons...</a>
+            </div>
+            <input type="text" id="icon" name="icon" list="icon-suggestions" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            <datalist id="icon-suggestions">
+                <!-- Options will be populated by JS -->
+            </datalist>
         </div>
 
         <div class="mb-4">
@@ -179,8 +185,8 @@
                     <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Content for the back of the folded card."></textarea>
                 </div>
                 <div id="fold-image-input" class="mb-3 hidden">
-                    <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL for Fold</label>
-                    <input type="text" id="fold-content-image-url" name="foldContentImageUrl" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://example.com/back_design.png">
+                    <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL or Icon Name for Fold</label>
+                    <input type="text" id="fold-content-image-url" name="foldContentImageUrl" list="icon-suggestions" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="e.g., swords or https://example.com/back_design.png">
                 </div>
                 <div id="fold-qr-input" class="mb-3 hidden">
                     <label for="fold-content-qr-data" class="block text-sm font-medium text-gray-300 mb-1">QR Code Data</label>
@@ -272,6 +278,7 @@
 
     <script>
         // Global application state
+        let iconManifest = {}; // To be populated from icon-lookup.json
         let appState = {
             cards: [ // Array to hold all cards
                 {
@@ -303,7 +310,8 @@
             printerType: 'thermal', // 'thermal' or 'color'
             thermalPaperSize: '58mm', // '58mm', '80mm'
             numCopies: 1, // Number of copies for the current card
-            printScope: 'current' // 'current' or 'all'
+            printScope: 'current', // 'current' or 'all'
+            rememberedIcons: []
         };
 
         // DOM Elements (defined after appState for clarity, but before functions that use them)
@@ -482,20 +490,25 @@
 
             let iconHtml = '';
             if (card.icon) {
-                if (isURL(card.icon)) {
-                    iconHtml = `<img src="${card.icon}" alt="Card Icon" class="w-12 h-12 object-contain mb-2 ${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
+                // New logic: First check the manifest for a local icon path
+                if (iconManifest[card.icon]) {
+                    const iconPath = iconManifest[card.icon];
+                    iconHtml = `<img src="${iconPath}" alt="${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
+                } else if (isURL(card.icon)) {
+                    // Fallback to URL if it's a valid URL
+                    iconHtml = `<img src="${card.icon}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
                 } else {
-                    // Assume it's a Font Awesome class name
-                    iconHtml = `<i class="fa-solid fa-${card.icon} card-icon-fa ${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
+                    // Finally, assume it's a Font Awesome class name
+                    iconHtml = `<i class="fa-solid fa-${card.icon} card-icon-fa" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
                 }
             }
 
             cardFrontPreview.className = `relative mx-auto p-2 border border-dashed border-gray-400 rounded-md ${widthClass} min-h-[150px] flex flex-col justify-between`;
             cardFrontPreview.innerHTML = `
+                ${iconHtml}
                 <div class="flex flex-col items-center mb-2">
                     <h1 class="text-2xl font-extrabold text-center mb-1 leading-tight">${card.title || ''}</h1>
                     ${card.type ? `<p class="text-lg text-center mb-2">${card.type}</p>` : ''}
-                    ${iconHtml}
                 </div>
 
                 ${(card.stats && Object.keys(card.stats).length > 0) ? `
@@ -533,7 +546,11 @@
                 if (foldContent.type === 'text' && foldContent.text) {
                     foldContentHtml = `<p class="text-sm text-center card-content">${formatText(foldContent.text)}</p>`;
                 } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
-                    foldContentHtml = `<img src="${foldContent.imageUrl}" alt="Fold Back Image" class="w-24 h-24 object-contain ${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/96x96/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=BACK+IMG';" />`;
+                    let backImagePath = foldContent.imageUrl;
+                    if (iconManifest[backImagePath]) {
+                        backImagePath = iconManifest[backImagePath];
+                    }
+                    foldContentHtml = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><img src="${backImagePath}" alt="Fold Back Image" style="width: 100%; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/96x96/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=BACK+IMG';" /></div>`;
                 } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
                     foldContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(foldContent.qrCodeData)}" alt="QR Code" class="w-24 h-24 object-contain" onerror="this.src='https://placehold.co/96x96/000/FFF?text=QR';" />`;
                 }
@@ -689,6 +706,7 @@
                             }
                         }
                         if (parsedState.printScope) appState.printScope = parsedState.printScope;
+                        if (parsedState.rememberedIcons) appState.rememberedIcons = parsedState.rememberedIcons;
 
                     }
                 }
@@ -711,6 +729,7 @@
                 showMessage('Failed to load card data. Starting with a new card.', true);
             }
             updateUIFromAppState();
+            populateIconSuggestions();
         }
 
         // JSON Import Handlers
@@ -888,10 +907,31 @@
             saveState();
         }
 
+        function populateIconSuggestions() {
+            const suggestionsDatalist = document.getElementById('icon-suggestions');
+            const defaultIcons = ['imp-laugh', 'crossed-swords', 'magic-swirl', 'family-tree', 'farmer', 'checkbox-tree'];
+            const allSuggestions = [...new Set([...defaultIcons, ...appState.rememberedIcons])];
+
+            suggestionsDatalist.innerHTML = allSuggestions.map(icon => `<option value="${icon}"></option>`).join('');
+        }
+
+        function rememberIcon(iconName) {
+            if (iconName && !isURL(iconName) && !appState.rememberedIcons.includes(iconName)) {
+                appState.rememberedIcons.push(iconName);
+                populateIconSuggestions();
+                saveState();
+            }
+        }
+
         // Event Listeners for main card inputs
         titleInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].title = e.target.value; saveState(); updateCardPreview(); updateCardNavigationUI(); });
         typeInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].type = e.target.value; saveState(); updateCardPreview(); });
-        iconInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].icon = e.target.value; saveState(); updateCardPreview(); });
+        iconInput.addEventListener('input', (e) => {
+            appState.cards[appState.currentCardIndex].icon = e.target.value;
+            rememberIcon(e.target.value);
+            saveState();
+            updateCardPreview();
+        });
         colorInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].color = e.target.value; saveState(); updateCardPreview(); });
         tagsInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].tags = e.target.value.split(',').map(tag => tag.trim()); saveState(); updateCardPreview(); });
         footerInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].footer = e.target.value; saveState(); updateCardPreview(); });
@@ -939,7 +979,12 @@
 
         // Fold content inputs
         foldContentTextarea.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].foldContent.text = e.target.value; updateCardPreview(); saveState(); });
-        foldContentImageUrlInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].foldContent.imageUrl = e.target.value; updateCardPreview(); saveState(); });
+        foldContentImageUrlInput.addEventListener('input', (e) => {
+            appState.cards[appState.currentCardIndex].foldContent.imageUrl = e.target.value;
+            rememberIcon(e.target.value);
+            updateCardPreview();
+            saveState();
+        });
         foldContentQrDataInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].foldContent.qrCodeData = e.target.value; updateCardPreview(); saveState(); });
 
         // Printer type selection
@@ -1008,18 +1053,25 @@
 
             let iconRenderHtml = '';
             if (card.icon) {
-                if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${card.icon}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                // New logic: Check manifest first, then URL, then fallback
+                if (iconManifest[card.icon]) {
+                    const iconPath = iconManifest[card.icon];
+                    iconRenderHtml = `<img src="${iconPath}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                } else if (isURL(card.icon)) {
+                    iconRenderHtml = `<img src="${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
-                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" />`;
+                    // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
+                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain; filter: grayscale(100%);" />`;
                 }
             }
 
             let htmlContent = `
-                <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff;">
-                    <h1 style="text-align: center; font-size: 24px; margin-bottom: 4px; line-height: 1.2;">${card.title || ''}</h1>
-                    ${card.type ? `<p style="text-align: center; font-size: 16px; margin-bottom: 8px;">${card.type}</p>` : ''}
+                <div style="position: relative; width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
                     ${iconRenderHtml}
+                    <div>
+                        <h1 style="text-align: center; font-size: 24px; margin-bottom: 4px; line-height: 1.2;">${card.title || ''}</h1>
+                        ${card.type ? `<p style="text-align: center; font-size: 16px; margin-bottom: 8px;">${card.type}</p>` : ''}
+                    </div>
 
                     ${(card.stats && Object.keys(card.stats).length > 0) ? `
                         <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; font-size: 14px;">
@@ -1029,7 +1081,7 @@
                         </div>
                     ` : ''}
 
-                    <div class="flex-grow overflow-hidden">
+                    <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around;">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
                                 ${section.heading ? `<h2 style="font-size: 18px; margin-bottom: 4px; border-bottom: 1px dashed #999; padding-bottom: 2px;">${section.heading}</h2>` : ''}
@@ -1039,22 +1091,24 @@
                         `).join('') : ''}
                     </div>
 
-                    ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                        <p style="font-size: 12px; text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 4px;">Tags: ${card.tags.join(', ')}</p>
-                    ` : ''}
+                    <div>
+                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
+                            <p style="font-size: 12px; text-align: center; margin-top: 8px; border-top: 1px dashed #999; padding-top: 4px;">Tags: ${card.tags.join(', ')}</p>
+                        ` : ''}
 
-                    ${card.footer ? `<p style="font-size: 12px; text-align: center; margin-top: 8px;">${card.footer || ''}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: 12px; text-align: center; margin-top: 8px;">${card.footer || ''}</p>` : ''}
+                    </div>
                 </div>
             `;
 
             if (card.isFolded) {
                 htmlContent += `
-                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center;">
+                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: 8px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center; display: flex; justify-content: center; align-items: center;">
                         ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
                             <p style="font-size: 14px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                            <img src="${card.foldContent.imageUrl}" style="display: block; margin: 0 auto; max-width: 80%; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
+                            <img src="${iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: 80px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
@@ -1114,18 +1168,22 @@
 
                 let iconRenderHtml = '';
                 if (card.icon) {
-                    if (isURL(card.icon)) {
-                        iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
+                    // New logic: Check manifest first, then URL, then Font Awesome
+                    if (iconManifest[card.icon]) {
+                        const iconPath = iconManifest[card.icon];
+                        iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
+                    } else if (isURL(card.icon)) {
+                        iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
                     } else {
-                        iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
+                        iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in;"></i>`;
                     }
                 }
 
                 const frontHtml = `
-                    <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                    <div style="position: relative; width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                    ${iconRenderHtml}
                     <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
                     ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
-                    ${iconRenderHtml}
 
                     <div style="flex-grow: 1; overflow: hidden; width: 100%;">
                         ${(card.stats && Object.keys(card.stats).length > 0) ? `
@@ -1160,7 +1218,7 @@
                             <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                            <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
+                            <img src="${iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl}" style="width: 100%; object-fit: contain;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
@@ -1171,6 +1229,10 @@
                 }
 
                 document.body.appendChild(tempContainer);
+
+                if (printerType === 'thermal') {
+                    targetHeightPx = tempContainer.offsetHeight;
+                }
 
                 try {
                     const canvas = await html2canvas(tempContainer, {
@@ -1220,6 +1282,16 @@
         });
 
         // Download Image button handler
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Handle CORS
+                img.onload = () => resolve(img);
+                img.onerror = (err) => reject(err);
+                img.src = src;
+            });
+        }
+
         function downloadImage(imageDataUrl, cardTitle = 'card') {
             const link = document.createElement('a');
             link.href = imageDataUrl;
@@ -1253,11 +1325,13 @@
 
                 if (printerType === 'thermal') {
                     targetWidthPx = thermalPaperSize === '58mm' ? 384 : 576;
+                    targetHeightPx = targetWidthPx * 1.4; // Maintain aspect ratio
                     tempContainer.style.width = `${targetWidthPx}px`;
+                    tempContainer.style.height = `${targetHeightPx}px`;
                     tempContainer.innerHTML = await generateThermalHtmlForCard(card);
                 } else {
                     targetWidthPx = 600;
-                    targetHeightPx = card.isFolded ? 1800 : 900;
+                    targetHeightPx = card.isFolded ? (targetWidthPx * 1.4 * 2) : (targetWidthPx * 1.4);
                     tempContainer.style.width = `${targetWidthPx}px`;
                     tempContainer.style.height = `${targetHeightPx}px`;
                     tempContainer.style.overflow = 'hidden';
@@ -1265,18 +1339,22 @@
 
                     let iconRenderHtml = '';
                     if (card.icon) {
-                        if (isURL(card.icon)) {
-                            iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
+                        // New logic: Check manifest first, then URL, then Font Awesome
+                        if (iconManifest[card.icon]) {
+                            const iconPath = iconManifest[card.icon];
+                            iconRenderHtml = `<div style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; background-image: url('${iconPath}'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>`;
+                        } else if (isURL(card.icon)) {
+                            iconRenderHtml = `<div style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; background-image: url('${card.icon}'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>`;
                         } else {
-                            iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
+                            iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in; display: flex; justify-content: center; align-items: center;"></i>`;
                         }
                     }
 
                     const frontHtml = `
-                        <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                        <div style="position: relative; width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                        ${iconRenderHtml}
                         <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
                         ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
-                        ${iconRenderHtml}
 
                         <div style="flex-grow: 1; overflow: hidden; width: 100%;">
                             ${(card.stats && Object.keys(card.stats).length > 0) ? `
@@ -1303,23 +1381,23 @@
                         </div>
                     `;
                     tempContainer.innerHTML = frontHtml;
+                        }
 
-                    if (card.isFolded) {
-                        const backHtml = `
+                        if (card.isFolded) {
+                            const backHtml = `
                             <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
                             ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
                                 <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
                             ` : ''}
                             ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                                <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
+                                <div style="width: 100%; height: 100%; background-image: url('${iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl}'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
                             ` : ''}
                             ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
                             ` : ''}
                             </div>
                         `;
-                        tempContainer.innerHTML += backHtml;
-                    }
+                            tempContainer.innerHTML += backHtml;
                 }
 
                 document.body.appendChild(tempContainer);
@@ -1332,6 +1410,39 @@
                         width: targetWidthPx,
                         height: targetHeightPx
                     });
+
+                    // Post-process the canvas to draw images correctly
+                    const ctx = canvas.getContext('2d');
+                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+
+                    if (iconUrl) {
+                        const img = await loadImage(iconUrl);
+                        const iconSize = 0.25 * 96; // 0.25 inch at 96 DPI
+                        const margin = 0.125 * 96;
+                        const aspectRatio = img.width / img.height;
+                        let newWidth = iconSize;
+                        let newHeight = iconSize / aspectRatio;
+                        if (newHeight > iconSize) {
+                            newHeight = iconSize;
+                            newWidth = iconSize * aspectRatio;
+                        }
+                        ctx.drawImage(img, targetWidthPx - margin - newWidth, margin, newWidth, newHeight);
+                    }
+
+                    if (card.isFolded && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                        const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                        const backImg = await loadImage(backImgUrl);
+                        const backAspectRatio = backImg.width / backImg.height;
+                        let backWidth = targetWidthPx;
+                        let backHeight = targetWidthPx / backAspectRatio;
+                        if (backHeight > targetHeightPx / 2) {
+                            backHeight = targetHeightPx / 2;
+                            backWidth = backHeight * backAspectRatio;
+                        }
+                        const backY = targetHeightPx - backHeight;
+                        ctx.drawImage(backImg, (targetWidthPx - backWidth) / 2, backY, backWidth, backHeight);
+                    }
+
                     const imageDataUrl = canvas.toDataURL('image/png');
                     downloadImage(imageDataUrl, card.title);
                 } catch (error) {
@@ -1362,79 +1473,136 @@
                         const tempContainer = document.createElement('div');
                         tempContainer.style.position = 'absolute';
                         tempContainer.style.left = '-9999px';
-                        tempContainer.style.width = '600px';
-                        tempContainer.style.height = card.isFolded ? '1800px' : '900px';
-                        tempContainer.style.overflow = 'hidden';
-                        tempContainer.style.backgroundColor = card.color || '#ffffff';
 
-                        let iconRenderHtml = '';
-                        if (card.icon) {
-                            if (isURL(card.icon)) {
-                                iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
-                            } else {
-                                iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="font-size: 150px; color: #4a6898; margin-bottom: 15px;"></i>`;
+                        let targetWidthPx;
+                        let targetHeightPx;
+
+                        if (appState.printerType === 'thermal') {
+                            targetWidthPx = appState.thermalPaperSize === '58mm' ? 384 : 576;
+                            targetHeightPx = targetWidthPx * 1.4; // Maintain aspect ratio
+                            tempContainer.style.width = `${targetWidthPx}px`;
+                            tempContainer.style.height = `${targetHeightPx}px`;
+                            tempContainer.innerHTML = await generateThermalHtmlForCard(card);
+                        } else {
+                            targetWidthPx = 600;
+                            targetHeightPx = card.isFolded ? (targetWidthPx * 1.4 * 2) : (targetWidthPx * 1.4);
+                            tempContainer.style.width = `${targetWidthPx}px`;
+                            tempContainer.style.height = `${targetHeightPx}px`;
+                            tempContainer.style.overflow = 'hidden';
+                            tempContainer.style.backgroundColor = card.color || '#ffffff';
+
+                            let iconRenderHtml = '';
+                            if (card.icon) {
+                                // New logic: Check manifest first, then URL, then Font Awesome
+                                if (iconManifest[card.icon]) {
+                                    const iconPath = iconManifest[card.icon];
+                            iconRenderHtml = `<div style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; background-image: url('${iconPath}'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>`;
+                                } else if (isURL(card.icon)) {
+                            iconRenderHtml = `<div style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; background-image: url('${card.icon}'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>`;
+                                } else {
+                                    iconRenderHtml = `<i class="fa-solid fa-${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in; display: flex; justify-content: center; align-items: center;"></i>`;
+                                }
+                            }
+
+                            const frontHtml = `
+                            <div style="position: relative; width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                            ${iconRenderHtml}
+                            <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
+                            ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
+
+                            <div style="flex-grow: 1; overflow: hidden; width: 100%;">
+                                ${(card.stats && Object.keys(card.stats).length > 0) ? `
+                                <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
+                                    ${Object.entries(card.stats).map(([key, value]) => `
+                                    <span style="margin: 0 15px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>
+                                    `).join('')}
+                                </div>
+                                ` : ''}
+
+                                ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
+                                <div style="margin-bottom: 15px; text-align: left;">
+                                    ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
+                                    <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body || '')}</p>
+                                    ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText || '')}</p>` : ''}
+                                </div>
+                                `).join('') : ''}
+                            </div>
+
+                            ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
+                                <p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>
+                            ` : ''}
+                            ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer || ''}</p>` : ''}
+                            </div>
+                        `;
+                            tempContainer.innerHTML = frontHtml;
+                        }
+
+                        if (card.isFolded) {
+                            if (appState.printerType !== 'thermal') {
+                                const backHtml = `
+                                <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
+                                ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
+                                    <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
+                                ` : ''}
+                                ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
+                                    <div style="width: 100%; height: 100%; background-image: url('${iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl}'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+                                ` : ''}
+                                ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
+                                ` : ''}
+                                </div>
+                            `;
+                                tempContainer.innerHTML += backHtml;
                             }
                         }
 
-                        const frontHtml = `
-                        <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
-                        <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
-                        ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
-                        ${iconRenderHtml}
-
-                        <div style="flex-grow: 1; overflow: hidden; width: 100%;">
-                            ${(card.stats && Object.keys(card.stats).length > 0) ? `
-                            <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
-                                ${Object.entries(card.stats).map(([key, value]) => `
-                                <span style="margin: 0 15px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>
-                                `).join('')}
-                            </div>
-                            ` : ''}
-
-                            ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
-                            <div style="margin-bottom: 15px; text-align: left;">
-                                ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
-                                <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText || '')}</p>` : ''}
-                            </div>
-                            `).join('') : ''}
-                        </div>
-
-                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>
-                        ` : ''}
-                        ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer || ''}</p>` : ''}
-                        </div>
-                    `;
-                        tempContainer.innerHTML = frontHtml;
-
-                        if (card.isFolded) {
-                            const backHtml = `
-                            <div style="width: 600px; height: 900px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
-                            ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
-                                <p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
-                            ` : ''}
-                            ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                                <img src="${card.foldContent.imageUrl}" style="max-width: 80%; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=BACK+IMG';" />
-                            ` : ''}
-                            ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="max-width: 300px; height: auto;" onerror="this.src='https://placehold.co/300x300/000/FFF?text=QR';" />
-                            ` : ''}
-                            </div>
-                        `;
-                            tempContainer.innerHTML += backHtml;
-                        }
-
                         document.body.appendChild(tempContainer);
+
+                        if (appState.printerType === 'thermal') {
+                            targetHeightPx = tempContainer.offsetHeight;
+                        }
 
                         try {
                             const canvas = await html2canvas(tempContainer, {
                                 scale: 1,
                                 useCORS: true,
                                 logging: false,
-                                width: 600,
-                                height: card.isFolded ? 1800 : 900,
+                                width: targetWidthPx,
+                                height: targetHeightPx,
                             });
+
+                            // Post-process the canvas to draw images correctly
+                            const ctx = canvas.getContext('2d');
+                            const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+
+                            if (iconUrl) {
+                                const img = await loadImage(iconUrl);
+                                const iconSize = 0.25 * 96; // 0.25 inch at 96 DPI
+                                const margin = 0.125 * 96;
+                                const aspectRatio = img.width / img.height;
+                                let newWidth = iconSize;
+                                let newHeight = iconSize / aspectRatio;
+                                if (newHeight > iconSize) {
+                                    newHeight = iconSize;
+                                    newWidth = iconSize * aspectRatio;
+                                }
+                                ctx.drawImage(img, targetWidthPx - margin - newWidth, margin, newWidth, newHeight);
+                            }
+
+                            if (card.isFolded && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                                const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                                const backImg = await loadImage(backImgUrl);
+                                const backAspectRatio = backImg.width / backImg.height;
+                                let backWidth = targetWidthPx;
+                                let backHeight = targetWidthPx / backAspectRatio;
+                                if (backHeight > targetHeightPx / 2) {
+                                    backHeight = targetHeightPx / 2;
+                                    backWidth = backHeight * backAspectRatio;
+                                }
+                                const backY = targetHeightPx - backHeight;
+                                ctx.drawImage(backImg, (targetWidthPx - backWidth) / 2, backY, backWidth, backHeight);
+                            }
+
                             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                             files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
                         } finally {
@@ -1487,7 +1655,21 @@
         });
 
         // Initial load and render
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            // Fetch the icon manifest first
+            try {
+                const response = await fetch('./icon-lookup.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                iconManifest = await response.json();
+                console.log('Icon manifest loaded successfully.');
+            } catch (error) {
+                console.error('Could not load icon manifest:', error);
+                showMessage('Could not load local icons. Please check the console for details.', true);
+            }
+
+            // Then load the rest of the application state
             loadState();
         });
     </script>

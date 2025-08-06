@@ -1016,7 +1016,7 @@
             if (card.icon) {
                 // New logic: Check manifest first, then URL, then fallback
                 if (iconManifest[card.icon]) {
-                    const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                    const iconPath = iconManifest[card.icon];
                     iconRenderHtml = `<img src="${iconPath}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
                     iconRenderHtml = `<img src="${card.icon}" style="display: block; margin: 0 auto 8px auto; max-width: 60px; height: auto; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
@@ -1127,7 +1127,7 @@
                 if (card.icon) {
                     // New logic: Check manifest first, then URL, then Font Awesome
                     if (iconManifest[card.icon]) {
-                        const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                        const iconPath = iconManifest[card.icon];
                         iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
                     } else if (isURL(card.icon)) {
                         iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
@@ -1282,7 +1282,7 @@
                     if (card.icon) {
                         // New logic: Check manifest first, then URL, then Font Awesome
                         if (iconManifest[card.icon]) {
-                            const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                            const iconPath = iconManifest[card.icon];
                             iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
                         } else if (isURL(card.icon)) {
                             iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;
@@ -1390,7 +1390,7 @@
                         if (card.icon) {
                             // New logic: Check manifest first, then URL, then Font Awesome
                             if (iconManifest[card.icon]) {
-                                const iconPath = new URL(iconManifest[card.icon], window.location.href).href;
+                                const iconPath = iconManifest[card.icon];
                                 iconRenderHtml = `<img src="${iconPath}" alt="${card.icon}" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=ICON';" />`;
                             } else if (isURL(card.icon)) {
                                 iconRenderHtml = `<img src="${card.icon}" alt="Card Icon" style="max-width: 150px; height: auto; margin-bottom: 15px;" onerror="this.src='https://placehold.co/150x150/000/FFF?text=IMG';" />`;

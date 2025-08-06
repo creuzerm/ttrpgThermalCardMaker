@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const iconsDir = path.join(__dirname, 'game-icons');
-const outputFile = path.join(__dirname, 'icon-lookup.json');
+const iconsDir = 'game-icons';
+const outputFile = 'icon-lookup.json';
 const iconMap = {};
 const seenNames = new Set();
 

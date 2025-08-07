@@ -235,6 +235,13 @@
                 <input type="number" id="num-copies" name="numCopies" min="1" max="10" value="1" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
             </div>
 
+            <div class="mb-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="include-corner-dots" name="includeCornerDots" class="form-checkbox h-5 w-5 text-purple-600 rounded" checked>
+                    <span class="ml-2 text-gray-300">Include Corner Dots (for PDF)</span>
+                </label>
+            </div>
+
             <!-- Card Preview Area -->
             <div id="card-preview-container" class="p-4 rounded-lg shadow-lg border-2 overflow-hidden">
                 <h3 class="text-xl font-bold mb-2 text-center" id="preview-title">Card Preview (Monochrome)</h3>
@@ -391,6 +398,7 @@
             printScope: 'current', // 'current' or 'all'
             thermalDpi: 203, // 180, 200, 203, 300
             outputFormat: 'pdf', // 'pdf' or 'png'
+            includeCornerDots: true,
             rememberedIcons: []
         };
 
@@ -422,7 +430,8 @@
         const thermalDpiContainer = document.getElementById('thermal-dpi-container');
         const thermalPaperSizeSelect = document.getElementById('thermal-paper-size');
         const thermalDpiSelect = document.getElementById('thermal-dpi');
-        const numCopiesInput = document.getElementById('num-copies'); // New
+        const numCopiesInput = document.getElementById('num-copies');
+        const includeCornerDotsCheckbox = document.getElementById('include-corner-dots');
         const cardPreviewContainer = document.getElementById('card-preview-container');
         const previewTitle = document.getElementById('preview-title');
         const cardFrontPreview = document.getElementById('card-front-preview');
@@ -753,6 +762,7 @@
             thermalPaperSizeSelect.value = appState.thermalPaperSize;
             thermalDpiSelect.value = appState.thermalDpi;
             numCopiesInput.value = appState.numCopies;
+            includeCornerDotsCheckbox.checked = appState.includeCornerDots;
 
             if (!currentCard.foldContent || typeof currentCard.foldContent !== 'object') {
                 currentCard.foldContent = { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
@@ -835,6 +845,9 @@
                             }
                         }
                         if (parsedState.printScope) appState.printScope = parsedState.printScope;
+                        if (typeof parsedState.includeCornerDots === 'boolean') {
+                            appState.includeCornerDots = parsedState.includeCornerDots;
+                        }
                         if (parsedState.rememberedIcons) appState.rememberedIcons = parsedState.rememberedIcons;
 
                     }
@@ -1127,6 +1140,11 @@
             if (val > 10) val = 10;
             appState.numCopies = val; // This is a global setting, not per card for now
             e.target.value = val;
+            saveState();
+        });
+
+        includeCornerDotsCheckbox.addEventListener('change', (e) => {
+            appState.includeCornerDots = e.target.checked;
             saveState();
         });
 
@@ -1590,12 +1608,16 @@
                 }
 
                 doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-                addCornerDots(doc, pdfWidth, pdfHeight);
+                if (appState.includeCornerDots) {
+                    addCornerDots(doc, pdfWidth, pdfHeight);
+                }
 
                 if (canvases.length > 1) {
                     doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
                     doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    addCornerDots(doc, pdfWidth, pdfHeight);
+                    if (appState.includeCornerDots) {
+                        addCornerDots(doc, pdfWidth, pdfHeight);
+                    }
                 }
 
                 isFirstPage = false;

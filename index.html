@@ -1363,7 +1363,7 @@
                 cardViewUrl.searchParams.set('view', 'card');
                 cardViewUrl.searchParams.set('data', encodedData);
 
-                const printUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='${cardViewUrl.toString()}'`;
+                const printUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='${encodeURIComponent(cardViewUrl.toString())}'`;
                 printButton.href = printUrl;
                 printButton.classList.remove('hidden');
             } else {

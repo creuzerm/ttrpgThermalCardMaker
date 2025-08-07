@@ -1245,7 +1245,6 @@
             return Math.round(printableWidthIn * dpi);
         }
 
-        // Generate HTML for thermal printer
         async function generateThermalHtmlForCard(card) {
             const widthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
             const baseWidth = 384; // Use 58mm @ 203 DPI as the baseline for scaling
@@ -1254,16 +1253,8 @@
             let iconRenderHtml = '';
             if (card.icon) {
                 const iconSize = 24 * scaleFactor; // 0.25in at base resolution
-                // New logic: Check manifest first, then URL, then fallback
-                if (iconManifest[card.icon]) {
-                    const iconPath = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${iconPath}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
-                } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
-                } else {
-                    // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
-                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
-                }
+                // MODIFIED: Use a placeholder div for manual rendering in generateCardCanvas.
+                iconRenderHtml = `<div id="card-export-icon-placeholder" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain;"></div>`;
             }
 
             let htmlContent = `
@@ -1303,17 +1294,21 @@
             `;
 
             if (card.isFolded) {
+                let backContentHtml = '';
+                const foldContent = card.foldContent || {};
+                if (foldContent.type === 'text' && foldContent.text) {
+                    backContentHtml = `<p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(foldContent.text)}</p>`;
+                } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
+                    // MODIFIED: Use a placeholder div for manual rendering in generateCardCanvas.
+                    backContentHtml = `<div id="card-export-back-placeholder" style="width: 100%; height: 100%;"></div>`;
+                } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
+                    // QR codes from the API generally render fine, so no change here.
+                    backContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
+                }
+
                 htmlContent += `
                     <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center; display: flex; justify-content: center; align-items: center;">
-                        ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
-                            <p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
-                        ` : ''}
-                        ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                            <img src="${sanitizeHTML(iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
-                        ` : ''}
-                        ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
-                        ` : ''}
+                        ${backContentHtml}
                     </div>
                 `;
             }

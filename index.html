@@ -429,6 +429,28 @@
 
 
         // Utility functions (defined first to ensure availability)
+        // New helper function to fetch an image and convert it to a Base64 Data URL
+        async function loadImageAsDataURL(src) {
+            try {
+                // Use a CORS proxy for external images to avoid tainted canvas issues
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const response = await fetch(proxyUrl + src);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch image: ${response.statusText}`);
+                }
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error(`Could not load image ${src}:`, error);
+                return null; // Return null on error
+            }
+        }
+
         function sanitizeHTML(text) {
             if (!text) return '';
             const sanitizer = document.createElement('div');
@@ -1253,8 +1275,10 @@
             let iconRenderHtml = '';
             if (card.icon) {
                 const iconSize = 24 * scaleFactor; // 0.25in at base resolution
-                // MODIFIED: Use a placeholder div for manual rendering in generateCardCanvas.
-                iconRenderHtml = `<div id="card-export-icon-placeholder" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain;"></div>`;
+                let iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+                let iconDataUrl = iconUrl ? await loadImageAsDataURL(iconUrl) : null;
+                const fallbackIcon = `https://placehold.co/60x60/000/FFF?text=ICON`;
+                iconRenderHtml = `<img src="${iconDataUrl || fallbackIcon}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
             }
 
             let htmlContent = `
@@ -1299,10 +1323,11 @@
                 if (foldContent.type === 'text' && foldContent.text) {
                     backContentHtml = `<p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(foldContent.text)}</p>`;
                 } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
-                    // MODIFIED: Use a placeholder div for manual rendering in generateCardCanvas.
-                    backContentHtml = `<div id="card-export-back-placeholder" style="width: 100%; height: 100%;"></div>`;
+                    let backImgUrl = iconManifest[foldContent.imageUrl] || foldContent.imageUrl;
+                    let backImgDataUrl = backImgUrl ? await loadImageAsDataURL(backImgUrl) : null;
+                    const fallbackBackImg = `https://placehold.co/100x100/000/FFF?text=BACK+IMG`;
+                    backContentHtml = `<img src="${backImgDataUrl || fallbackBackImg}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" />`;
                 } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
-                    // QR codes from the API generally render fine, so no change here.
                     backContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
                 }
 
@@ -1444,33 +1469,29 @@
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            // Use a specific class to scope the styles and queries
             tempContainer.className = 'card-export-render-container';
 
             let targetWidthPx, targetHeightPx;
             let htmlContent = '';
 
-            // This logic is mostly extracted from the original download/share buttons
             if (appState.printerType === 'thermal') {
                 targetWidthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
-                targetHeightPx = targetWidthPx * (card.isFolded ? 2.8 : 1.4); // Maintain aspect ratio, account for fold
-                // For thermal, we let the content define the height. The container will have two divs.
+                targetHeightPx = targetWidthPx * (card.isFolded ? 2.8 : 1.4);
                 tempContainer.style.width = `${targetWidthPx}px`;
-                htmlContent = await generateThermalHtmlForCard(card); // This function already produces a complete HTML string
+                htmlContent = await generateThermalHtmlForCard(card);
             } else { // 'color' printer type
                 targetWidthPx = 600;
-                // For folded color cards, the canvas is twice the height of the front (1:1.5 ratio)
                 targetHeightPx = card.isFolded ? (targetWidthPx * 1.5 * 2) : (targetWidthPx * 1.5);
                 tempContainer.style.width = `${targetWidthPx}px`;
                 tempContainer.style.height = `${targetHeightPx}px`;
                 tempContainer.style.overflow = 'hidden';
 
-                // Simplified HTML generation for color cards
                 let iconHtml = '';
-                console.log('Calculated Dimensions (WxH):', targetWidthPx, 'x', targetHeightPx);
                 if (card.icon) {
-                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/48x48/E0E0E0/888?text=ICON`);
-                    iconHtml = `<div id="card-export-icon-placeholder" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px;"></div>`;
+                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+                    const iconDataUrl = iconUrl ? await loadImageAsDataURL(iconUrl) : null;
+                    const fallbackIcon = `https://placehold.co/60x60/E0E0E0/888?text=ICON`;
+                    iconHtml = `<img src="${iconDataUrl || fallbackIcon}" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; object-fit: contain;" />`;
                 }
 
                 const frontHtml = `
@@ -1493,7 +1514,6 @@
                         ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `<p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>` : ''}
                         ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
                     </div>`;
-
                 htmlContent += frontHtml;
 
                 if (card.isFolded) {
@@ -1503,7 +1523,9 @@
                         backContentHtml = `<p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(foldContent.text)}</p>`;
                     } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
                         const backImgUrl = iconManifest[foldContent.imageUrl] || foldContent.imageUrl;
-                        backContentHtml = `<div id="card-export-back-placeholder" style="width: 90%; height: 90%;"></div>`;
+                        const backImgDataUrl = backImgUrl ? await loadImageAsDataURL(backImgUrl) : null;
+                        const fallbackBackImg = `https://placehold.co/300x300/E0E0E0/888?text=BACK+IMG`;
+                        backContentHtml = `<img src="${backImgDataUrl || fallbackBackImg}" style="width: 90%; height: 90%; object-fit: contain;" />`;
                     } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
                         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(foldContent.qrCodeData)}`;
                         backContentHtml = `<img class="card-export-qr" src="${qrUrl}" style="max-width: 300px; height: auto;" />`;
@@ -1520,7 +1542,6 @@
             tempContainer.innerHTML = htmlContent;
             document.body.appendChild(tempContainer);
 
-            // Add a small delay to allow fonts to render if needed
             await new Promise(resolve => setTimeout(resolve, 100));
 
             const canvas = await html2canvas(tempContainer, {
@@ -1529,73 +1550,6 @@
                 width: targetWidthPx,
                 height: targetHeightPx,
             });
-
-            // Manually draw images onto the canvas to bypass html2canvas rendering bugs
-            const ctx = canvas.getContext('2d');
-
-            // 1. Draw the icon
-            if (card.icon) {
-                const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
-                if (iconUrl) {
-                    try {
-                        const img = await loadImage(iconUrl);
-                        const placeholder = tempContainer.querySelector('#card-export-icon-placeholder');
-                        const rect = placeholder.getBoundingClientRect();
-                        const containerRect = tempContainer.getBoundingClientRect();
-
-                        const x = rect.left - containerRect.left;
-                        const y = rect.top - containerRect.top;
-                        const width = rect.width;
-                        const height = rect.height;
-
-                        const hRatio = width / img.width;
-                        const vRatio = height / img.height;
-                        const ratio = Math.min(hRatio, vRatio);
-                        const centerShiftX = (width - img.width * ratio) / 2;
-                        const centerShiftY = (height - img.height * ratio) / 2;
-
-                        if (appState.printerType === 'thermal') {
-                            ctx.filter = 'grayscale(100%)';
-                        }
-                        ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
-                        ctx.filter = 'none'; // Reset filter
-                    } catch (e) {
-                        console.error("Could not draw icon:", e);
-                    }
-                }
-            }
-
-            // 2. Draw the back image if it exists
-            if (card.isFolded && card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
-                const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                if (backImgUrl) {
-                    try {
-                        const img = await loadImage(backImgUrl);
-                        const placeholder = tempContainer.querySelector('#card-export-back-placeholder');
-                        const rect = placeholder.getBoundingClientRect();
-                        const containerRect = tempContainer.getBoundingClientRect();
-
-                        const x = rect.left - containerRect.left;
-                        const y = rect.top - containerRect.top;
-                        const width = rect.width;
-                        const height = rect.height;
-
-                        const hRatio = width / img.width;
-                        const vRatio = height / img.height;
-                        const ratio = Math.min(hRatio, vRatio);
-                        const centerShiftX = (width - img.width * ratio) / 2;
-                        const centerShiftY = (height - img.height * ratio) / 2;
-
-                        if (appState.printerType === 'thermal') {
-                            ctx.filter = 'grayscale(100%)';
-                        }
-                        ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
-                        ctx.filter = 'none'; // Reset filter
-                    } catch (e) {
-                        console.error("Could not draw back image:", e);
-                    }
-                }
-            }
 
             document.body.removeChild(tempContainer);
             return canvas;

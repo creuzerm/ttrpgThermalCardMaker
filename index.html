@@ -1310,12 +1310,12 @@
                 // New logic: Check manifest first, then URL, then fallback
                 if (iconManifest[card.icon]) {
                     const iconPath = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${iconPath}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                    iconRenderHtml = `<img src="${iconPath}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
                     // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
-                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
+                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
                 }
             }
 
@@ -1508,7 +1508,12 @@
             document.body.appendChild(tempContainer);
             await new Promise(resolve => setTimeout(resolve, 100)); // Allow render
 
-            const frontCanvas = await html2canvas(frontContainer.firstElementChild, { useCORS: true, logging: false });
+            const frontCanvas = await html2canvas(frontContainer.firstElementChild, {
+                useCORS: true,
+                logging: false,
+                backgroundColor: null,
+                removeContainer: true
+            });
 
             if (card.isFolded) {
                 // --- Back of Card ---
@@ -1520,7 +1525,12 @@
 
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                const backCanvas = await html2canvas(backContainer.firstElementChild, { useCORS: true, logging: false });
+                const backCanvas = await html2canvas(backContainer.firstElementChild, {
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: null,
+                    removeContainer: true
+                });
 
                 document.body.removeChild(tempContainer);
                 return [frontCanvas, backCanvas];
@@ -1540,10 +1550,10 @@
                     backContentHtml = `<p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
                 } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
                     const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
+                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" width="${widthPx}" height="${widthPx * 1.4}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
                 } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
                     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
-                    backContentHtml = `<img src="${qrUrl}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
+                    backContentHtml = `<img src="${qrUrl}" width="${100 * scaleFactor}" height="${100 * scaleFactor}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
                 }
             }
 

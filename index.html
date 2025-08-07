@@ -1491,7 +1491,7 @@
         });
 
         // Refactored function to generate a canvas for a given card
-        async function generateCardCanvas(card, forPdf = false) {
+        async function generateCardCanvas(card, printBack) {
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
@@ -1513,10 +1513,10 @@
                 removeContainer: true
             });
 
-            if (card.isFolded) {
+            if (printBack) {
                 // --- Back of Card ---
                 const backContainer = document.createElement('div');
-                const backHtml = await generateFoldedBackHtmlForCard(card); // You'll need to create this function
+                const backHtml = await generateFoldedBackHtmlForCard(card);
                 backContainer.innerHTML = backHtml;
                 tempContainer.innerHTML = ''; // Clear and reuse
                 tempContainer.appendChild(backContainer);
@@ -1562,13 +1562,17 @@
             `;
         }
 
-        async function generatePdfDocument(cards) {
+        async function generatePdfDocument(cards, foldOverride = null) {
             const { jsPDF } = window.jspdf;
             let doc;
             let isFirstPage = true;
 
             for (const card of cards) {
-                const canvases = await generateCardCanvas(card);
+                const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
+                const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
+                const finalPrintBackDecision = shouldPrintBack && hasBackContent;
+
+                const canvases = await generateCardCanvas(card, finalPrintBackDecision);
                 const firstCanvas = canvases[0];
                 const cardWidth = firstCanvas.width;
                 const cardHeight = firstCanvas.height;
@@ -1658,7 +1662,8 @@
             showMessage('Generating PDF for download...');
             try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
-                const pdf = await generatePdfDocument(cardsToProcess);
+                const foldOverride = appState.printScope === 'all' ? isFoldedCheckbox.checked : null;
+                const pdf = await generatePdfDocument(cardsToProcess, foldOverride);
                 const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;
                 pdf.save(fileName);
                 showMessage('PDF downloaded successfully!');
@@ -1679,7 +1684,8 @@
             showMessage('Preparing PDF for sharing...');
             try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
-                const pdf = await generatePdfDocument(cardsToProcess);
+                const foldOverride = appState.printScope === 'all' ? isFoldedCheckbox.checked : null;
+                const pdf = await generatePdfDocument(cardsToProcess, foldOverride);
                 const blob = pdf.output('blob');
                 const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;
                 const file = new File([blob], fileName, { type: 'application/pdf' });

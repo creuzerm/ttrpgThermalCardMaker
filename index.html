@@ -1493,176 +1493,78 @@
         });
 
         // Refactored function to generate a canvas for a given card
-        async function generateCardCanvas(card) {
-            console.log('--- Generating Card Canvas ---');
-            console.log('Printer Type:', appState.printerType);
-            console.log('Thermal Paper Size:', appState.thermalPaperSize);
-            console.log('Thermal DPI:', appState.thermalDpi);
-
+        async function generateCardCanvas(card, forPdf = false) {
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            // Use a specific class to scope the styles and queries
             tempContainer.className = 'card-export-render-container';
 
-            let targetWidthPx, targetHeightPx;
-            let htmlContent = '';
+            // --- Front of Card ---
+            const frontContainer = document.createElement('div');
+            const frontHtml = await generateThermalHtmlForCard(card);
+            frontContainer.innerHTML = frontHtml;
+            tempContainer.appendChild(frontContainer);
 
-            // This logic is mostly extracted from the original download/share buttons
-            if (appState.printerType === 'thermal') {
-                targetWidthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
-                targetHeightPx = targetWidthPx * (card.isFolded ? 2.8 : 1.4); // Maintain aspect ratio, account for fold
-                // For thermal, we let the content define the height. The container will have two divs.
-                tempContainer.style.width = `${targetWidthPx}px`;
-                htmlContent = await generateThermalHtmlForCard(card); // This function already produces a complete HTML string
-            } else { // 'color' printer type
-                targetWidthPx = 600;
-                // For folded color cards, the canvas is twice the height of the front (1:1.5 ratio)
-                targetHeightPx = card.isFolded ? (targetWidthPx * 1.5 * 2) : (targetWidthPx * 1.5);
-                tempContainer.style.width = `${targetWidthPx}px`;
-                tempContainer.style.height = `${targetHeightPx}px`;
-                tempContainer.style.overflow = 'hidden';
-
-                // Simplified HTML generation for color cards
-                let iconHtml = '';
-                console.log('Calculated Dimensions (WxH):', targetWidthPx, 'x', targetHeightPx);
-                if (card.icon) {
-                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/48x48/E0E0E0/888?text=ICON`);
-                    iconHtml = `<div id="card-export-icon-placeholder" style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px;"></div>`;
-                }
-
-                const frontHtml = `
-                    <div class="card-export-front" style="position: relative; width: ${targetWidthPx}px; height: ${targetWidthPx * 1.5}px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${sanitizeHTML(card.color || '#ffffff')}; color: #000;">
-                        ${iconHtml}
-                        <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
-                        ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${sanitizeHTML(card.type)}</p>` : ''}
-                        <div style="flex-grow: 1; overflow: hidden; width: 100%;">
-                            ${(card.stats && Object.keys(card.stats).length > 0) ? `
-                            <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
-                                ${Object.entries(card.stats).map(([key, value]) => `<span style="margin: 0 15px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>`).join('')}
-                            </div>` : ''}
-                            ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
-                            <div style="margin-bottom: 15px; text-align: left;">
-                                ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${sanitizeHTML(section.heading)}</h2>` : ''}
-                                <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText || '')}</p>` : ''}
-                            </div>`).join('') : ''}
-                        </div>
-                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `<p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>` : ''}
-                        ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
-                    </div>`;
-
-                htmlContent += frontHtml;
-
-                if (card.isFolded) {
-                    let backContentHtml = '';
-                    const foldContent = card.foldContent || {};
-                    if (foldContent.type === 'text' && foldContent.text) {
-                        backContentHtml = `<p style="font-size: 28px; margin: 0; line-height: 1.4;">${formatText(foldContent.text)}</p>`;
-                    } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
-                        const backImgUrl = iconManifest[foldContent.imageUrl] || foldContent.imageUrl;
-                        backContentHtml = `<div id="card-export-back-placeholder" style="width: 90%; height: 90%;"></div>`;
-                    } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
-                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(foldContent.qrCodeData)}`;
-                        backContentHtml = `<img class="card-export-qr" src="${qrUrl}" style="max-width: 300px; height: auto;" />`;
-                    }
-
-                    const backHtml = `
-                        <div class="card-export-back" style="width: ${targetWidthPx}px; height: ${targetWidthPx * 1.5}px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${sanitizeHTML(card.color || '#ffffff')}; color: #000; transform: rotate(180deg); transform-origin: center center;">
-                            ${backContentHtml}
-                        </div>`;
-                    htmlContent += backHtml;
-                }
-            }
-
-            tempContainer.innerHTML = htmlContent;
             document.body.appendChild(tempContainer);
+            await new Promise(resolve => setTimeout(resolve, 100)); // Allow render
 
-            // Add a small delay to allow fonts to render if needed
-            await new Promise(resolve => setTimeout(resolve, 100));
+            const frontCanvas = await html2canvas(frontContainer.firstElementChild, { useCORS: true, logging: false });
 
-            const canvas = await html2canvas(tempContainer, {
-                useCORS: true,
-                logging: false,
-                width: targetWidthPx,
-                height: targetHeightPx,
-            });
+            if (card.isFolded) {
+                // --- Back of Card ---
+                const backContainer = document.createElement('div');
+                const backHtml = await generateFoldedBackHtmlForCard(card); // You'll need to create this function
+                backContainer.innerHTML = backHtml;
+                tempContainer.innerHTML = ''; // Clear and reuse
+                tempContainer.appendChild(backContainer);
 
-            // Manually draw images onto the canvas to bypass html2canvas rendering bugs
-            const ctx = canvas.getContext('2d');
+                await new Promise(resolve => setTimeout(resolve, 100));
 
-            // 1. Draw the icon
-            if (card.icon) {
-                const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
-                if (iconUrl) {
-                    try {
-                        const img = await loadImage(iconUrl);
-                        const placeholder = tempContainer.querySelector('#card-export-icon-placeholder');
-                        const rect = placeholder.getBoundingClientRect();
-                        const containerRect = tempContainer.getBoundingClientRect();
+                const backCanvas = await html2canvas(backContainer.firstElementChild, { useCORS: true, logging: false });
 
-                        const x = rect.left - containerRect.left;
-                        const y = rect.top - containerRect.top;
-                        const width = rect.width;
-                        const height = rect.height;
-
-                        const hRatio = width / img.width;
-                        const vRatio = height / img.height;
-                        const ratio = Math.min(hRatio, vRatio);
-                        const centerShiftX = (width - img.width * ratio) / 2;
-                        const centerShiftY = (height - img.height * ratio) / 2;
-
-                        ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
-                    } catch (e) {
-                        console.error("Could not draw icon:", e);
-                    }
-                }
-            }
-
-            // 2. Draw the back image if it exists
-            if (card.isFolded && card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
-                const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                if (backImgUrl) {
-                    try {
-                        const img = await loadImage(backImgUrl);
-                        const placeholder = tempContainer.querySelector('#card-export-back-placeholder');
-                        const rect = placeholder.getBoundingClientRect();
-                        const containerRect = tempContainer.getBoundingClientRect();
-
-                        const x = rect.left - containerRect.left;
-                        const y = rect.top - containerRect.top;
-                        const width = rect.width;
-                        const height = rect.height;
-
-                        const hRatio = width / img.width;
-                        const vRatio = height / img.height;
-                        const ratio = Math.min(hRatio, vRatio);
-                        const centerShiftX = (width - img.width * ratio) / 2;
-                        const centerShiftY = (height - img.height * ratio) / 2;
-
-                        ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
-                    } catch (e) {
-                        console.error("Could not draw back image:", e);
-                    }
-                }
+                document.body.removeChild(tempContainer);
+                return [frontCanvas, backCanvas];
             }
 
             document.body.removeChild(tempContainer);
-            return canvas;
+            return [frontCanvas];
+        }
+
+        async function generateFoldedBackHtmlForCard(card) {
+            const widthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
+            const scaleFactor = widthPx / 384;
+            let backContentHtml = '';
+
+            if (card.foldContent) {
+                if (card.foldContent.type === 'text') {
+                    backContentHtml = `<p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
+                } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                    const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
+                } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
+                    backContentHtml = `<img src="${qrUrl}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
+                }
+            }
+
+            return `
+                <div style="width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center;">
+                    ${backContentHtml}
+                </div>
+            `;
         }
 
         // Function to generate PDF for a given card
         async function generatePdfForCard(card) {
             const { jsPDF } = window.jspdf;
-            const cardCanvas = await generateCardCanvas(card);
+            const canvases = await generateCardCanvas(card);
 
-            const isThermal = appState.printerType === 'thermal';
-            const cardWidth = cardCanvas.width;
-            const cardHeight = cardCanvas.height;
+            const firstCanvas = canvases[0];
+            const cardWidth = firstCanvas.width;
+            const cardHeight = firstCanvas.height;
 
-            // Use mm for jsPDF dimensions
-            const pdfWidth = isThermal ? (appState.thermalPaperSize === '58mm' ? 48 : 72) : (cardWidth / 300) * 25.4;
-            const pdfHeight = isThermal ? (cardHeight / cardCanvas.width) * pdfWidth : (cardHeight / 300) * 25.4;
+            const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+            const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
             const doc = new jsPDF({
                 orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
@@ -1670,8 +1572,12 @@
                 format: [pdfWidth, pdfHeight]
             });
 
-            const imgData = cardCanvas.toDataURL('image/png');
-            doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            if (canvases.length > 1) {
+                doc.addPage();
+                doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+            }
 
             return doc;
         }

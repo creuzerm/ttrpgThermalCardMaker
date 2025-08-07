@@ -1581,13 +1581,24 @@
             });
 
             doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+            addCornerDots(doc, pdfWidth, pdfHeight);
 
             if (canvases.length > 1) {
                 doc.addPage();
                 doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                addCornerDots(doc, pdfWidth, pdfHeight);
             }
 
             return doc;
+        }
+
+        function addCornerDots(doc, width, height) {
+            const dotSize = 0.1;
+            doc.setFillColor(0, 0, 0);
+            doc.rect(0, 0, dotSize, dotSize, 'F');
+            doc.rect(width - dotSize, 0, dotSize, dotSize, 'F');
+            doc.rect(0, height - dotSize, dotSize, dotSize, 'F');
+            doc.rect(width - dotSize, height - dotSize, dotSize, dotSize, 'F');
         }
 
         // Download Image button handler

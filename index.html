@@ -1376,6 +1376,9 @@
                 // The HTML is URI-encoded to ensure it's passed correctly in the URL.
                 let dynHtml = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='data:text/html,${encodeURIComponent(fullHtml)}'`;
 
+                // Log the full URL to the console for debugging purposes.
+                console.log("Generated Print URL:", dynHtml);
+
                 // Setting window.location.href to this special URL triggers the Android Print Service.
                 window.location.href = dynHtml;
             } catch (error) {

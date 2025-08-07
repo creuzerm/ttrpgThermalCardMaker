@@ -1554,7 +1554,11 @@
                         const centerShiftX = (width - img.width * ratio) / 2;
                         const centerShiftY = (height - img.height * ratio) / 2;
 
+                        if (appState.printerType === 'thermal') {
+                            ctx.filter = 'grayscale(100%)';
+                        }
                         ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
+                        ctx.filter = 'none'; // Reset filter
                     } catch (e) {
                         console.error("Could not draw icon:", e);
                     }
@@ -1582,7 +1586,11 @@
                         const centerShiftX = (width - img.width * ratio) / 2;
                         const centerShiftY = (height - img.height * ratio) / 2;
 
+                        if (appState.printerType === 'thermal') {
+                            ctx.filter = 'grayscale(100%)';
+                        }
                         ctx.drawImage(img, 0, 0, img.width, img.height, x + centerShiftX, y + centerShiftY, img.width * ratio, img.height * ratio);
+                        ctx.filter = 'none'; // Reset filter
                     } catch (e) {
                         console.error("Could not draw back image:", e);
                     }

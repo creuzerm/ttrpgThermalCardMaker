@@ -1373,8 +1373,8 @@
                 fullHtml += '</body></html>';
 
                 // Construct the dynamic print URL with the generated HTML embedded.
-                // The HTML is URI-encoded to ensure it's passed correctly in the URL.
-                let dynHtml = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='data:text/html,${encodeURIComponent(fullHtml)}'`;
+                // The example suggests the HTML content itself is not URI-encoded, so we will follow that.
+                let dynHtml = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='data:text/html,${fullHtml}'`;
 
                 // Log the full URL to the console for debugging purposes.
                 console.log("Generated Print URL:", dynHtml);

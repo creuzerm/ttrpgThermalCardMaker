@@ -1723,7 +1723,7 @@
             }
 
             try {
-                const decodedString = new TextDecoder().decode(Uint8Array.from(atob(dataParam), c => c.charCodeAt(0)));
+                const decodedString = decodeURIComponent(atob(dataParam));
                 const decodedData = JSON.parse(decodedString);
 
                 const card = decodedData.card || decodedData;

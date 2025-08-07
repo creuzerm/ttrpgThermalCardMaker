@@ -37,50 +37,17 @@
     <div id="main-generator-view">
         <!-- Service Worker Registration -->
         <script>
-            // Service Worker content as a string
-            const swContent = `
-                const CACHE_NAME = 'ttrpg-card-printer-cache-v1';
-                const urlsToCache = [
-                  './', // Cache the current HTML file
-                  // If you have other assets (like icons) served relative to this HTML file, list them here:
-                  // './icon-192x192.png',
-                  // './icon-512x512.png',
-                ];
-
-                self.addEventListener('install', (event) => {
-                  event.waitUntil(
-                    caches.open(CACHE_NAME)
-                      .then((cache) => {
-                        console.log('Opened cache');
-                        return cache.addAll(urlsToCache);
-                      })
-                      .catch(error => console.error('Service Worker cache addAll failed:', error))
-                  );
-                });
-
-                self.addEventListener('fetch', (event) => {
-                  event.respondWith(
-                    caches.match(event.request)
-                      .then((response) => {
-                        if (response) {
-                          return response;
-                        }
-                        return fetch(event.request);
-                      })
-                  );
-                });
-            `;
-
-            // Register service worker using a Blob URL, only if in a secure context or localhost
+            // Standard Service Worker Registration
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
-                        const swBlob = new Blob([swContent], { type: 'application/javascript' });
-                        const swUrl = URL.createObjectURL(swBlob);
-
-                        navigator.serviceWorker.register(swUrl)
-                            .then(registration => console.log('Service Worker registered:', registration))
-                            .catch(error => console.error('Service Worker registration failed:', error));
+                        navigator.serviceWorker.register('/sw.js')
+                            .then(registration => {
+                                console.log('Service Worker registered with scope:', registration.scope);
+                            })
+                            .catch(error => {
+                                console.error('Service Worker registration failed:', error);
+                            });
                     } else {
                         console.warn('Service Worker not registered: PWA features (like offline mode) require HTTPS or localhost.');
                     }

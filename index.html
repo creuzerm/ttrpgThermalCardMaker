@@ -731,6 +731,7 @@
             togglePrinterTypeOptions();
             updateCardNavigationUI(); // Update card navigation UI
             updateCardPreview();
+            updatePrintLink();
         }
 
         // Save state to localStorage
@@ -1356,13 +1357,13 @@
                         numCopies: appState.numCopies
                     }
                 };
-                const encodedData = btoa(JSON.stringify(dataToSend));
+                const encodedData = btoa(encodeURIComponent(JSON.stringify(dataToSend)));
 
                 const cardViewUrl = new URL('index.html', window.location.href);
                 cardViewUrl.searchParams.set('view', 'card');
                 cardViewUrl.searchParams.set('data', encodedData);
 
-                const printUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='${cardViewUrl.toString()}'`;
+                const printUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='${encodeURIComponent(cardViewUrl.toString())}'`;
                 printButton.href = printUrl;
                 printButton.classList.remove('hidden');
             } else {

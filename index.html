@@ -746,7 +746,7 @@
                 const cardDataParam = urlParams.get('data') || urlParams.get('cardData');
 
                 if (cardDataParam) {
-                    const decodedString = new TextDecoder().decode(Uint8Array.from(atob(cardDataParam), c => c.charCodeAt(0)));
+                    const decodedString = decodeURIComponent(atob(cardDataParam));
                     const decodedData = JSON.parse(decodedString);
 
                     // Correctly unpack the data from the URL
@@ -1330,7 +1330,7 @@
                 }
             };
             const jsonString = JSON.stringify(dataToSend);
-            const encodedData = btoa(new TextEncoder().encode(jsonString).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+            const encodedData = btoa(encodeURIComponent(jsonString));
             const url = `index.html?view=card&data=${encodedData}`;
             window.open(url, '_blank');
         }
@@ -1658,7 +1658,7 @@
                 }
             };
             const jsonString = JSON.stringify(dataToSend);
-            const encodedData = btoa(new TextEncoder().encode(jsonString).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+            const encodedData = btoa(encodeURIComponent(jsonString));
 
             const currentUrl = new URL(window.location.href);
             // Clear existing params to create a clean link for the editor view

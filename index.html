@@ -1495,7 +1495,8 @@
             try {
                 const files = [];
                 for (const card of cardsToProcess) {
-                    const canvas = await generateCardCanvas(card);
+                    const [canvas] = await generateCardCanvas(card);
+                    if (!canvas) continue;
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                     files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
                 }
@@ -1673,7 +1674,8 @@
             for (const card of cardsToProcess) {
                 // This loop doesn't need to update the main UI, just process cards.
                 try {
-                    const canvas = await generateCardCanvas(card);
+                    const [canvas] = await generateCardCanvas(card);
+                    if (!canvas) continue; // Skip if canvas generation failed
                     const imageDataUrl = canvas.toDataURL('image/png');
                     downloadImage(imageDataUrl, card.title); // Use existing helper to download
                 } catch (error) {
@@ -1752,7 +1754,8 @@
                 const files = [];
 
                 for (const card of cardsToProcess) {
-                    const canvas = await generateCardCanvas(card);
+                    const [canvas] = await generateCardCanvas(card);
+                    if (!canvas) continue;
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                     files.push(new File([blob], `${card.title.replace(/\s/g, '_')}_card.png`, { type: 'image/png' }));
                 }

@@ -731,6 +731,7 @@
             togglePrinterTypeOptions();
             updateCardNavigationUI(); // Update card navigation UI
             updateCardPreview();
+            updatePrintLink();
         }
 
         // Save state to localStorage
@@ -1356,7 +1357,7 @@
                         numCopies: appState.numCopies
                     }
                 };
-                const encodedData = btoa(JSON.stringify(dataToSend));
+                const encodedData = btoa(encodeURIComponent(JSON.stringify(dataToSend)));
 
                 const cardViewUrl = new URL('index.html', window.location.href);
                 cardViewUrl.searchParams.set('view', 'card');

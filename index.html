@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- html2canvas CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
@@ -248,24 +250,50 @@
             </div>
 
             <div class="mt-6 flex flex-col space-y-3">
-                <label class="block text-sm font-medium text-gray-300">Print/Export Scope:</label>
-                <div class="flex space-x-4 mb-4">
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="printScope" value="current" checked class="form-radio h-4 w-4 text-purple-600">
-                        <span class="ml-2 text-gray-300">Current Card</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="printScope" value="all" class="form-radio h-4 w-4 text-purple-600">
-                        <span class="ml-2 text-gray-300">All Cards</span>
-                    </label>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="output-format" class="block text-sm font-medium text-gray-300 mb-1">Output Format</label>
+                        <select id="output-format" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                            <option value="pdf">PDF</option>
+                            <option value="png">PNG</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Print/Export Scope</label>
+                        <div class="flex items-center space-x-4 h-full">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="printScope" value="current" checked class="form-radio h-4 w-4 text-purple-600">
+                                <span class="ml-2 text-gray-300">Current</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="printScope" value="all" class="form-radio h-4 w-4 text-purple-600">
+                                <span class="ml-2 text-gray-300">All</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
-                <button id="view-card-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">View Card</button>
-                <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Print to Thermal Printer</button>
-                <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
-                <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Image</button>
-                <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
-                <button id="copy-bookmark-link-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
+                <!-- Action Buttons -->
+                <div id="output-actions-container" class="mt-4">
+                    <!-- PDF Actions -->
+                    <div id="pdf-actions" class="space-y-3">
+                        <button id="view-pdf-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Preview as PDF</button>
+                        <button id="download-pdf-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download PDF</button>
+                        <button id="share-pdf-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share PDF</button>
+                    </div>
+                    <!-- PNG Actions -->
+                    <div id="png-actions" class="hidden space-y-3">
+                        <button id="download-image-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Image</button>
+                        <button id="share-card-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-700 pt-4 space-y-3">
+                    <button id="print-thermal-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Print to Thermal Printer</button>
+                    <button id="print-color-photo-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
+                    <button id="copy-bookmark-link-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
+                    <button id="view-card-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Open Card in New Tab</button>
+                </div>
             </div>
         </div>
     </div>
@@ -363,6 +391,7 @@
             numCopies: 1, // Number of copies for the current card
             printScope: 'current', // 'current' or 'all'
             thermalDpi: 203, // 180, 200, 203, 300
+            outputFormat: 'pdf', // 'pdf' or 'png'
             rememberedIcons: []
         };
 
@@ -406,6 +435,12 @@
         const downloadImageBtn = document.getElementById('download-image-btn');
         const shareCardBtn = document.getElementById('share-card-btn');
         const copyBookmarkLinkBtn = document.getElementById('copy-bookmark-link-btn');
+        const outputFormatSelect = document.getElementById('output-format');
+        const pdfActions = document.getElementById('pdf-actions');
+        const pngActions = document.getElementById('png-actions');
+        const viewPdfBtn = document.getElementById('view-pdf-btn');
+        const downloadPdfBtn = document.getElementById('download-pdf-btn');
+        const sharePdfBtn = document.getElementById('share-pdf-btn');
 
         // Card Navigation Elements
         const prevCardBtn = document.getElementById('prev-card-btn');
@@ -679,6 +714,16 @@
             }
         }
 
+        function toggleOutputActions() {
+            if (appState.outputFormat === 'pdf') {
+                pdfActions.classList.remove('hidden');
+                pngActions.classList.add('hidden');
+            } else {
+                pdfActions.classList.add('hidden');
+                pngActions.classList.remove('hidden');
+            }
+        }
+
         // Card Navigation UI Update
         function updateCardNavigationUI() {
             cardSelect.innerHTML = '';
@@ -706,6 +751,7 @@
             footerInput.value = currentCard.footer || '';
             isFoldedCheckbox.checked = currentCard.isFolded;
             printerTypeSelect.value = appState.printerType;
+            outputFormatSelect.value = appState.outputFormat;
             thermalPaperSizeSelect.value = appState.thermalPaperSize;
             thermalDpiSelect.value = appState.thermalDpi;
             numCopiesInput.value = appState.numCopies;
@@ -729,6 +775,7 @@
             renderStats();
             toggleFoldContentOptions();
             togglePrinterTypeOptions();
+            toggleOutputActions();
             updateCardNavigationUI(); // Update card navigation UI
             updateCardPreview();
             updatePrintLink();
@@ -1148,6 +1195,12 @@
                 appState.printScope = e.target.value;
                 saveState();
             });
+        });
+
+        outputFormatSelect.addEventListener('change', (e) => {
+            appState.outputFormat = e.target.value;
+            toggleOutputActions();
+            saveState();
         });
 
         // Card Navigation Event Listeners
@@ -1598,6 +1651,31 @@
             return canvas;
         }
 
+        // Function to generate PDF for a given card
+        async function generatePdfForCard(card) {
+            const { jsPDF } = window.jspdf;
+            const cardCanvas = await generateCardCanvas(card);
+
+            const isThermal = appState.printerType === 'thermal';
+            const cardWidth = cardCanvas.width;
+            const cardHeight = cardCanvas.height;
+
+            // Use mm for jsPDF dimensions
+            const pdfWidth = isThermal ? (appState.thermalPaperSize === '58mm' ? 48 : 72) : (cardWidth / 300) * 25.4;
+            const pdfHeight = isThermal ? (cardHeight / cardCanvas.width) * pdfWidth : (cardHeight / 300) * 25.4;
+
+            const doc = new jsPDF({
+                orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                unit: 'mm',
+                format: [pdfWidth, pdfHeight]
+            });
+
+            const imgData = cardCanvas.toDataURL('image/png');
+            doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            return doc;
+        }
+
         // Download Image button handler
         function loadImage(src) {
             return new Promise((resolve, reject) => {
@@ -1641,6 +1719,64 @@
             appState.currentCardIndex = originalCardIndex;
             updateCardPreview();
             showMessage('Image download process completed for selected cards.');
+        });
+
+        // Download PDF button handler
+        downloadPdfBtn.addEventListener('click', async () => {
+            showMessage('Generating PDF for download...');
+            try {
+                const cardToProcess = appState.cards[appState.currentCardIndex];
+                const pdf = await generatePdfForCard(cardToProcess);
+                pdf.save(`${cardToProcess.title.replace(/\s/g, '_')}.pdf`);
+                showMessage('PDF downloaded successfully!');
+            } catch (error) {
+                console.error('Error generating PDF for download:', error);
+                showMessage(`Error generating PDF: ${error.message}`, true);
+            }
+        });
+
+        // View PDF button handler
+        viewPdfBtn.addEventListener('click', async () => {
+            showMessage('Generating PDF for preview...');
+            try {
+                const cardToProcess = appState.cards[appState.currentCardIndex];
+                const pdf = await generatePdfForCard(cardToProcess);
+                pdf.output('dataurlnewwindow');
+            } catch (error) {
+                console.error('Error generating PDF for preview:', error);
+                showMessage(`Error generating PDF preview: ${error.message}`, true);
+            }
+        });
+
+        // Share PDF button handler
+        sharePdfBtn.addEventListener('click', async () => {
+            const dummyFile = new File(["dummy"], "dummy.pdf", { type: "application/pdf" });
+            if (!navigator.share || !navigator.canShare({ files: [dummyFile] })) {
+                showMessage('Web Share API for files not supported on this device/browser. Please download the PDF and share manually.', true);
+                return;
+            }
+
+            showMessage('Preparing PDF for sharing...');
+            try {
+                const cardToProcess = appState.cards[appState.currentCardIndex];
+                const pdf = await generatePdfForCard(cardToProcess);
+                const blob = pdf.output('blob');
+                const file = new File([blob], `${cardToProcess.title.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
+
+                await navigator.share({
+                    files: [file],
+                    title: `TTRPG Card: ${cardToProcess.title}`,
+                    text: `Here is the TTRPG card I made: ${cardToProcess.title}`,
+                });
+                showMessage('PDF shared successfully!');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    showMessage('Share cancelled.', false);
+                } else {
+                    console.error('Error sharing PDF:', error);
+                    showMessage(`Error sharing PDF: ${error.message}`, true);
+                }
+            }
         });
 
         // Share Card button handler

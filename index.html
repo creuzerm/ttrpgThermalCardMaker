@@ -261,7 +261,7 @@
                 </div>
 
                 <button id="view-card-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">View Card</button>
-                <a id="print-thermal-btn" href="#" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Print to Thermal Printer</a>
+                <button id="print-thermal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Print to Thermal Printer</button>
                 <button id="print-color-photo-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
                 <button id="download-image-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Image</button>
                 <button id="share-card-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
@@ -1343,30 +1343,59 @@
             openCardView(cardToView);
         });
 
+        // Event listener for the thermal print button
+        printThermalBtn.addEventListener('click', async () => {
+            // This function replaces the old method of using a pre-generated href.
+            // It now dynamically creates the HTML content and constructs the special
+            // print URL on the fly, as requested.
+
+            // First, check if the user agent is Android, as this feature is specific to it.
+            const isAndroid = /android/i.test(navigator.userAgent);
+            if (!isAndroid) {
+                showMessage('This feature is for Android devices with the ESC/POS Print Service app.', true);
+                return;
+            }
+
+            showMessage('Generating card for printing...');
+
+            try {
+                // Determine if we are printing the current card or all cards.
+                const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+
+                // We will accumulate the HTML for all selected cards into a single string.
+                let fullHtml = '<html><head><style>body { margin: 0; padding: 0; } @media print { @page { margin: 0; } body { margin: 0; } }</style></head><body>';
+                for (const card of cardsToProcess) {
+                    // The generateThermalHtmlForCard function is async, so we await it.
+                    fullHtml += await generateThermalHtmlForCard(card);
+                    // Add a page break after each card to ensure they print on separate sections of the paper.
+                    fullHtml += "<div style='page-break-after:always'></div>";
+                }
+                fullHtml += '</body></html>';
+
+                // Construct the dynamic print URL with the generated HTML embedded.
+                // The HTML is URI-encoded to ensure it's passed correctly in the URL.
+                let dynHtml = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='data:text/html,${encodeURIComponent(fullHtml)}'`;
+
+                // Setting window.location.href to this special URL triggers the Android Print Service.
+                window.location.href = dynHtml;
+            } catch (error) {
+                console.error('Error generating thermal print content:', error);
+                showMessage('Failed to generate card for printing. See console for details.', true);
+            }
+        });
+
         function updatePrintLink() {
+            // This function's responsibility is now only to show or hide the thermal print button
+            // based on the user's browser agent. The actual printing logic is handled
+            // in the 'click' event listener for the printThermalBtn.
             const printButton = document.getElementById('print-thermal-btn');
             const isAndroid = /android/i.test(navigator.userAgent);
 
             if (isAndroid) {
-                const cardToPrint = appState.cards[appState.currentCardIndex];
-                const dataToSend = {
-                    card: cardToPrint,
-                    settings: {
-                        thermalPaperSize: appState.thermalPaperSize,
-                        thermalDpi: appState.thermalDpi,
-                        numCopies: appState.numCopies
-                    }
-                };
-                const encodedData = btoa(encodeURIComponent(JSON.stringify(dataToSend)));
-
-                const cardViewUrl = new URL('index.html', window.location.href);
-                cardViewUrl.searchParams.set('view', 'card');
-                cardViewUrl.searchParams.set('data', encodedData);
-
-                const printUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=${appState.numCopies}&src='${encodeURIComponent(cardViewUrl.toString())}'`;
-                printButton.href = printUrl;
+                // If the user is on Android, the button is made visible.
                 printButton.classList.remove('hidden');
             } else {
+                // Otherwise, the button is hidden, as the feature won't work.
                 printButton.classList.add('hidden');
             }
         }

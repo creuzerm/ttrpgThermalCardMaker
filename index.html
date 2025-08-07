@@ -277,7 +277,6 @@
                 <div id="output-actions-container" class="mt-4">
                     <!-- PDF Actions -->
                     <div id="pdf-actions" class="space-y-3">
-                        <button id="view-pdf-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Preview as PDF</button>
                         <button id="download-pdf-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download PDF</button>
                         <button id="share-pdf-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share PDF</button>
                     </div>
@@ -438,7 +437,6 @@
         const outputFormatSelect = document.getElementById('output-format');
         const pdfActions = document.getElementById('pdf-actions');
         const pngActions = document.getElementById('png-actions');
-        const viewPdfBtn = document.getElementById('view-pdf-btn');
         const downloadPdfBtn = document.getElementById('download-pdf-btn');
         const sharePdfBtn = document.getElementById('share-pdf-btn');
 
@@ -1648,19 +1646,6 @@
             } catch (error) {
                 console.error('Error generating PDF for download:', error);
                 showMessage(`Error generating PDF: ${error.message}`, true);
-            }
-        });
-
-        // View PDF button handler
-        viewPdfBtn.addEventListener('click', async () => {
-            showMessage('Generating PDF for preview...');
-            try {
-                const cardToProcess = appState.cards[appState.currentCardIndex];
-                const pdf = await generatePdfForCard(cardToProcess);
-                pdf.output('dataurlnewwindow');
-            } catch (error) {
-                console.error('Error generating PDF for preview:', error);
-                showMessage(`Error generating PDF preview: ${error.message}`, true);
             }
         });
 

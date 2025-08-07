@@ -1562,33 +1562,40 @@
             `;
         }
 
-        // Function to generate PDF for a given card
-        async function generatePdfForCard(card) {
+        async function generatePdfDocument(cards) {
             const { jsPDF } = window.jspdf;
-            const canvases = await generateCardCanvas(card);
+            let doc;
+            let isFirstPage = true;
 
-            const firstCanvas = canvases[0];
-            const cardWidth = firstCanvas.width;
-            const cardHeight = firstCanvas.height;
+            for (const card of cards) {
+                const canvases = await generateCardCanvas(card);
+                const firstCanvas = canvases[0];
+                const cardWidth = firstCanvas.width;
+                const cardHeight = firstCanvas.height;
+                const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
-            const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-            const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+                if (isFirstPage) {
+                    doc = new jsPDF({
+                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                        unit: 'mm',
+                        format: [pdfWidth, pdfHeight]
+                    });
+                } else {
+                    doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                }
 
-            const doc = new jsPDF({
-                orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                unit: 'mm',
-                format: [pdfWidth, pdfHeight]
-            });
-
-            doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-            addCornerDots(doc, pdfWidth, pdfHeight);
-
-            if (canvases.length > 1) {
-                doc.addPage();
-                doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
                 addCornerDots(doc, pdfWidth, pdfHeight);
-            }
 
+                if (canvases.length > 1) {
+                    doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                    doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    addCornerDots(doc, pdfWidth, pdfHeight);
+                }
+
+                isFirstPage = false;
+            }
             return doc;
         }
 
@@ -1650,9 +1657,10 @@
         downloadPdfBtn.addEventListener('click', async () => {
             showMessage('Generating PDF for download...');
             try {
-                const cardToProcess = appState.cards[appState.currentCardIndex];
-                const pdf = await generatePdfForCard(cardToProcess);
-                pdf.save(`${cardToProcess.title.replace(/\s/g, '_')}.pdf`);
+                const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+                const pdf = await generatePdfDocument(cardsToProcess);
+                const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;
+                pdf.save(fileName);
                 showMessage('PDF downloaded successfully!');
             } catch (error) {
                 console.error('Error generating PDF for download:', error);
@@ -1670,15 +1678,16 @@
 
             showMessage('Preparing PDF for sharing...');
             try {
-                const cardToProcess = appState.cards[appState.currentCardIndex];
-                const pdf = await generatePdfForCard(cardToProcess);
+                const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+                const pdf = await generatePdfDocument(cardsToProcess);
                 const blob = pdf.output('blob');
-                const file = new File([blob], `${cardToProcess.title.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
+                const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;
+                const file = new File([blob], fileName, { type: 'application/pdf' });
 
                 await navigator.share({
                     files: [file],
-                    title: `TTRPG Card: ${cardToProcess.title}`,
-                    text: `Here is the TTRPG card I made: ${cardToProcess.title}`,
+                    title: `TTRPG Cards`,
+                    text: `Here are the TTRPG cards I made.`,
                 });
                 showMessage('PDF shared successfully!');
             } catch (error) {

@@ -1303,6 +1303,49 @@
         setupAccordion(accordionGenericJsonHeading, accordionGenericJsonContent);
 
 
+        // --- Start of Shared Card Rendering Configuration ---
+
+        // Define all layout dimensions in inches. This is the single source of truth.
+        const CARD_HEIGHT_RATIO = 1.4; // Ratio of height to width
+        const PADDING_IN = 0.08; // General padding around the card content
+        const ICON_SIZE_IN = 0.25;
+        const ICON_OFFSET_IN = 0.125; // From top and right edges
+
+        // Font sizes in points (1pt = 1/72in) are a standard way to define font size.
+        const FONT_SIZE_TITLE_PT = 18;
+        const FONT_SIZE_TYPE_PT = 12;
+        const FONT_SIZE_STATS_PT = 10;
+        const FONT_SIZE_SECTION_HEAD_PT = 14;
+        const FONT_SIZE_BODY_PT = 10;
+        const FONT_SIZE_FLAVOR_PT = 9;
+        const FONT_SIZE_TAGS_FOOTER_PT = 8;
+        const FONT_SIZE_FOLD_TEXT_PT = 10;
+
+        // Spacing
+        const TITLE_MARGIN_BOTTOM_IN = 0.04;
+        const TYPE_MARGIN_BOTTOM_IN = 0.08;
+        const STATS_MARGIN_BOTTOM_IN = 0.08;
+        const STAT_SPACING_IN = 0.08;
+        const SECTION_HEAD_MARGIN_BOTTOM_IN = 0.04;
+        const SECTION_HEAD_PADDING_BOTTOM_IN = 0.02;
+        const SECTION_BODY_MARGIN_BOTTOM_IN = 0.04;
+        const FLAVOR_MARGIN_TOP_IN = 0.04;
+        const TAGS_MARGIN_TOP_IN = 0.08;
+        const TAGS_PADDING_TOP_IN = 0.04;
+        const FOOTER_MARGIN_TOP_IN = 0.08;
+
+        // QR Code
+        const QR_CODE_SIZE_IN = 0.8;
+        const QR_CODE_MAX_SIZE_IN = 0.6;
+
+        // Helper to convert inches to pixels based on a given DPI
+        const toPx = (inches, dpi) => Math.round(inches * dpi);
+        // Helper to convert points to pixels based on a given DPI
+        const ptToPx = (points, dpi) => Math.round((points / 72) * dpi);
+
+        // --- End of Shared Card Rendering Configuration ---
+
+
         function getPixelWidth(paperSize, dpi) {
             // Based on the table provided in README.md
             // 1 inch = 25.4 mm
@@ -1316,37 +1359,30 @@
 
         // Generate HTML for thermal printer
         async function generateThermalHtmlForCard(card) {
-            const widthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
-            const baseWidth = 384; // Use 58mm @ 203 DPI as the baseline for scaling
-            const scaleFactor = widthPx / baseWidth;
+            const dpi = appState.thermalDpi;
+            const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
 
             let iconRenderHtml = '';
             if (card.icon) {
-                const iconSize = 24 * scaleFactor; // 0.25in at base resolution
-                // New logic: Check manifest first, then URL, then fallback
-                if (iconManifest[card.icon]) {
-                    const iconPath = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${iconPath}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
-                } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
-                } else {
-                    // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
-                    iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
-                }
+                const iconSize = toPx(ICON_SIZE_IN, dpi);
+                const iconOffset = toPx(ICON_OFFSET_IN, dpi);
+                const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}`);
+
+                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${iconOffset}px; right: ${iconOffset}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
             }
 
             let htmlContent = `
-                <div style="position: relative; width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
+                <div style="position: relative; width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
                     ${iconRenderHtml}
                     <div>
-                        <h1 style="text-align: center; font-size: ${24 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
-                        ${card.type ? `<p style="text-align: center; font-size: ${16 * scaleFactor}px; margin-bottom: ${8 * scaleFactor}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                        <h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
+                        ${card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
                     </div>
 
                     ${(card.stats && Object.keys(card.stats).length > 0) ? `
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${8 * scaleFactor}px; font-size: ${14 * scaleFactor}px;">
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${toPx(STATS_MARGIN_BOTTOM_IN, dpi)}px; font-size: ${ptToPx(FONT_SIZE_STATS_PT, dpi)}px;">
                             ${Object.entries(card.stats).map(([key, value]) => `
-                                <span style="margin: 0 ${8 * scaleFactor}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
+                                <span style="margin: 0 ${toPx(STAT_SPACING_IN / 2, dpi)}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
                             `).join('')}
                         </div>
                     ` : ''}
@@ -1354,35 +1390,40 @@
                     <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around;">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
-                                ${section.heading ? `<h2 style="font-size: ${18 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; border-bottom: 1px dashed #999; padding-bottom: ${2 * scaleFactor}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
-                                <p style="font-size: ${14 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: ${12 * scaleFactor}px; font-style: italic; color: #555; margin-top: ${4 * scaleFactor}px;">${formatText(section.flavorText || '')}</p>` : ''}
+                                ${section.heading ? `<h2 style="font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
+                                <p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-bottom: ${toPx(SECTION_BODY_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.4;">${formatText(section.body || '')}</p>
+                                ${section.flavorText ? `<p style="font-size: ${ptToPx(FONT_SIZE_FLAVOR_PT, dpi)}px; font-style: italic; color: #555; margin-top: ${toPx(FLAVOR_MARGIN_TOP_IN, dpi)}px;">${formatText(section.flavorText || '')}</p>` : ''}
                             </div>
                         `).join('') : ''}
                     </div>
 
                     <div>
                         ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px; border-top: 1px dashed #999; padding-top: ${4 * scaleFactor}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
+                            <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
                         ` : ''}
 
-                        ${card.footer ? `<p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
                     </div>
                 </div>
             `;
 
             if (card.isFolded) {
+                let foldContentHtml = '';
+                if (card.foldContent) {
+                    if (card.foldContent.type === 'text' && card.foldContent.text) {
+                        foldContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
+                    } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
+                        const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                        foldContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
+                    } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
+                        const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
+                        const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);
+                        foldContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
+                    }
+                }
                 htmlContent += `
-                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center; display: flex; justify-content: center; align-items: center;">
-                        ${(card.foldContent && card.foldContent.type === 'text' && card.foldContent.text) ? `
-                            <p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
-                        ` : ''}
-                        ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                            <img src="${sanitizeHTML(iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
-                        ` : ''}
-                        ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
-                        ` : ''}
+                    <div style="width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; transform: rotate(180deg); transform-origin: center center; display: flex; justify-content: center; align-items: center;">
+                        ${foldContentHtml}
                     </div>
                 `;
             }
@@ -1557,24 +1598,26 @@
         }
 
         async function generateFoldedBackHtmlForCard(card) {
-            const widthPx = getPixelWidth(appState.thermalPaperSize, appState.thermalDpi);
-            const scaleFactor = widthPx / 384;
+            const dpi = appState.thermalDpi;
+            const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
             let backContentHtml = '';
 
             if (card.foldContent) {
-                if (card.foldContent.type === 'text') {
-                    backContentHtml = `<p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
+                if (card.foldContent.type === 'text' && card.foldContent.text) {
+                    backContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
                 } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
                     const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" width="${widthPx}" height="${widthPx * 1.4}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
+                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
                 } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
-                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
-                    backContentHtml = `<img src="${qrUrl}" width="${100 * scaleFactor}" height="${100 * scaleFactor}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
+                    const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
+                    const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
+                    backContentHtml = `<img src="${qrUrl}" width="${qrSize}" height="${qrSize}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
                 }
             }
 
             return `
-                <div style="width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center;">
+                <div style="width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center;">
                     ${backContentHtml}
                 </div>
             `;

@@ -429,11 +429,20 @@
 
 
         // Utility functions (defined first to ensure availability)
+        function sanitizeHTML(text) {
+            if (!text) return '';
+            const sanitizer = document.createElement('div');
+            sanitizer.textContent = text;
+            return sanitizer.innerHTML;
+        }
+
         function formatText(text) {
             if (!text) return '';
             let formattedText = text;
             formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
             formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+            formattedText = formattedText.replace(/<i>/g, '<em>');
+            formattedText = formattedText.replace(/<\/i>/g, '</em>');
             formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'); // Links
             formattedText = formattedText.replace(/\n/g, '<br />'); // Newlines
             return formattedText;
@@ -563,13 +572,13 @@
                 // New logic: First check the manifest for a local icon path
                 if (iconManifest[card.icon]) {
                     const iconPath = iconManifest[card.icon];
-                    iconHtml = `<img src="${iconPath}" alt="${card.icon}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
+                    iconHtml = `<img src="${iconPath}" alt="${sanitizeHTML(card.icon)}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
                     // Fallback to URL if it's a valid URL
-                    iconHtml = `<img src="${card.icon}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
+                    iconHtml = `<img src="${sanitizeHTML(card.icon)}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
                 } else {
                     // Finally, assume it's a Font Awesome class name
-                    iconHtml = `<i class="fa-solid fa-${card.icon} card-icon-fa" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
+                    iconHtml = `<i class="fa-solid fa-${sanitizeHTML(card.icon)} card-icon-fa" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
                 }
             }
 
@@ -577,15 +586,15 @@
             cardFrontPreview.innerHTML = `
                 ${iconHtml}
                 <div class="flex flex-col items-center mb-2">
-                    <h1 class="text-2xl font-extrabold text-center mb-1 leading-tight">${card.title || ''}</h1>
-                    ${card.type ? `<p class="text-lg text-center mb-2">${card.type}</p>` : ''}
+                    <h1 class="text-2xl font-extrabold text-center mb-1 leading-tight">${sanitizeHTML(card.title || '')}</h1>
+                    ${card.type ? `<p class="text-lg text-center mb-2">${sanitizeHTML(card.type)}</p>` : ''}
                 </div>
 
                 ${(card.stats && Object.keys(card.stats).length > 0) ? `
                     <div class="flex flex-wrap justify-center text-sm mb-2">
                         ${Object.entries(card.stats).map(([key, value]) => `
                             <span class="mx-2 whitespace-nowrap">
-                                <strong class="font-semibold">${key || ''}:</strong> ${value || ''}
+                                <strong class="font-semibold">${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}
                             </span>
                         `).join('')}
                     </div>
@@ -594,7 +603,7 @@
                 <div class="flex-grow overflow-hidden">
                     ${(card.sections && Array.isArray(card.sections)) ? card.sections.map((section, index) => `
                         <div class="mb-2">
-                            ${section.heading ? `<h2 class="text-lg font-semibold border-b border-gray-300 pb-1 mb-1">${section.heading}</h2>` : ''}
+                            ${section.heading ? `<h2 class="text-lg font-semibold border-b border-gray-300 pb-1 mb-1">${sanitizeHTML(section.heading)}</h2>` : ''}
                             <p class="text-sm leading-snug card-content">${formatText(section.body || '')}</p>
                             ${section.flavorText ? `<p class="text-xs italic text-gray-600 mt-1 card-content">${formatText(section.flavorText || '')}</p>` : ''}
                         </div>
@@ -602,9 +611,9 @@
                 </div>
 
                 ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                    <p class="text-xs text-center mt-2 border-t border-gray-300 pt-1">Tags: ${card.tags.join(', ')}</p>
+                    <p class="text-xs text-center mt-2 border-t border-gray-300 pt-1">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
                 ` : ''}
-                ${card.footer ? `<p class="text-xs text-center mt-1">${card.footer || ''}</p>` : ''}
+                ${card.footer ? `<p class="text-xs text-center mt-1">${sanitizeHTML(card.footer || '')}</p>` : ''}
             `;
 
             if (card.isFolded) {
@@ -620,7 +629,7 @@
                     if (iconManifest[backImagePath]) {
                         backImagePath = iconManifest[backImagePath];
                     }
-                    foldContentHtml = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><img src="${backImagePath}" alt="Fold Back Image" style="width: 100%; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/96x96/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=BACK+IMG';" /></div>`;
+                    foldContentHtml = `<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><img src="${sanitizeHTML(backImagePath)}" alt="Fold Back Image" style="width: 100%; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/96x96/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=BACK+IMG';" /></div>`;
                 } else if (foldContent.type === 'qrCode' && foldContent.qrCodeData) {
                     foldContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(foldContent.qrCodeData)}" alt="QR Code" class="w-24 h-24 object-contain" onerror="this.src='https://placehold.co/96x96/000/FFF?text=QR';" />`;
                 }
@@ -737,7 +746,8 @@
                 const cardDataParam = urlParams.get('data') || urlParams.get('cardData');
 
                 if (cardDataParam) {
-                    const decodedData = JSON.parse(atob(cardDataParam));
+                    const decodedString = decodeURIComponent(atob(cardDataParam));
+                    const decodedData = JSON.parse(decodedString);
 
                     // Correctly unpack the data from the URL
                     if (decodedData.card) {
@@ -843,6 +853,34 @@
             }
         }
 
+        function processTextGroup(textGroup) {
+            const isTable = textGroup.length > 1 && textGroup.every(line => line.includes('｜'));
+            if (isTable) {
+                let tableHtml = '<table class="w-full text-left border-collapse">';
+                textGroup.forEach((line, index) => {
+                    const cells = line.split('｜').map(cell => cell.trim());
+                    if (index === 0) {
+                        tableHtml += '<thead><tr>';
+                        cells.forEach(cell => {
+                            tableHtml += `<th class="p-1 border-b-2 border-gray-400">${sanitizeHTML(cell)}</th>`;
+                        });
+                        tableHtml += '</tr></thead>';
+                        tableHtml += '<tbody>';
+                    } else {
+                        tableHtml += '<tr>';
+                        cells.forEach(cell => {
+                            tableHtml += `<td class="p-1 border-b border-gray-500">${sanitizeHTML(cell)}</td>`;
+                        });
+                        tableHtml += '</tr>';
+                    }
+                });
+                tableHtml += '</tbody></table>';
+                return tableHtml;
+            } else {
+                return sanitizeHTML(textGroup.join('\n'));
+            }
+        }
+
         function parseAndSetCardData(dataArray, type) {
             appState.cards = []; // Clear existing cards
             dataArray.forEach(data => {
@@ -870,40 +908,69 @@
 
                     if (data.contents && Array.isArray(data.contents)) {
                         let currentSection = { heading: '', body: '', flavorText: '' };
-                        data.contents.forEach(line => {
+
+                        function pushCurrentSection() {
+                            if (currentSection.body || currentSection.heading || currentSection.flavorText) {
+                                newCard.sections.push({ ...currentSection });
+                            }
+                            currentSection = { heading: '', body: '', flavorText: '' };
+                        }
+
+                        for (let i = 0; i < data.contents.length; i++) {
+                            const line = data.contents[i];
+
                             if (line.startsWith('subtitle | ')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
-                                }
-                                currentSection = { heading: '', body: '', flavorText: '' };
+                                pushCurrentSection();
                                 newCard.type = line.substring('subtitle | '.length).trim();
                             } else if (line.startsWith('rule')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
-                                }
-                                currentSection = { heading: '', body: '', flavorText: '' };
+                                pushCurrentSection();
                             } else if (line.startsWith('text | ')) {
-                                const textBody = line.substring('text | '.length).trim();
+                                const textGroup = [line.substring('text | '.length).trim()];
+                                while (i + 1 < data.contents.length && data.contents[i + 1].startsWith('text | ')) {
+                                    i++;
+                                    textGroup.push(data.contents[i].substring('text | '.length).trim());
+                                }
+
+                                const processedText = processTextGroup(textGroup);
                                 if (currentSection.body) {
-                                    currentSection.body += '\n' + textBody;
+                                    currentSection.body += '\n' + processedText;
                                 } else {
-                                    currentSection.body = textBody;
+                                    currentSection.body = processedText;
                                 }
                             } else if (line.startsWith('property | ')) {
                                 const parts = line.substring('property | '.length).split(' | ');
                                 if (parts.length >= 2) {
                                     newCard.stats[parts[0].trim()] = parts[1].trim();
                                 }
-                            } else if (line.startsWith('section | ')) {
-                                if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                    newCard.sections.push({ ...currentSection });
+                            } else if (line.startsWith('dndstats | ')) {
+                                const statKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+                                const stats = line.substring('dndstats | '.length).split(' | ').map(s => s.trim());
+                                if (stats.length === statKeys.length) {
+                                    statKeys.forEach((key, index) => {
+                                        newCard.stats[key] = stats[index];
+                                    });
                                 }
-                                currentSection = { heading: line.substring('section | '.length).trim(), body: '', flavorText: '' };
+                            } else if (line.startsWith('description | ')) {
+                                pushCurrentSection();
+                                const parts = line.substring('description | '.length).split(' | ').map(p => p.trim());
+                                currentSection = {
+                                    heading: parts.length >= 2 ? parts[0] : '',
+                                    body: parts.length >= 2 ? parts[1] : parts[0],
+                                    flavorText: ''
+                                };
+                            } else if (line.startsWith('bullet | ')) {
+                                const bulletText = '• ' + line.substring('bullet | '.length).trim();
+                                if (currentSection.body) {
+                                    currentSection.body += '\n' + bulletText;
+                                } else {
+                                    currentSection.body = bulletText;
+                                }
+                            } else if (line.startsWith('section | ')) {
+                                pushCurrentSection();
+                                currentSection.heading = line.substring('section | '.length).trim();
                             }
-                        });
-                        if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                            newCard.sections.push({ ...currentSection });
                         }
+                        pushCurrentSection();
                     }
 
                     if (newCard.sections.length === 0) {
@@ -1191,7 +1258,7 @@
                     const iconPath = iconManifest[card.icon];
                     iconRenderHtml = `<img src="${iconPath}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${card.icon}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
                     // Fallback for non-URL, non-manifest icons (e.g., Font Awesome names)
                     iconRenderHtml = `<img src="https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}" style="position: absolute; top: ${12 * scaleFactor}px; right: ${12 * scaleFactor}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" />`;
@@ -1202,14 +1269,14 @@
                 <div style="position: relative; width: ${widthPx}px; height: ${widthPx * 1.4}px; font-family: 'Inter', sans-serif; padding: ${8 * scaleFactor}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
                     ${iconRenderHtml}
                     <div>
-                        <h1 style="text-align: center; font-size: ${24 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.2;">${card.title || ''}</h1>
-                        ${card.type ? `<p style="text-align: center; font-size: ${16 * scaleFactor}px; margin-bottom: ${8 * scaleFactor}px;">${card.type}</p>` : ''}
+                        <h1 style="text-align: center; font-size: ${24 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
+                        ${card.type ? `<p style="text-align: center; font-size: ${16 * scaleFactor}px; margin-bottom: ${8 * scaleFactor}px;">${sanitizeHTML(card.type)}</p>` : ''}
                     </div>
 
                     ${(card.stats && Object.keys(card.stats).length > 0) ? `
                         <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${8 * scaleFactor}px; font-size: ${14 * scaleFactor}px;">
                             ${Object.entries(card.stats).map(([key, value]) => `
-                                <span style="margin: 0 ${8 * scaleFactor}px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>
+                                <span style="margin: 0 ${8 * scaleFactor}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
                             `).join('')}
                         </div>
                     ` : ''}
@@ -1217,7 +1284,7 @@
                     <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around;">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
-                                ${section.heading ? `<h2 style="font-size: ${18 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; border-bottom: 1px dashed #999; padding-bottom: ${2 * scaleFactor}px;">${section.heading}</h2>` : ''}
+                                ${section.heading ? `<h2 style="font-size: ${18 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; border-bottom: 1px dashed #999; padding-bottom: ${2 * scaleFactor}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
                                 <p style="font-size: ${14 * scaleFactor}px; margin-bottom: ${4 * scaleFactor}px; line-height: 1.4;">${formatText(section.body || '')}</p>
                                 ${section.flavorText ? `<p style="font-size: ${12 * scaleFactor}px; font-style: italic; color: #555; margin-top: ${4 * scaleFactor}px;">${formatText(section.flavorText || '')}</p>` : ''}
                             </div>
@@ -1226,10 +1293,10 @@
 
                     <div>
                         ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px; border-top: 1px dashed #999; padding-top: ${4 * scaleFactor}px;">Tags: ${card.tags.join(', ')}</p>
+                            <p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px; border-top: 1px dashed #999; padding-top: ${4 * scaleFactor}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
                         ` : ''}
 
-                        ${card.footer ? `<p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px;">${card.footer || ''}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: ${12 * scaleFactor}px; text-align: center; margin-top: ${8 * scaleFactor}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
                     </div>
                 </div>
             `;
@@ -1241,7 +1308,7 @@
                             <p style="font-size: ${14 * scaleFactor}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) ? `
-                            <img src="${iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
+                            <img src="${sanitizeHTML(iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />
                         ` : ''}
                         ${(card.foldContent && card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) ? `
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=${100 * scaleFactor}x${100 * scaleFactor}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${80 * scaleFactor}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />
@@ -1262,7 +1329,8 @@
                     numCopies: appState.numCopies
                 }
             };
-            const encodedData = btoa(JSON.stringify(dataToSend));
+            const jsonString = JSON.stringify(dataToSend);
+            const encodedData = btoa(encodeURIComponent(jsonString));
             const url = `index.html?view=card&data=${encodedData}`;
             window.open(url, '_blank');
         }
@@ -1378,24 +1446,24 @@
                 }
 
                 const frontHtml = `
-                    <div class="card-export-front" style="position: relative; width: ${targetWidthPx}px; height: ${targetWidthPx * 1.5}px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000;">
+                    <div class="card-export-front" style="position: relative; width: ${targetWidthPx}px; height: ${targetWidthPx * 1.5}px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; background-color: ${sanitizeHTML(card.color || '#ffffff')}; color: #000;">
                         ${iconHtml}
-                        <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${card.title || ''}</h1>
-                        ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${card.type}</p>` : ''}
+                        <h1 style="font-size: 48px; margin-bottom: 10px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
+                        ${card.type ? `<p style="font-size: 28px; margin-bottom: 15px;">${sanitizeHTML(card.type)}</p>` : ''}
                         <div style="flex-grow: 1; overflow: hidden; width: 100%;">
                             ${(card.stats && Object.keys(card.stats).length > 0) ? `
                             <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; font-size: 24px;">
-                                ${Object.entries(card.stats).map(([key, value]) => `<span style="margin: 0 15px; white-space: nowrap;"><strong>${key || ''}:</strong> ${value || ''}</span>`).join('')}
+                                ${Object.entries(card.stats).map(([key, value]) => `<span style="margin: 0 15px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>`).join('')}
                             </div>` : ''}
                             ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div style="margin-bottom: 15px; text-align: left;">
-                                ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${section.heading}</h2>` : ''}
+                                ${section.heading ? `<h2 style="font-size: 32px; margin-bottom: 8px; border-bottom: 2px solid #ccc; padding-bottom: 4px;">${sanitizeHTML(section.heading)}</h2>` : ''}
                                 <p style="font-size: 24px; margin-bottom: 8px; line-height: 1.4;">${formatText(section.body || '')}</p>
                                 ${section.flavorText ? `<p style="font-size: 20px; font-style: italic; color: #555; margin-top: 8px;">${formatText(section.flavorText || '')}</p>` : ''}
                             </div>`).join('') : ''}
                         </div>
-                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `<p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${card.tags.join(', ')}</p>` : ''}
-                        ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${card.footer || ''}</p>` : ''}
+                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `<p style="font-size: 20px; text-align: center; margin-top: 15px; border-top: 2px solid #ccc; padding-top: 8px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>` : ''}
+                        ${card.footer ? `<p style="font-size: 20px; text-align: center; margin-top: 15px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
                     </div>`;
 
                 htmlContent += frontHtml;
@@ -1414,7 +1482,7 @@
                     }
 
                     const backHtml = `
-                        <div class="card-export-back" style="width: ${targetWidthPx}px; height: ${targetWidthPx * 1.5}px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${card.color || '#ffffff'}; color: #000; transform: rotate(180deg); transform-origin: center center;">
+                        <div class="card-export-back" style="width: ${targetWidthPx}px; height: ${targetWidthPx * 1.5}px; font-family: 'Inter', sans-serif; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: ${sanitizeHTML(card.color || '#ffffff')}; color: #000; transform: rotate(180deg); transform-origin: center center;">
                             ${backContentHtml}
                         </div>`;
                     htmlContent += backHtml;
@@ -1589,7 +1657,8 @@
                     numCopies: appState.numCopies
                 }
             };
-            const encodedData = btoa(JSON.stringify(dataToSend));
+            const jsonString = JSON.stringify(dataToSend);
+            const encodedData = btoa(encodeURIComponent(jsonString));
 
             const currentUrl = new URL(window.location.href);
             // Clear existing params to create a clean link for the editor view
@@ -1654,7 +1723,7 @@
             }
 
             try {
-                const decodedString = atob(dataParam);
+                const decodedString = decodeURIComponent(atob(dataParam));
                 const decodedData = JSON.parse(decodedString);
 
                 const card = decodedData.card || decodedData;

@@ -376,6 +376,8 @@
             rememberedIcons: []
         };
 
+        const MAX_SHARE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
         // DOM Elements (defined after appState for clarity, but before functions that use them)
         const titleInput = document.getElementById('title');
         const typeInput = document.getElementById('type');
@@ -1978,7 +1980,17 @@
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
                 const foldOverride = appState.printScope === 'all' ? isFoldedCheckbox.checked : null;
                 const pdf = await generatePdfDocument(cardsToProcess, foldOverride);
+                if (!pdf) {
+                    showMessage('Could not generate PDF. Nothing to share.', true);
+                    return;
+                }
                 const blob = pdf.output('blob');
+
+                if (blob.size > MAX_SHARE_SIZE_BYTES) {
+                    showMessage(`PDF is too large to share (${(blob.size / 1024 / 1024).toFixed(2)} MB). Please use the Download button.`, true);
+                    return;
+                }
+
                 const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;
                 const file = new File([blob], fileName, { type: 'application/pdf' });
 

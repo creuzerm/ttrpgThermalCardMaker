@@ -1359,29 +1359,36 @@
             return Math.round(printableWidthIn * dpi);
         }
 
-        // Generate HTML for thermal printer
-        async function generateThermalHtmlForCard(card) {
+        async function generateCardHtml(card, options = { isScrolling: false }) {
+            const { isScrolling } = options;
             const dpi = appState.thermalDpi;
             const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
 
             let iconRenderHtml = '';
-            if (card.icon && !card.isContinuation) {
+            if (card.icon && (!card.isContinuation || isScrolling)) {
                 const iconSize = toPx(ICON_SIZE_IN, dpi);
                 const iconOffset = toPx(ICON_OFFSET_IN, dpi);
                 const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}`);
 
-                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${iconOffset}px; right: ${iconOffset}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${iconOffset}px; right: ${iconOffset}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https.placehold.co/60x60/000/FFF?text=ICON';" />`;
             }
 
+            const containerHeight = isScrolling ? 'auto' : `${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px`;
+            const containerStyle = isScrolling
+                ? `position: relative; width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column; border-bottom: 1px dashed #ccc; margin-bottom: 10px;`
+                : `position: relative; width: ${widthPx}px; height: ${containerHeight}; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;`;
+
+            const contentAreaStyle = isScrolling ? "overflow: visible;" : "flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start;";
+
             let htmlContent = `
-                <div style="position: relative; width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
+                <div style="${containerStyle}">
                     ${iconRenderHtml}
                     <div>
                         ${card.title ? `<h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>` : ''}
-                        ${!card.isContinuation && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                        ${(!card.isContinuation || isScrolling) && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
                     </div>
 
-                    ${!card.isContinuation && (card.stats && Object.keys(card.stats).length > 0) ? `
+                    ${(!card.isContinuation || isScrolling) && (card.stats && Object.keys(card.stats).length > 0) ? `
                         <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${toPx(STATS_MARGIN_BOTTOM_IN, dpi)}px; font-size: ${ptToPx(FONT_SIZE_STATS_PT, dpi)}px;">
                             ${Object.entries(card.stats).map(([key, value]) => `
                                 <span style="margin: 0 ${toPx(STAT_SPACING_IN / 2, dpi)}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
@@ -1389,7 +1396,7 @@
                         </div>
                     ` : ''}
 
-                    <div class="card-content-area" style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start;">
+                    <div class="card-content-area" style="${contentAreaStyle}">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
                                 ${section.heading ? `<h2 style="font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
@@ -1400,16 +1407,15 @@
                     </div>
 
                     <div>
-                        ${!card.isContinuation && (card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
-                        ` : ''}
+                        ${(!card.isContinuation || isScrolling) && (card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
+                            <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>` : ''}
 
-                        ${!card.isContinuation && card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
+                        ${(!card.isContinuation || isScrolling) && card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
                     </div>
                 </div>
             `;
 
-            if (card.isFolded) {
+            if (card.isFolded && !isScrolling) {
                 let foldContentHtml = '';
                 if (card.foldContent) {
                     if (card.foldContent.type === 'text' && card.foldContent.text) {
@@ -1420,7 +1426,7 @@
                     } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
                         const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
                         const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);
-                        foldContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
+                        foldContentHtml = `<img src="https.api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https.placehold.co/80x80/000/FFF?text=QR';" />`;
                     }
                 }
                 htmlContent += `
@@ -1430,6 +1436,11 @@
                 `;
             }
             return htmlContent;
+        }
+
+        // Generate HTML for thermal printer
+        async function generateThermalHtmlForCard(card) {
+            return await generateCardHtml(card, { isScrolling: false });
         }
 
         // Function to open the card view
@@ -1561,7 +1572,7 @@
 
             // --- Front of Card ---
             const frontContainer = document.createElement('div');
-            const frontHtml = await generateThermalHtmlForCard(card);
+            const frontHtml = await generateCardHtml(card, { isScrolling: false });
             frontContainer.innerHTML = frontHtml;
             tempContainer.appendChild(frontContainer);
 
@@ -1601,55 +1612,7 @@
         }
 
         async function generateScrollingHtmlForCard(card) {
-            const dpi = appState.thermalDpi;
-            const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
-
-            let iconRenderHtml = '';
-            if (card.icon) {
-                const iconSize = toPx(ICON_SIZE_IN, dpi);
-                const iconOffset = toPx(ICON_OFFSET_IN, dpi);
-                const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}`);
-
-                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${iconOffset}px; right: ${iconOffset}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
-            }
-
-            // This is largely the same as generateThermalHtmlForCard, but with no fixed height on the main container.
-            let htmlContent = `
-                <div style="position: relative; width: ${widthPx}px; /* NO FIXED HEIGHT */ font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column; border-bottom: 1px dashed #ccc; margin-bottom: 10px;">
-                    ${iconRenderHtml}
-                    <div>
-                        <h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
-                        ${card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
-                    </div>
-
-                    ${(card.stats && Object.keys(card.stats).length > 0) ? `
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${toPx(STATS_MARGIN_BOTTOM_IN, dpi)}px; font-size: ${ptToPx(FONT_SIZE_STATS_PT, dpi)}px;">
-                            ${Object.entries(card.stats).map(([key, value]) => `
-                                <span style="margin: 0 ${toPx(STAT_SPACING_IN / 2, dpi)}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
-                            `).join('')}
-                        </div>
-                    ` : ''}
-
-                    <div class="card-content-area" style="overflow: visible;">
-                        ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
-                            <div class="mb-2">
-                                ${section.heading ? `<h2 style="font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
-                                <p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-bottom: ${toPx(SECTION_BODY_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: ${ptToPx(FONT_SIZE_FLAVOR_PT, dpi)}px; font-style: italic; color: #555; margin-top: ${toPx(FLAVOR_MARGIN_TOP_IN, dpi)}px;">${formatText(section.flavorText || '')}</p>` : ''}
-                            </div>
-                        `).join('') : ''}
-                    </div>
-
-                    <div>
-                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
-                            <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
-                        ` : ''}
-
-                        ${card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
-                    </div>
-                </div>
-            `;
-            return htmlContent;
+            return await generateCardHtml(card, { isScrolling: true });
         }
 
         async function generateBackCanvas(card) {
@@ -1711,7 +1674,7 @@
                 tempContainer.style.visibility = 'hidden';
 
                 const renderWrapper = document.createElement('div');
-                renderWrapper.innerHTML = await generateThermalHtmlForCard(card);
+                renderWrapper.innerHTML = await generateCardHtml(card, { isScrolling: false });
                 tempContainer.appendChild(renderWrapper);
                 document.body.appendChild(tempContainer);
 

@@ -1932,11 +1932,14 @@
         });
 
         function resetShareButton() {
+            const readyClasses = ['bg-yellow-500', 'hover:bg-yellow-600'];
+            const initialClasses = ['bg-green-600', 'hover:bg-green-700'];
+
             pdfShareBlob = null;
             sharePdfBtn.disabled = false;
             sharePdfBtn.textContent = 'Share PDF';
-            sharePdfBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-            sharePdfBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            sharePdfBtn.classList.remove(...readyClasses);
+            sharePdfBtn.classList.add(...initialClasses);
         }
 
         // Share PDF button handler

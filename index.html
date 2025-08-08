@@ -1931,6 +1931,17 @@
             }
         });
 
+        function resetShareButton() {
+            const readyClasses = ['bg-yellow-500', 'hover:bg-yellow-600'];
+            const initialClasses = ['bg-green-600', 'hover:bg-green-700'];
+
+            pdfShareBlob = null;
+            sharePdfBtn.disabled = false;
+            sharePdfBtn.textContent = 'Share PDF';
+            sharePdfBtn.classList.remove(...readyClasses);
+            sharePdfBtn.classList.add(...initialClasses);
+        }
+
         // Share PDF button handler
         sharePdfBtn.addEventListener('click', async () => {
             // --- Second Click Logic ---
@@ -1955,10 +1966,7 @@
                     }
                 } finally {
                     // Reset state after sharing
-                    pdfShareBlob = null;
-                    sharePdfBtn.textContent = 'Share PDF';
-                    sharePdfBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-                    sharePdfBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    resetShareButton();
                 }
                 return; // End execution after handling the second click
             }
@@ -1988,8 +1996,7 @@
                 if (blob.size > MAX_SHARE_SIZE_BYTES) {
                     showMessage(`PDF is too large to share (${(blob.size / 1024 / 1024).toFixed(2)} MB). Please use the Download button.`, true);
                     // Reset button on failure
-                    sharePdfBtn.disabled = false;
-                    sharePdfBtn.textContent = 'Share PDF';
+                    resetShareButton();
                     return;
                 }
 
@@ -2004,11 +2011,7 @@
                 console.error('Error preparing PDF for sharing:', error);
                 showMessage(`Error preparing PDF: ${error.message}`, true);
                 // Reset button on failure
-                pdfShareBlob = null;
-                sharePdfBtn.disabled = false;
-                sharePdfBtn.textContent = 'Share PDF';
-                sharePdfBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-                sharePdfBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                resetShareButton();
             }
         });
 

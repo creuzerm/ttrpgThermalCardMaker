@@ -1674,7 +1674,7 @@
                 tempContainer.style.visibility = 'hidden';
 
                 const renderWrapper = document.createElement('div');
-                renderWrapper.innerHTML = await generateCardHtml(card, { isScrolling: false });
+                renderWrapper.innerHTML = await generateThermalHtmlForCard(card);
                 tempContainer.appendChild(renderWrapper);
                 document.body.appendChild(tempContainer);
 

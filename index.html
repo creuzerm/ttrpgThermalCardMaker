@@ -1572,7 +1572,7 @@
 
             // --- Front of Card ---
             const frontContainer = document.createElement('div');
-            const frontHtml = await generateCardHtml(card, { isScrolling: false });
+            const frontHtml = await generateThermalHtmlForCard(card);
             frontContainer.innerHTML = frontHtml;
             tempContainer.appendChild(frontContainer);
 

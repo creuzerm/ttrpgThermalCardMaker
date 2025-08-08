@@ -1330,7 +1330,7 @@
             const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
 
             let iconRenderHtml = '';
-            if (card.icon) {
+            if (card.icon && !card.isContinuation) {
                 const iconSize = toPx(ICON_SIZE_IN, dpi);
                 const iconOffset = toPx(ICON_OFFSET_IN, dpi);
                 const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}`);
@@ -1343,10 +1343,10 @@
                     ${iconRenderHtml}
                     <div>
                         <h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
-                        ${card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                        ${!card.isContinuation && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
                     </div>
 
-                    ${(card.stats && Object.keys(card.stats).length > 0) ? `
+                    ${!card.isContinuation && (card.stats && Object.keys(card.stats).length > 0) ? `
                         <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${toPx(STATS_MARGIN_BOTTOM_IN, dpi)}px; font-size: ${ptToPx(FONT_SIZE_STATS_PT, dpi)}px;">
                             ${Object.entries(card.stats).map(([key, value]) => `
                                 <span style="margin: 0 ${toPx(STAT_SPACING_IN / 2, dpi)}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
@@ -1354,7 +1354,7 @@
                         </div>
                     ` : ''}
 
-                    <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around;">
+                    <div class="card-content-area" style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start;">
                         ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
                             <div class="mb-2">
                                 ${section.heading ? `<h2 style="font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
@@ -1365,11 +1365,11 @@
                     </div>
 
                     <div>
-                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
+                        ${!card.isContinuation && (card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
                             <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
                         ` : ''}
 
-                        ${card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
+                        ${!card.isContinuation && card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
                     </div>
                 </div>
             `;
@@ -1591,47 +1591,159 @@
             `;
         }
 
+        async function splitCardIntoPages(originalCard) {
+            // Helper to check for overflow by rendering the card off-screen
+            const checkForOverflow = async (card) => {
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.visibility = 'hidden';
+
+                const renderWrapper = document.createElement('div');
+                renderWrapper.innerHTML = await generateThermalHtmlForCard(card);
+                tempContainer.appendChild(renderWrapper);
+                document.body.appendChild(tempContainer);
+
+                // Allow the browser a moment to render everything
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                const contentArea = tempContainer.querySelector('.card-content-area');
+                if (!contentArea) {
+                    console.error("Could not find .card-content-area for overflow check.");
+                    document.body.removeChild(tempContainer);
+                    return false;
+                }
+
+                // Check if the scroll height is greater than the client height
+                const isOverflowing = contentArea.scrollHeight > contentArea.clientHeight;
+                document.body.removeChild(tempContainer);
+                return isOverflowing;
+            };
+
+            const cardWithAllSections = JSON.parse(JSON.stringify(originalCard));
+            if (!(await checkForOverflow(cardWithAllSections))) {
+                // If the card doesn't overflow with all its content, no splitting is needed.
+                return [originalCard];
+            }
+
+            const pages = [];
+            let pageCounter = 1;
+            let sectionsToProcess = JSON.parse(JSON.stringify(originalCard.sections));
+
+            // Create the first page from the original card
+            const page1 = JSON.parse(JSON.stringify(originalCard));
+            page1.sections = [];
+
+            // Add sections one by one to the first page until it overflows
+            for (const section of sectionsToProcess) {
+                const testPage = { ...page1, sections: [...page1.sections, section] };
+
+                if (await checkForOverflow(testPage)) {
+                    // This section makes the page overflow, so we stop here.
+                    break;
+                }
+                page1.sections.push(section);
+            }
+            pages.push(page1);
+
+            let remainingSections = sectionsToProcess.slice(page1.sections.length);
+
+            while (remainingSections.length > 0) {
+                pageCounter++;
+                const continuationPage = JSON.parse(JSON.stringify(originalCard));
+                continuationPage.title = `${originalCard.title} (Page ${pageCounter})`;
+                continuationPage.icon = '';
+                continuationPage.type = '';
+                continuationPage.stats = {};
+                continuationPage.tags = [];
+                continuationPage.footer = '';
+                continuationPage.isContinuation = true;
+                continuationPage.isFolded = false; // Continuation pages don't have their own backs
+                continuationPage.foldContent = {}; // Clear out fold content
+                continuationPage.sections = [];
+
+                for (const section of remainingSections) {
+                    const testPage = { ...continuationPage, sections: [...continuationPage.sections, section] };
+                    if (await checkForOverflow(testPage)) {
+                        break;
+                    }
+                    continuationPage.sections.push(section);
+                }
+
+                if (continuationPage.sections.length === 0 && remainingSections.length > 0) {
+                    continuationPage.sections.push(remainingSections[0]);
+                }
+
+                pages.push(continuationPage);
+                remainingSections = remainingSections.slice(continuationPage.sections.length);
+            }
+
+            // For folded cards, ensure the total number of pages is even
+            if (originalCard.isFolded) {
+                let totalOutputPages = 0;
+                for (const p of pages) {
+                    totalOutputPages++; // Count the front page
+                    const hasBackContent = p.foldContent && (p.foldContent.text || p.foldContent.imageUrl || p.foldContent.qrCodeData);
+                    if (p.isFolded && hasBackContent) {
+                        totalOutputPages++; // Count the back page
+                    }
+                }
+
+                if (totalOutputPages % 2 !== 0) {
+                    // If the total is odd, add a blank page to make it even
+                    const blankPage = { title: '', isContinuation: true, sections: [], isFolded: false, foldContent: {} };
+                    pages.push(blankPage);
+                }
+            }
+
+            return pages;
+        }
+
         async function generatePdfDocument(cards, foldOverride = null) {
             const { jsPDF } = window.jspdf;
             let doc;
             let isFirstPage = true;
 
             for (const card of cards) {
-                const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
-                const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
-                const finalPrintBackDecision = shouldPrintBack && hasBackContent;
+                const pages = await splitCardIntoPages(card);
 
-                const canvases = await generateCardCanvas(card, finalPrintBackDecision);
-                const firstCanvas = canvases[0];
-                const cardWidth = firstCanvas.width;
-                const cardHeight = firstCanvas.height;
-                const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+                for (const page of pages) {
+                    const shouldPrintBack = (foldOverride !== null) ? foldOverride : page.isFolded;
+                    const hasBackContent = page.foldContent && (page.foldContent.text || page.foldContent.imageUrl || page.foldContent.qrCodeData);
+                    const finalPrintBackDecision = shouldPrintBack && hasBackContent;
 
-                if (isFirstPage) {
-                    doc = new jsPDF({
-                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                        unit: 'mm',
-                        format: [pdfWidth, pdfHeight]
-                    });
-                } else {
-                    doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
-                }
+                    const canvases = await generateCardCanvas(page, finalPrintBackDecision);
+                    const firstCanvas = canvases[0];
+                    const cardWidth = firstCanvas.width;
+                    const cardHeight = firstCanvas.height;
+                    const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
-                doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-                if (appState.includeCornerDots) {
-                    addCornerDots(doc, pdfWidth, pdfHeight);
-                }
+                    if (isFirstPage) {
+                        doc = new jsPDF({
+                            orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                            unit: 'mm',
+                            format: [pdfWidth, pdfHeight]
+                        });
+                    } else {
+                        doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                    }
 
-                if (canvases.length > 1) {
-                    doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
-                    doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
                     if (appState.includeCornerDots) {
                         addCornerDots(doc, pdfWidth, pdfHeight);
                     }
-                }
 
-                isFirstPage = false;
+                    if (canvases.length > 1) {
+                        doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                        doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                        if (appState.includeCornerDots) {
+                            addCornerDots(doc, pdfWidth, pdfHeight);
+                        }
+                    }
+
+                    isFirstPage = false;
+                }
             }
             return doc;
         }

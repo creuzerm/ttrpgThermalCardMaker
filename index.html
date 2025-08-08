@@ -1169,9 +1169,9 @@
                 // Uncheck folded if scrolling is checked
                 appState.cards[appState.currentCardIndex].isFolded = false;
                 isFoldedCheckbox.checked = false;
-                // Also hide the fold content options
-                foldContentOptions.classList.add('hidden');
+                toggleFoldContentOptions();
             }
+            updateCardPreview();
             saveState();
         });
 

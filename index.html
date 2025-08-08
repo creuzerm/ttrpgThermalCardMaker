@@ -132,13 +132,19 @@
                 <input type="text" id="footer" name="footer" placeholder="e.g., Source: PHB" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
             </div>
 
-            <!-- Folded Card Options -->
+            <!-- Card Format Options -->
             <div class="mb-4 border-t border-gray-700 pt-4">
-                <h3 class="text-xl font-semibold mb-3 text-purple-300">Card Folding</h3>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-purple-600 rounded">
-                    <span class="ml-2 text-gray-300">Folded Card</span>
-                </label>
+                <h3 class="text-xl font-semibold mb-3 text-purple-300">Card Format Options</h3>
+                <div class="flex space-x-6">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-purple-600 rounded">
+                        <span class="ml-2 text-gray-300">Folded Card</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="is-scrolling" name="isScrolling" class="form-checkbox h-5 w-5 text-green-600 rounded">
+                        <span class="ml-2 text-gray-300">Scrolling Card (Single Page PDF)</span>
+                    </label>
+                </div>
 
                 <div id="fold-content-options" class="mt-4 bg-gray-700 p-4 rounded-md hidden">
                     <h4 class="text-lg font-semibold mb-2 text-purple-200">Back/Bottom Fold Content</h4>
@@ -366,6 +372,7 @@
             thermalDpi: 203, // 180, 200, 203, 300
             outputFormat: 'pdf', // 'pdf' or 'png'
             includeCornerDots: true,
+            isScrolling: false, // New property for scrolling card option
             rememberedIcons: []
         };
 
@@ -381,6 +388,7 @@
         const tagsInput = document.getElementById('tags');
         const footerInput = document.getElementById('footer');
         const isFoldedCheckbox = document.getElementById('is-folded');
+        const isScrollingCheckbox = document.getElementById('is-scrolling');
         const foldContentOptions = document.getElementById('fold-content-options');
         const foldContentTypeSelect = document.getElementById('fold-content-type');
         const foldTextInput = document.getElementById('fold-text-input');
@@ -726,6 +734,7 @@
             isFoldedCheckbox.checked = currentCard.isFolded;
             printerTypeSelect.value = appState.printerType;
             outputFormatSelect.value = appState.outputFormat;
+            isScrollingCheckbox.checked = appState.isScrolling;
             thermalPaperSizeSelect.value = appState.thermalPaperSize;
             thermalDpiSelect.value = appState.thermalDpi;
             numCopiesInput.value = appState.numCopies;
@@ -1134,9 +1143,32 @@
 
         // Folded card checkbox
         isFoldedCheckbox.addEventListener('change', (e) => {
-            appState.cards[appState.currentCardIndex].isFolded = e.target.checked;
+            const isChecked = e.target.checked;
+            appState.cards[appState.currentCardIndex].isFolded = isChecked;
+
+            if (isChecked) {
+                // Uncheck scrolling if folded is checked
+                appState.isScrolling = false;
+                isScrollingCheckbox.checked = false;
+            }
+
             toggleFoldContentOptions();
             updateCardPreview();
+            saveState();
+        });
+
+        // Scrolling card checkbox
+        isScrollingCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            appState.isScrolling = isChecked;
+
+            if (isChecked) {
+                // Uncheck folded if scrolling is checked
+                appState.cards[appState.currentCardIndex].isFolded = false;
+                isFoldedCheckbox.checked = false;
+                // Also hide the fold content options
+                foldContentOptions.classList.add('hidden');
+            }
             saveState();
         });
 
@@ -1565,6 +1597,58 @@
             return [frontCanvas];
         }
 
+        async function generateScrollingHtmlForCard(card) {
+            const dpi = appState.thermalDpi;
+            const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
+
+            let iconRenderHtml = '';
+            if (card.icon) {
+                const iconSize = toPx(ICON_SIZE_IN, dpi);
+                const iconOffset = toPx(ICON_OFFSET_IN, dpi);
+                const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}`);
+
+                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${iconOffset}px; right: ${iconOffset}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+            }
+
+            // This is largely the same as generateThermalHtmlForCard, but with no fixed height on the main container.
+            let htmlContent = `
+                <div style="position: relative; width: ${widthPx}px; /* NO FIXED HEIGHT */ font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column; border-bottom: 1px dashed #ccc; margin-bottom: 10px;">
+                    ${iconRenderHtml}
+                    <div>
+                        <h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
+                        ${card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                    </div>
+
+                    ${(card.stats && Object.keys(card.stats).length > 0) ? `
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: ${toPx(STATS_MARGIN_BOTTOM_IN, dpi)}px; font-size: ${ptToPx(FONT_SIZE_STATS_PT, dpi)}px;">
+                            ${Object.entries(card.stats).map(([key, value]) => `
+                                <span style="margin: 0 ${toPx(STAT_SPACING_IN / 2, dpi)}px; white-space: nowrap;"><strong>${sanitizeHTML(key || '')}:</strong> ${sanitizeHTML(value || '')}</span>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="card-content-area" style="overflow: visible;">
+                        ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
+                            <div class="mb-2">
+                                ${section.heading ? `<h2 style="font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
+                                <p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-bottom: ${toPx(SECTION_BODY_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.4;">${formatText(section.body || '')}</p>
+                                ${section.flavorText ? `<p style="font-size: ${ptToPx(FONT_SIZE_FLAVOR_PT, dpi)}px; font-style: italic; color: #555; margin-top: ${toPx(FLAVOR_MARGIN_TOP_IN, dpi)}px;">${formatText(section.flavorText || '')}</p>` : ''}
+                            </div>
+                        `).join('') : ''}
+                    </div>
+
+                    <div>
+                        ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
+                            <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>
+                        ` : ''}
+
+                        ${card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            return htmlContent;
+        }
+
         async function generateBackCanvas(card) {
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
@@ -1628,7 +1712,6 @@
                 tempContainer.appendChild(renderWrapper);
                 document.body.appendChild(tempContainer);
 
-                // Allow the browser a moment to render everything
                 await new Promise(resolve => setTimeout(resolve, 50));
 
                 const contentArea = tempContainer.querySelector('.card-content-area');
@@ -1638,7 +1721,6 @@
                     return false;
                 }
 
-                // Check if the scroll height is greater than the client height
                 const isOverflowing = contentArea.scrollHeight > contentArea.clientHeight;
                 document.body.removeChild(tempContainer);
                 return isOverflowing;
@@ -1646,23 +1728,17 @@
 
             const cardWithAllSections = JSON.parse(JSON.stringify(originalCard));
             if (!(await checkForOverflow(cardWithAllSections))) {
-                // If the card doesn't overflow with all its content, no splitting is needed.
                 return [originalCard];
             }
 
             const pages = [];
             let sectionsToProcess = JSON.parse(JSON.stringify(originalCard.sections));
-
-            // Create the first page from the original card
             const page1 = JSON.parse(JSON.stringify(originalCard));
             page1.sections = [];
 
-            // Add sections one by one to the first page until it overflows
             for (const section of sectionsToProcess) {
                 const testPage = { ...page1, sections: [...page1.sections, section] };
-
                 if (await checkForOverflow(testPage)) {
-                    // This section makes the page overflow, so we stop here.
                     break;
                 }
                 page1.sections.push(section);
@@ -1673,7 +1749,7 @@
 
             while (remainingSections.length > 0) {
                 const continuationPage = JSON.parse(JSON.stringify(originalCard));
-                continuationPage.title = ''; // No title for continuation pages
+                continuationPage.title = '';
                 continuationPage.icon = '';
                 continuationPage.type = '';
                 continuationPage.stats = {};
@@ -1704,73 +1780,114 @@
         async function generatePdfDocument(cards, foldOverride = null) {
             const { jsPDF } = window.jspdf;
             let doc;
-            let isFirstPage = true;
 
-            let allFrontPages = [];
-            for (const card of cards) {
-                const frontPages = await splitCardIntoPages(card);
-                allFrontPages.push(...frontPages);
-            }
+            if (appState.isScrolling) {
+                // --- Scrolling Card Logic ---
+                let fullHtml = '<div>';
+                const cardsToProcess = appState.printScope === 'all' ? cards : [cards[appState.currentCardIndex]];
 
-            for (const page of allFrontPages) {
-                const canvases = await generateCardCanvas(page, false); // Never generate back canvas in this loop
-                const firstCanvas = canvases[0];
-                const cardWidth = firstCanvas.width;
-                const cardHeight = firstCanvas.height;
+                for (const card of cardsToProcess) {
+                    fullHtml += await generateScrollingHtmlForCard(card);
+                }
+                fullHtml += '</div>';
+
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.innerHTML = fullHtml;
+                document.body.appendChild(tempContainer);
+
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                const canvas = await html2canvas(tempContainer.firstElementChild, {
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: null,
+                    removeContainer: true
+                });
+
+                document.body.removeChild(tempContainer);
+
+                const cardWidth = canvas.width;
+                const cardHeight = canvas.height;
                 const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                 const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
-                if (isFirstPage) {
-                    doc = new jsPDF({
-                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                        unit: 'mm',
-                        format: [pdfWidth, pdfHeight]
-                    });
-                } else {
-                    doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [pdfWidth, pdfHeight]
+                });
+                doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            } else {
+                // --- Multi-Page Logic ---
+                let isFirstPage = true;
+                let allFrontPages = [];
+                const cardsToProcess = appState.printScope === 'all' ? cards : [cards[appState.currentCardIndex]];
+
+                for (const card of cardsToProcess) {
+                    const frontPages = await splitCardIntoPages(card);
+                    allFrontPages.push(...frontPages);
                 }
 
-                doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-                if (appState.includeCornerDots) {
-                    addCornerDots(doc, pdfWidth, pdfHeight);
-                }
+                for (const page of allFrontPages) {
+                    const canvases = await generateCardCanvas(page, false);
+                    const firstCanvas = canvases[0];
+                    if (!firstCanvas) continue;
 
-                isFirstPage = false;
-            }
+                    const cardWidth = firstCanvas.width;
+                    const cardHeight = firstCanvas.height;
+                    const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
-            // After all front pages are rendered, add the back pages for any folded cards
-            for (const card of cards) {
-                const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
-                const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
-
-                if (shouldPrintBack && hasBackContent) {
-                    if (!doc) { // Handle case where there might only be a back page to print
-                         const tempCanvas = await generateBackCanvas(card);
-                         const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                         const pdfHeight = (tempCanvas.height / tempCanvas.width) * pdfWidth;
-                         doc = new jsPDF({
-                            orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                    if (isFirstPage) {
+                        doc = new jsPDF({
+                            orientation: 'portrait',
                             unit: 'mm',
                             format: [pdfWidth, pdfHeight]
                         });
-                        isFirstPage = false; // The first page is no longer "first"
+                        isFirstPage = false;
+                    } else {
+                        doc.addPage([pdfWidth, pdfHeight], 'portrait');
                     }
 
+                    doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    if (appState.includeCornerDots) {
+                        addCornerDots(doc, pdfWidth, pdfHeight);
+                    }
+                }
+
+                // After all front pages are rendered, add the back pages for any folded cards
+                const foldedCardsWithBacks = cardsToProcess.filter(card => {
+                    const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
+                    const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
+                    return shouldPrintBack && hasBackContent;
+                });
+
+                for (const card of foldedCardsWithBacks) {
                     const backCanvas = await generateBackCanvas(card);
+                    if (!backCanvas) continue;
+
                     const cardWidth = backCanvas.width;
                     const cardHeight = backCanvas.height;
                     const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                     const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
-                    if (!isFirstPage) {
-                        doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                    if (!doc) { // If no front pages were rendered, create the doc now
+                        doc = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: [pdfWidth, pdfHeight]
+                        });
+                    } else {
+                        doc.addPage([pdfWidth, pdfHeight], 'portrait');
                     }
 
                     doc.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
                     if (appState.includeCornerDots) {
                         addCornerDots(doc, pdfWidth, pdfHeight);
                     }
-                    isFirstPage = false;
                 }
             }
 

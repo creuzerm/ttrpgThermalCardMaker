@@ -1342,7 +1342,7 @@
                 <div style="position: relative; width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;">
                     ${iconRenderHtml}
                     <div>
-                        <h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>
+                        ${card.title ? `<h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>` : ''}
                         ${!card.isContinuation && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
                     </div>
 
@@ -1565,6 +1565,30 @@
             return [frontCanvas];
         }
 
+        async function generateBackCanvas(card) {
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+
+            const backContainer = document.createElement('div');
+            const backHtml = await generateFoldedBackHtmlForCard(card);
+            backContainer.innerHTML = backHtml;
+            tempContainer.appendChild(backContainer);
+            document.body.appendChild(tempContainer);
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const backCanvas = await html2canvas(backContainer.firstElementChild, {
+                useCORS: true,
+                logging: false,
+                backgroundColor: null,
+                removeContainer: true
+            });
+
+            document.body.removeChild(tempContainer);
+            return backCanvas;
+        }
+
         async function generateFoldedBackHtmlForCard(card) {
             const dpi = appState.thermalDpi;
             const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
@@ -1627,7 +1651,6 @@
             }
 
             const pages = [];
-            let pageCounter = 1;
             let sectionsToProcess = JSON.parse(JSON.stringify(originalCard.sections));
 
             // Create the first page from the original card
@@ -1649,17 +1672,14 @@
             let remainingSections = sectionsToProcess.slice(page1.sections.length);
 
             while (remainingSections.length > 0) {
-                pageCounter++;
                 const continuationPage = JSON.parse(JSON.stringify(originalCard));
-                continuationPage.title = `${originalCard.title} (Page ${pageCounter})`;
+                continuationPage.title = ''; // No title for continuation pages
                 continuationPage.icon = '';
                 continuationPage.type = '';
                 continuationPage.stats = {};
                 continuationPage.tags = [];
                 continuationPage.footer = '';
                 continuationPage.isContinuation = true;
-                continuationPage.isFolded = false; // Continuation pages don't have their own backs
-                continuationPage.foldContent = {}; // Clear out fold content
                 continuationPage.sections = [];
 
                 for (const section of remainingSections) {
@@ -1678,24 +1698,6 @@
                 remainingSections = remainingSections.slice(continuationPage.sections.length);
             }
 
-            // For folded cards, ensure the total number of pages is even
-            if (originalCard.isFolded) {
-                let totalOutputPages = 0;
-                for (const p of pages) {
-                    totalOutputPages++; // Count the front page
-                    const hasBackContent = p.foldContent && (p.foldContent.text || p.foldContent.imageUrl || p.foldContent.qrCodeData);
-                    if (p.isFolded && hasBackContent) {
-                        totalOutputPages++; // Count the back page
-                    }
-                }
-
-                if (totalOutputPages % 2 !== 0) {
-                    // If the total is odd, add a blank page to make it even
-                    const blankPage = { title: '', isContinuation: true, sections: [], isFolded: false, foldContent: {} };
-                    pages.push(blankPage);
-                }
-            }
-
             return pages;
         }
 
@@ -1704,47 +1706,74 @@
             let doc;
             let isFirstPage = true;
 
+            let allFrontPages = [];
             for (const card of cards) {
-                const pages = await splitCardIntoPages(card);
+                const frontPages = await splitCardIntoPages(card);
+                allFrontPages.push(...frontPages);
+            }
 
-                for (const page of pages) {
-                    const shouldPrintBack = (foldOverride !== null) ? foldOverride : page.isFolded;
-                    const hasBackContent = page.foldContent && (page.foldContent.text || page.foldContent.imageUrl || page.foldContent.qrCodeData);
-                    const finalPrintBackDecision = shouldPrintBack && hasBackContent;
+            for (const page of allFrontPages) {
+                const canvases = await generateCardCanvas(page, false); // Never generate back canvas in this loop
+                const firstCanvas = canvases[0];
+                const cardWidth = firstCanvas.width;
+                const cardHeight = firstCanvas.height;
+                const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
 
-                    const canvases = await generateCardCanvas(page, finalPrintBackDecision);
-                    const firstCanvas = canvases[0];
-                    const cardWidth = firstCanvas.width;
-                    const cardHeight = firstCanvas.height;
-                    const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                    const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+                if (isFirstPage) {
+                    doc = new jsPDF({
+                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                        unit: 'mm',
+                        format: [pdfWidth, pdfHeight]
+                    });
+                } else {
+                    doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
+                }
 
-                    if (isFirstPage) {
-                        doc = new jsPDF({
+                doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                if (appState.includeCornerDots) {
+                    addCornerDots(doc, pdfWidth, pdfHeight);
+                }
+
+                isFirstPage = false;
+            }
+
+            // After all front pages are rendered, add the back pages for any folded cards
+            for (const card of cards) {
+                const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
+                const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
+
+                if (shouldPrintBack && hasBackContent) {
+                    if (!doc) { // Handle case where there might only be a back page to print
+                         const tempCanvas = await generateBackCanvas(card);
+                         const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                         const pdfHeight = (tempCanvas.height / tempCanvas.width) * pdfWidth;
+                         doc = new jsPDF({
                             orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
                             unit: 'mm',
                             format: [pdfWidth, pdfHeight]
                         });
-                    } else {
+                        isFirstPage = false; // The first page is no longer "first"
+                    }
+
+                    const backCanvas = await generateBackCanvas(card);
+                    const cardWidth = backCanvas.width;
+                    const cardHeight = backCanvas.height;
+                    const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+
+                    if (!isFirstPage) {
                         doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
                     }
 
-                    doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    doc.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
                     if (appState.includeCornerDots) {
                         addCornerDots(doc, pdfWidth, pdfHeight);
                     }
-
-                    if (canvases.length > 1) {
-                        doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'landscape' : 'portrait');
-                        doc.addImage(canvases[1].toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-                        if (appState.includeCornerDots) {
-                            addCornerDots(doc, pdfWidth, pdfHeight);
-                        }
-                    }
-
                     isFirstPage = false;
                 }
             }
+
             return doc;
         }
 

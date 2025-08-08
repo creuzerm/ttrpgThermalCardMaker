@@ -1426,7 +1426,7 @@
                     } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
                         const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
                         const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);
-                        foldContentHtml = `<img src="https.api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https.placehold.co/80x80/000/FFF?text=QR';" />`;
+                        foldContentHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
                     }
                 }
                 htmlContent += `

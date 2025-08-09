@@ -10,6 +10,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- jsPDF CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF-AutoTable CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
@@ -1768,16 +1770,175 @@
             return downsampledCanvas;
         }
 
+        async function generatePdfWithText(doc, card) {
+            // This function renders a single card to the current page of the jsPDF document.
+            // It uses jsPDF's text and drawing functions, not html2canvas.
+
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 2; // mm
+            let y = margin;
+
+            // --- FONT SETUP ---
+            // jsPDF requires fonts to be added to the VFS. For simplicity, we'll use standard fonts.
+            // This generator uses 'Inter', so we'll map to 'helvetica'.
+            doc.setFont('helvetica');
+
+            // --- ICON ---
+            if (card.icon) {
+                try {
+                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
+                    if (iconUrl) {
+                        const img = await loadImage(iconUrl);
+                        const iconSize = 6; // mm
+                        doc.addImage(img, 'PNG', pageWidth - iconSize - margin, y, iconSize, iconSize);
+                    }
+                } catch (e) {
+                    console.error("Could not load icon for PDF:", e);
+                }
+            }
+
+            // --- TITLE ---
+            if (card.title) {
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text(card.title, pageWidth / 2, y + 5, { align: 'center' });
+                y += 8;
+            }
+
+            // --- TYPE ---
+            if (card.type) {
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(card.type, pageWidth / 2, y, { align: 'center' });
+                y += 5;
+            }
+
+            // --- STATS ---
+            if (card.stats && Object.keys(card.stats).length > 0) {
+                const statsText = Object.entries(card.stats)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(' | ');
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'bold');
+                doc.text(statsText, pageWidth / 2, y, { align: 'center' });
+                y += 5;
+            }
+
+            // --- SECTIONS (using AutoTable) ---
+            if (card.sections && card.sections.length > 0) {
+                const body = card.sections.map(section => {
+                    // Each section is a single "cell" in our table. We'll handle rendering inside the hook.
+                    return [section];
+                });
+
+                doc.autoTable({
+                    startY: y,
+                    body: body,
+                    theme: 'plain',
+                    tableWidth: 'auto',
+                    margin: { left: margin, right: margin },
+                    styles: {
+                        cellPadding: 0,
+                    },
+                    didDrawCell: (data) => {
+                        const section = data.cell.raw;
+                        let cursorY = data.cell.y;
+
+                        // Draw heading
+                        if (section.heading) {
+                            doc.setFontSize(10);
+                            doc.setFont(undefined, 'bold');
+                            doc.text(section.heading, data.cell.x + 1, cursorY + 4);
+                            doc.setDrawColor(150); // light grey
+                            doc.line(data.cell.x, cursorY + 5.5, data.cell.x + data.cell.width, cursorY + 5.5);
+                            cursorY += 8;
+                        }
+
+                        // Draw body
+                        if (section.body) {
+                            doc.setFontSize(9);
+                            doc.setFont(undefined, 'normal');
+                            const bodyText = doc.splitTextToSize(section.body, data.cell.width - 2);
+                            doc.text(bodyText, data.cell.x + 1, cursorY);
+                            cursorY += (bodyText.length * 3.5) + 2; // Estimate line height
+                        }
+
+                        // Draw flavor text
+                        if (section.flavorText) {
+                            doc.setFontSize(8);
+                            doc.setFont(undefined, 'italic');
+                            doc.setTextColor(100); // grey
+                            const flavorText = doc.splitTextToSize(section.flavorText, data.cell.width - 2);
+                            doc.text(flavorText, data.cell.x + 1, cursorY);
+                            doc.setTextColor(0); // reset color
+                        }
+                    },
+                });
+                y = doc.autoTable.previous.finalY;
+            }
+
+            // --- TAGS AND FOOTER ---
+            const finalY = Math.max(y, doc.autoTable.previous.finalY || 0);
+            const footerY = pageHeight - 5; // Place at bottom
+
+            if (card.tags && card.tags.length > 0) {
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Tags: ${card.tags.join(', ')}`, pageWidth/2, footerY, { align: 'center' });
+            }
+            if (card.footer) {
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'italic');
+                doc.text(card.footer, pageWidth/2, footerY + 3, { align: 'center' });
+            }
+        }
+
         async function generatePdfDocument(cards, foldOverride = null) {
             const { jsPDF } = window.jspdf;
             let doc;
 
+            // --- TEXT-BASED PDF LOGIC ---
+            if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
+                const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                const pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO; // Maintain aspect ratio
+
+                doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [pdfWidthMm, pdfHeightMm]
+                });
+
+                for (let i = 0; i < cards.length; i++) {
+                    const card = cards[i];
+                    if (i > 0) doc.addPage();
+                    await generatePdfWithText(doc, card);
+                    if (appState.includeCornerDots) {
+                        addCornerDots(doc, pdfWidthMm, pdfHeightMm);
+                    }
+
+                    // Handle folded card back
+                    const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
+                    if (shouldPrintBack && card.foldContent && card.foldContent.text) {
+                        doc.addPage();
+                        // Simple text rendering for the back
+                        doc.setFontSize(10);
+                        doc.setFont(undefined, 'normal');
+                        doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                        if (appState.includeCornerDots) {
+                             addCornerDots(doc, pdfWidthMm, pdfHeightMm);
+                        }
+                    }
+                }
+                return doc;
+            }
+
+            // --- IMAGE-BASED PDF LOGIC (Legacy) ---
+            // This part handles PNG output and "scrolling" PDFs, which are image-based by nature.
             if (appState.isScrolling) {
-                // --- Scrolling Card Logic ---
                 let fullHtml = '<div>';
-                // FIX: Use the 'cards' parameter directly. The caller now determines which cards to process.
                 for (const card of cards) {
-                    if (!card) continue; // Safety check
+                    if (!card) continue;
                     fullHtml += await generateScrollingHtmlForCard(card);
                 }
                 fullHtml += '</div>';
@@ -1787,45 +1948,24 @@
                 tempContainer.style.left = '-9999px';
                 tempContainer.innerHTML = fullHtml;
                 document.body.appendChild(tempContainer);
-
                 await new Promise(resolve => setTimeout(resolve, 50));
 
-                const canvas = await html2canvas(tempContainer.firstElementChild, {
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: null,
-                    removeContainer: true
-                });
-
+                const canvas = await html2canvas(tempContainer.firstElementChild, { useCORS: true, logging: false, backgroundColor: null, removeContainer: true });
                 document.body.removeChild(tempContainer);
 
                 const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                 const physicalWidthInches = pdfWidthMm / 25.4;
-
                 const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
-
                 const cardWidth = downsampled.width;
                 const cardHeight = downsampled.height;
                 const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
 
-                doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: [pdfWidthMm, pdfHeight]
-                });
+                doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
                 doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-
             } else {
-                // --- Multi-Page Logic ---
                 let isFirstPage = true;
-                let allFrontPages = [];
-                // FIX: Use the 'cards' parameter directly.
-                const pageArrays = await Promise.all(
-                    cards
-                        .filter(card => card)
-                        .map(card => splitCardIntoPages(card))
-                );
-                allFrontPages.push(...pageArrays.flat());
+                const pageArrays = await Promise.all(cards.filter(card => card).map(card => splitCardIntoPages(card)));
+                const allFrontPages = pageArrays.flat();
 
                 for (const page of allFrontPages) {
                     const canvases = await generateCardCanvas(page, false);
@@ -1834,34 +1974,25 @@
 
                     const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                     const physicalWidthInches = pdfWidthMm / 25.4;
-
                     firstCanvas = await downsampleCanvas(firstCanvas, appState.thermalDpi, physicalWidthInches);
-
                     const cardWidth = firstCanvas.width;
                     const cardHeight = firstCanvas.height;
                     const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
 
                     if (isFirstPage) {
-                        doc = new jsPDF({
-                            orientation: 'portrait',
-                            unit: 'mm',
-                            format: [pdfWidthMm, pdfHeight]
-                        });
+                        doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
                         isFirstPage = false;
                     } else {
                         doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
                     }
-
                     doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
                     if (appState.includeCornerDots) {
                         addCornerDots(doc, pdfWidthMm, pdfHeight);
                     }
                 }
 
-                // After all front pages are rendered, add the back pages for any folded cards
-                // FIX: Use the 'cards' parameter directly.
                 const foldedCardsWithBacks = cards.filter(card => {
-                    if (!card) return false; // Safety check
+                    if (!card) return false;
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
                     return shouldPrintBack && hasBackContent;
@@ -1870,33 +2001,24 @@
                 for (const card of foldedCardsWithBacks) {
                     let backCanvas = await generateBackCanvas(card);
                     if (!backCanvas) continue;
-
                     const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                     const physicalWidthInches = pdfWidthMm / 25.4;
-
                     backCanvas = await downsampleCanvas(backCanvas, appState.thermalDpi, physicalWidthInches);
-
                     const cardWidth = backCanvas.width;
                     const cardHeight = backCanvas.height;
                     const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
 
-                    if (!doc) { // If no front pages were rendered, create the doc now
-                        doc = new jsPDF({
-                            orientation: 'portrait',
-                            unit: 'mm',
-                            format: [pdfWidthMm, pdfHeight]
-                        });
+                    if (!doc) {
+                        doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
                     } else {
                         doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
                     }
-
                     doc.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
                     if (appState.includeCornerDots) {
                         addCornerDots(doc, pdfWidthMm, pdfHeight);
                     }
                 }
             }
-
             return doc;
         }
 

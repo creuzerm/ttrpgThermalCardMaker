@@ -1750,9 +1750,9 @@
             if (appState.isScrolling) {
                 // --- Scrolling Card Logic ---
                 let fullHtml = '<div>';
-                const cardsToProcess = appState.printScope === 'all' ? cards : [cards[appState.currentCardIndex]];
-
-                for (const card of cardsToProcess) {
+                // FIX: Use the 'cards' parameter directly. The caller now determines which cards to process.
+                for (const card of cards) {
+                    if (!card) continue; // Safety check
                     fullHtml += await generateScrollingHtmlForCard(card);
                 }
                 fullHtml += '</div>';
@@ -1790,9 +1790,9 @@
                 // --- Multi-Page Logic ---
                 let isFirstPage = true;
                 let allFrontPages = [];
-                const cardsToProcess = appState.printScope === 'all' ? cards : [cards[appState.currentCardIndex]];
-
-                for (const card of cardsToProcess) {
+                // FIX: Use the 'cards' parameter directly.
+                for (const card of cards) {
+                    if (!card) continue; // Safety check for undefined cards
                     const frontPages = await splitCardIntoPages(card);
                     allFrontPages.push(...frontPages);
                 }
@@ -1825,7 +1825,9 @@
                 }
 
                 // After all front pages are rendered, add the back pages for any folded cards
-                const foldedCardsWithBacks = cardsToProcess.filter(card => {
+                // FIX: Use the 'cards' parameter directly.
+                const foldedCardsWithBacks = cards.filter(card => {
+                    if (!card) return false; // Safety check
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
                     return shouldPrintBack && hasBackContent;

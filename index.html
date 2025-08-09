@@ -1790,8 +1790,17 @@
                     const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
                     if (iconUrl) {
                         const img = await loadImage(iconUrl);
+
+                        // Use a canvas to convert the image to a data URL
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        ctx.drawImage(img, 0, 0);
+                        const dataUrl = canvas.toDataURL('image/png');
+
                         const iconSize = 6; // mm
-                        doc.addImage(img, 'PNG', pageWidth - iconSize - margin, y, iconSize, iconSize);
+                        doc.addImage(dataUrl, 'PNG', pageWidth - iconSize - margin, y, iconSize, iconSize);
                     }
                 } catch (e) {
                     console.error("Could not load icon for PDF:", e);

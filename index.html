@@ -1791,11 +1791,12 @@
                 let isFirstPage = true;
                 let allFrontPages = [];
                 // FIX: Use the 'cards' parameter directly.
-                for (const card of cards) {
-                    if (!card) continue; // Safety check for undefined cards
-                    const frontPages = await splitCardIntoPages(card);
-                    allFrontPages.push(...frontPages);
-                }
+                const pageArrays = await Promise.all(
+                    cards
+                        .filter(card => card)
+                        .map(card => splitCardIntoPages(card))
+                );
+                allFrontPages.push(...pageArrays.flat());
 
                 for (const page of allFrontPages) {
                     const canvases = await generateCardCanvas(page, false);

@@ -1743,6 +1743,31 @@
             return pages;
         }
 
+        async function downsampleCanvas(sourceCanvas, targetDpi, physicalWidthInches) {
+            const sourceWidth = sourceCanvas.width;
+            const sourceHeight = sourceCanvas.height;
+
+            // Calculate the target dimensions in pixels
+            const targetWidth = Math.round(physicalWidthInches * targetDpi);
+            // Maintain aspect ratio
+            const targetHeight = sourceWidth > 0 ? Math.round((sourceHeight / sourceWidth) * targetWidth) : 0;
+
+            // Create a new canvas with the target dimensions
+            const downsampledCanvas = document.createElement('canvas');
+            downsampledCanvas.width = targetWidth;
+            downsampledCanvas.height = targetHeight;
+            const ctx = downsampledCanvas.getContext('2d');
+
+            // Set a white background to avoid transparency issues in the final PDF
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+            // Draw the source canvas onto the new canvas, which performs the downsampling
+            ctx.drawImage(sourceCanvas, 0, 0, targetWidth, targetHeight);
+
+            return downsampledCanvas;
+        }
+
         async function generatePdfDocument(cards, foldOverride = null) {
             const { jsPDF } = window.jspdf;
             let doc;
@@ -1774,17 +1799,21 @@
 
                 document.body.removeChild(tempContainer);
 
-                const cardWidth = canvas.width;
-                const cardHeight = canvas.height;
-                const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+                const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                const physicalWidthInches = pdfWidthMm / 25.4;
+
+                const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
+
+                const cardWidth = downsampled.width;
+                const cardHeight = downsampled.height;
+                const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
 
                 doc = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
-                    format: [pdfWidth, pdfHeight]
+                    format: [pdfWidthMm, pdfHeight]
                 });
-                doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
 
             } else {
                 // --- Multi-Page Logic ---
@@ -1800,28 +1829,32 @@
 
                 for (const page of allFrontPages) {
                     const canvases = await generateCardCanvas(page, false);
-                    const firstCanvas = canvases[0];
+                    let firstCanvas = canvases[0];
                     if (!firstCanvas) continue;
+
+                    const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const physicalWidthInches = pdfWidthMm / 25.4;
+
+                    firstCanvas = await downsampleCanvas(firstCanvas, appState.thermalDpi, physicalWidthInches);
 
                     const cardWidth = firstCanvas.width;
                     const cardHeight = firstCanvas.height;
-                    const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                    const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+                    const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
 
                     if (isFirstPage) {
                         doc = new jsPDF({
                             orientation: 'portrait',
                             unit: 'mm',
-                            format: [pdfWidth, pdfHeight]
+                            format: [pdfWidthMm, pdfHeight]
                         });
                         isFirstPage = false;
                     } else {
-                        doc.addPage([pdfWidth, pdfHeight], 'portrait');
+                        doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
                     }
 
-                    doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
                     if (appState.includeCornerDots) {
-                        addCornerDots(doc, pdfWidth, pdfHeight);
+                        addCornerDots(doc, pdfWidthMm, pdfHeight);
                     }
                 }
 
@@ -1835,27 +1868,31 @@
                 });
 
                 for (const card of foldedCardsWithBacks) {
-                    const backCanvas = await generateBackCanvas(card);
+                    let backCanvas = await generateBackCanvas(card);
                     if (!backCanvas) continue;
+
+                    const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const physicalWidthInches = pdfWidthMm / 25.4;
+
+                    backCanvas = await downsampleCanvas(backCanvas, appState.thermalDpi, physicalWidthInches);
 
                     const cardWidth = backCanvas.width;
                     const cardHeight = backCanvas.height;
-                    const pdfWidth = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                    const pdfHeight = (cardHeight / cardWidth) * pdfWidth;
+                    const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
 
                     if (!doc) { // If no front pages were rendered, create the doc now
                         doc = new jsPDF({
                             orientation: 'portrait',
                             unit: 'mm',
-                            format: [pdfWidth, pdfHeight]
+                            format: [pdfWidthMm, pdfHeight]
                         });
                     } else {
-                        doc.addPage([pdfWidth, pdfHeight], 'portrait');
+                        doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
                     }
 
-                    doc.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    doc.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
                     if (appState.includeCornerDots) {
-                        addCornerDots(doc, pdfWidth, pdfHeight);
+                        addCornerDots(doc, pdfWidthMm, pdfHeight);
                     }
                 }
             }

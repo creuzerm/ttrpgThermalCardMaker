@@ -1750,7 +1750,7 @@
             // Calculate the target dimensions in pixels
             const targetWidth = Math.round(physicalWidthInches * targetDpi);
             // Maintain aspect ratio
-            const targetHeight = Math.round((sourceHeight / sourceWidth) * targetWidth);
+            const targetHeight = sourceWidth > 0 ? Math.round((sourceHeight / sourceWidth) * targetWidth) : 0;
 
             // Create a new canvas with the target dimensions
             const downsampledCanvas = document.createElement('canvas');

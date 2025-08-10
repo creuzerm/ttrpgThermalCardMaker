@@ -103,14 +103,43 @@ Enjoy generating your TTRPG cards!
 ## Supported Paper Sizes
 
 The tool supports various thermal paper sizes and printer resolutions. The final output is padded to the *printable width* to ensure accurate sizing.
-
-| Paper Size (Total Width) | Printable Width (Approx.) | DPI (Dots Per Inch) | Calculation (in Inches) | Actual Pixels (Dots/Line) | Typical Use Case                                          |
+                                       |
+| Paper Size (Total Width) | Printable Width (Approx.) | DPI (Dots Per Inch) | Calculation (in Inches) | Actual Pixels (Dots/Line) | Typical Use Case |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 58mm (2.28 in)           | 48mm (1.89 in)            | 180 DPI             | 1.89" × 180         | 340 pixels                | Older or more basic receipt printers.                     |
-| 58mm (2.28 in)           | 48mm (1.89 in)            | 200 DPI             | 1.89" × 200         | 378 pixels                | Common for many modern entry-level models.                |
-| 58mm (2.28 in)           | 48mm (1.89 in)            | 203 DPI             | 1.89" × 203         | 384 pixels                | The most common standard for receipts and basic labels.   |
-| 58mm (2.28 in)           | 48mm (1.89 in)            | 300 DPI             | 1.89" × 300         | 567 pixels                | Specialized for high-quality receipts or small labels.    |
-| 80mm (3.15 in)           | 72mm (2.83 in)            | 180 DPI             | 2.83" × 180         | 509 pixels                | Older or more basic POS printers.                         |
-| 80mm (3.15 in)           | 72mm (2.83 in)            | 200 DPI             | 2.83" × 200         | 566 pixels                | Common for many modern entry-level models.                |
-| 80mm (3.15 in)           | 72mm (2.83 in)            | 203 DPI             | 2.83" × 203         | 576 pixels                | The most prevalent standard for retail and hospitality POS. |
-| 80mm (3.15 in)           | 72mm (2.83 in)            | 300 DPI             | 2.83" × 300         | 849 pixels                | Used for high-detail receipts, logos, and intricate barcodes. |
+| 58mm (2.28 in) | 48mm (1.89 in) | 180 DPI | 1.89" × 180 | 340 pixels | Older or more basic receipt printers. |
+| 58mm (2.28 in) | 48mm (1.89 in) | 200 DPI | 1.89" × 200 | 378 pixels | Common for many modern entry-level models. |
+| 58mm (2.28 in) | 48mm (1.89 in) | 203 DPI | 1.89" × 203 | 384 pixels | The most common standard for receipts and basic labels. |
+| 58mm (2.28 in) | 48mm (1.89 in) | 300 DPI | 1.89" × 300 | 567 pixels | Specialized for high-quality receipts or small labels. |
+| 80mm (3.15 in) | 72mm (2.83 in) | 180 DPI | 2.83" × 180 | 509 pixels | Older or more basic POS printers. |
+| 80mm (3.15 in) | 72mm (2.83 in) | 200 DPI | 2.83" × 200 | 566 pixels | Common for many modern entry-level models. |
+| 80mm (3.15 in) | 72mm (2.83 in) | 203 DPI | 2.83" × 203 | 576 pixels | The most prevalent standard for retail and hospitality POS. |
+| 80mm (3.15 in) | 72mm (2.83 in) | 300 DPI | 2.83" × 300 | 849 pixels | Used for high-detail receipts, logos, and intricate barcodes. |
+| 2 in (50.8 mm) | 1.89 in (48 mm) | 180 DPI | 1.89" × 180 | 340 pixels | Very basic receipts and labels where resolution isn't a priority. |
+| 2 in (50.8 mm) | 1.89 in (48 mm) | 203 DPI | 1.89" × 203 | 384 pixels | Small barcodes, product tags, price tags, and shelf labels. |
+| 2 in (50.8 mm) | 1.89 in (48 mm) | 300 DPI | 1.89" × 300 | 567 pixels | Jewelry labels, small asset tracking tags, or detailed QR codes. |
+| 3 in (76.2 mm) | 2.83 in (72 mm) | 180 DPI | 2.83" × 180 | 509 pixels | Older point-of-sale (POS) systems, basic receipts, or parking tickets. |
+| 3 in (76.2 mm) | 2.83 in (72 mm) | 203 DPI | 2.83" × 203 | 576 pixels | General-purpose labels, shipping labels for small packages, and basic inventory tracking. |
+| 3 in (76.2 mm) | 2.83 in (72 mm) | 300 DPI | 2.83" × 300 | 849 pixels | High-density barcodes, medication labels in pharmacies, and product labels with detailed text. |
+| 4 in (101.6 mm) | 4.09 in (104 mm) | 203 DPI | 4.09" × 203 | 830 pixels | The standard for shipping labels (4" x 6"), warehouse and pallet labels, and large barcodes. |
+| 4 in (101.6 mm) | 4.09 in (104 mm) | 300 DPI | 4.09" × 300 | 1227 pixels | High-resolution shipping labels, large product labels with logos, or detailed compliance information. |
+| Letter (8.5 in) | 8.5 in (215.9 mm) | 203 DPI | 8.5" × 203 | 1726 pixels | Printing single-page documents, forms, or reports that need to be generated quickly without ink. |
+| Letter (8.5 in) | 8.5 in (215.9 mm) | 300 DPI | 8.5" × 300 | 2550 pixels | High-detail documents, contracts, or high-quality forms in a specific setting like a mobile office. |
+| A4 (8.27 in) | 8.27 in (210 mm) | 203 DPI | 8.27" × 203 | 1680 pixels | European standard for thermal documents, similar uses to Letter size but with international compatibility. |
+| A4 (8.27 in) | 8.27 in (210 mm) | 300 DPI | 8.27" × 300 | 2480 pixels | High-resolution international documents or forms requiring high-quality, inkless printing. |
+
+
+
+### Standard Thermal Label Sizes (2x3 inches and larger)
+
+| Label Dimensions (W x H) | Common Use Cases |
+| :--- | :--- |
+| **2" x 3"** (50.8mm x 76.2mm) | Inventory, asset tags, small shipping labels, and product information. |
+| **2" x ?"** (50.8mm x ?mm) | Continious Roll - common for this size |
+| **3" x 2"** (76.2mm x 50.8mm) | General-purpose labels, bin labels, and barcodes for small items. |
+| **3" x 5"** (76.2mm x 127mm) | Shipping labels for smaller packages, compliance labels, and shelf tags. |
+| **3" x ?"** (76.2mm x ?mm) | Continous Roll |
+| **4" x 2"** (101.6mm x 50.8mm) | Large barcodes, compliance labels, and shipping labels for small items. |
+| **4" x 3"** (101.6mm x 76.2mm) | Pallet and carton labeling, shipping labels for medium-sized boxes. |
+| **4" x 6"** (101.6mm x 152.4mm) | **Industry standard for shipping labels** (UPS, FedEx, USPS), warehouse, and industrial labeling. |
+| **4" x 8"** (101.6mm x 203.2mm) | Large shipping labels, detailed packing slips, and specialized logistics. |
+| **4.5" x ?"** (114.3mm x ?mm) | Continious Roll |

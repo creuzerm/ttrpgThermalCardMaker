@@ -84,38 +84,38 @@ This format is based on the [rpg-cards project by crobi](https://crobi.github.io
 
 #### Top-Level Card Properties
 
-| Key                | Type             | Status      | Description                                                                                                                              |
-| ------------------ | ---------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`            | `string`         | **Supported** | The title of the card.                                                                                                                   |
-| `count`            | `number`         | **Supported** | The number of copies of this card to create. Parsed into the `numCopies` field.                                                          |
-| `color`            | `string`         | **Supported** | A CSS color name or hex code for the card's theme color (used in 'Color' printer mode).                                                  |
-| `icon`             | `string`         | **Supported** | The name of a game-icon.net icon (e.g., "magic-swirl") or a Font Awesome class name.                                                       |
-| `icon_back`        | `string`         | **Supported** | The icon for the back of a folded card. If present, sets `isFolded: true` and `foldContent.type: 'imageUrl'`.                              |
-| `contents`         | `Array<string>`  | **Supported** | An array of strings that define the card's layout and content, processed in order.                                                       |
-| `background_image` | `string`         | *Unsupported* | A URL for a background image on the card back.                                                                                           |
+| Key                | Type             | Description                                                                                                                              |
+| ------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`            | `string`         | The title of the card.                                                                                                                   |
+| `count`            | `number`         | The number of copies of this card to create. Parsed into the `numCopies` field.                                                          |
+| `color`            | `string`         | A CSS color name or hex code for the card's theme color (used in 'Color' printer mode).                                                  |
+| `icon`             | `string`         | The name of a game-icon.net icon (e.g., "magic-swirl") or a Font Awesome class name.                                                       |
+| `icon_back`        | `string`         | The icon for the back of a folded card. If present, sets `isFolded: true` and `foldContent.type: 'imageUrl'`.                              |
+| `contents`         | `Array<string>`  | An array of strings that define the card's layout and content, processed in order.                                                       |
+| `background_image` | `string`         | A URL for a background image on the card back. Takes precedence over `icon_back`.                                                        |
 
 #### Card `contents` Elements
 
 Each element in the `contents` array is a string formatted as `"element_name | parameter1 | parameter2 | ..."`.
 
-| Element Name    | Parameters                                    | Status        | Description                                                                                                                                                                  |
-| --------------- | --------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `subtitle`      | `text`                                        | **Supported**   | Sets the `type` property of the card. The optional second parameter for right-aligned text is *unsupported*.                                                                 |
-| `rule`          | (none)                                        | **Supported**   | Adds a visual separator. In this implementation, it finalizes the previous content section.                                                                                  |
-| `property`      | `name`, `description`                         | **Supported**   | Adds a key-value pair to the card's `stats` object.                                                                                                                          |
-| `dndstats`      | `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`      | **Supported**   | Adds D&D style stats to the card's `stats` object.                                                                                                                           |
-| `text`          | `text`                                        | **Supported**   | Appends text to the `body` of the current section. Handles multi-line text and basic tables (using `｜` as a separator).                                                     |
-| `description`   | `heading`, `body`                             | **Supported**   | Creates a new section with a heading and body text.                                                                                                                          |
-| `bullet`        | `text`                                        | **Supported**   | Adds a bullet point (`•`) to the body of the current section.                                                                                                                |
-| `section`       | `heading`                                     | **Supported**   | Creates a new section with the given heading. The optional second parameter for right-aligned text is *unsupported*.                                                         |
-| `fill`          | `weight`                                      | *Unsupported* | Dynamically resized empty element.                                                                                                                                           |
-| `boxes`         | `count`, `size`, `text`                       | *Unsupported* | A line of empty boxes for tracking charges.                                                                                                                                  |
-| `swstats`       | (various)                                     | *Unsupported* | A stat block for Savage Worlds.                                                                                                                                              |
-| `picture`       | `url`, `height`                               | *Unsupported* | An inline picture.                                                                                                                                                           |
-| `p2e_stats`     | (various)                                     | *Unsupported* | A stat block for Pathfinder 2nd Edition.                                                                                                                                     |
-| `p2e_activity`  | `name`, `actions`, `description`              | *Unsupported* | An activity block for Pathfinder 2nd Edition.                                                                                                                                |
-| `p2e_trait`     | `rarity`, `text`                              | *Unsupported* | A trait badge for Pathfinder 2nd Edition.                                                                                                                                    |
-| `ruler`         | (none)                                        | *Unsupported* | A thin horizontal line.                                                                                                                                                      |
+| Element Name    | Parameters                                    | Description                                                                                                                                                                  |
+| --------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `subtitle`      | `text`, `aside_text`                          | Sets the `type` property of the card, with an optional second parameter for right-aligned text.                                                                              |
+| `rule`          | (none)                                        | Adds a dashed horizontal separator.                                                                                                                                          |
+| `property`      | `name`, `description`                         | Adds an inline key-value property line. Parsed as a distinct section type to preserve order.                                                                                 |
+| `dndstats`      | `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`      | Adds a D&D-style stat block.                                                                                                                                                 |
+| `text`          | `text`                                        | Appends text to the `body` of the current section. Handles multi-line text and basic tables (using `｜` as a separator).                                                     |
+| `description`   | `heading`, `body`                             | Creates a new section with a heading and body text.                                                                                                                          |
+| `bullet`        | `text`                                        | Adds a bullet point (`•`) to the body of the current section.                                                                                                                |
+| `section`       | `heading`, `aside_text`                       | Creates a new section with the given heading, with an optional second parameter for right-aligned text.                                                                      |
+| `fill`          | `weight`                                      | Dynamically resized empty element for vertical spacing.                                                                                                                      |
+| `boxes`         | `count`, `size`, `text`                       | A line of empty boxes for tracking charges, with optional descriptive text.                                                                                                  |
+| `swstats`       | (various)                                     | A stat block for Savage Worlds.                                                                                                                                              |
+| `picture`       | `url`, `height`                               | An inline picture, centered in the card content area.                                                                                                                        |
+| `p2e_stats`     | (various)                                     | A stat block for Pathfinder 2nd Edition.                                                                                                                                     |
+| `p2e_activity`  | `name`, `actions`, `description`              | An activity block for Pathfinder 2nd Edition, with action icons.                                                                                                             |
+| `p2e_trait`     | `rarity`, `text`                              | A trait badge for Pathfinder 2nd Edition. Must be wrapped in `p2e_start_trait_section` and `p2e_end_trait_section`.                                                          |
+| `ruler`         | (none)                                        | A thin, solid horizontal line for content separation.                                                                                                                        |
 
 ---
 

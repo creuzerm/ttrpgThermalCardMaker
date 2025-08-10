@@ -638,30 +638,8 @@
         function updateCardPreview() {
             const card = appState.cards[appState.currentCardIndex];
             const printerType = appState.printerType;
-            const thermalPaperWidth = appState.thermalPaperWidth;
 
-            let cardWidth, cardHeight;
-
-            if (thermalPaperWidth === 'custom') {
-                cardWidth = appState.customWidth;
-                cardHeight = appState.customLength;
-            } else {
-                const standardSize = STANDARD_SIZES[thermalPaperWidth]?.find(s => s.value === appState.standardSize);
-                if (standardSize) {
-                    cardWidth = standardSize.width;
-                    cardHeight = standardSize.length;
-                } else {
-                    // Fallback for default when appState is inconsistent.
-                    const widthMap = { '58mm': 1.89, '80mm': 2.83, '2in': 1.89, '3in': 2.83, '4in': 4.09 };
-                    cardWidth = widthMap[thermalPaperWidth] || 1.89;
-                    cardHeight = null; // Ensure it's calculated below
-                }
-            }
-
-            // If cardHeight is not set (e.g., for continuous roll or fallback), calculate it based on aspect ratio.
-            if (cardHeight == null) {
-                cardHeight = cardWidth * CARD_HEIGHT_RATIO;
-            }
+            const { cardWidth, cardHeight } = getCardDimensionsInInches();
 
             const widthClass = `w-[${cardWidth}in]`;
             cardFrontPreview.style.height = `${cardHeight}in`;
@@ -1492,6 +1470,38 @@
         // Helper to convert points to pixels based on a given DPI
         const ptToPx = (points, dpi) => Math.round((points / 72) * dpi);
 
+        // --- Start of Refactored Dimension Calculation ---
+
+        function getCardDimensionsInInches() {
+            const thermalPaperWidth = appState.thermalPaperWidth;
+            let cardWidth, cardHeight;
+
+            if (thermalPaperWidth === 'custom') {
+                cardWidth = appState.customWidth;
+                cardHeight = appState.customLength;
+            } else {
+                const standardSize = STANDARD_SIZES[thermalPaperWidth]?.find(s => s.value === appState.standardSize);
+                if (standardSize) {
+                    cardWidth = standardSize.width;
+                    cardHeight = standardSize.length;
+                } else {
+                    // Fallback for default when appState is inconsistent.
+                    const widthMap = { '58mm': 1.89, '80mm': 2.83, '2in': 1.89, '3in': 2.83, '4in': 4.09 };
+                    cardWidth = widthMap[thermalPaperWidth] || 1.89;
+                    cardHeight = null; // Ensure it's calculated below
+                }
+            }
+
+            // If cardHeight is not set (e.g., for continuous roll or fallback), calculate it based on aspect ratio.
+            if (cardHeight == null) {
+                cardHeight = cardWidth * CARD_HEIGHT_RATIO;
+            }
+
+            return { cardWidth, cardHeight };
+        }
+
+        // --- End of Refactored Dimension Calculation ---
+
         // --- End of Shared Card Rendering Configuration ---
 
 
@@ -2043,25 +2053,9 @@
             let doc;
 
             if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
-                let pdfWidthMm, pdfHeightMm;
-
-                if (appState.thermalPaperWidth === 'custom') {
-                    pdfWidthMm = appState.customWidth * 25.4;
-                    pdfHeightMm = appState.customLength * 25.4;
-                } else {
-                    const standardSize = STANDARD_SIZES[appState.thermalPaperWidth]?.find(s => s.value === appState.standardSize);
-                    if (standardSize && standardSize.width && standardSize.length) {
-                        pdfWidthMm = standardSize.width * 25.4;
-                        pdfHeightMm = standardSize.length * 25.4;
-                    } else {
-                        const widthMapMm = { '58mm': 48, '80mm': 72, '2in': 48, '3in': 72, '4in': 104 };
-                        pdfWidthMm = widthMapMm[appState.thermalPaperWidth] || 48;
-                        pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO;
-                    }
-                }
-                if (appState.standardSize === 'bridge') {
-                    pdfHeightMm = 3.5 * 25.4;
-                }
+                const { cardWidth, cardHeight } = getCardDimensionsInInches();
+                const pdfWidthMm = cardWidth * 25.4;
+                const pdfHeightMm = cardHeight * 25.4;
 
                 doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeightMm] });
 

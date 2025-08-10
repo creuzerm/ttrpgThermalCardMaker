@@ -1819,33 +1819,53 @@
 
             if (card.sections && card.sections.length > 0) {
                 const contentWidth = pageWidth - (margin * 2);
+
                 for (const section of card.sections) {
+                    // Check for page overflow before drawing each section
                     const headingHeight = section.heading ? (doc.setFontSize(10).getTextDimensions(section.heading).h + 4) : 0;
                     const bodyHeight = section.body ? (doc.setFontSize(9).getTextDimensions(section.body, { maxWidth: contentWidth }).h + 2) : 0;
                     const flavorHeight = section.flavorText ? (doc.setFontSize(8).getTextDimensions(section.flavorText, { maxWidth: contentWidth }).h + 2) : 0;
                     const sectionHeight = headingHeight + bodyHeight + flavorHeight;
+
                     if (y + sectionHeight > pageHeight - margin) {
                         doc.addPage();
                         y = margin;
                     }
+
                     if (section.heading) {
                         doc.setFontSize(10).setFont(undefined, 'bold');
                         doc.text(section.heading, margin, y);
                         doc.setDrawColor(150);
-                        doc.line(margin, y + 1, pageWidth - margin, y + 1);
+                        doc.line(margin, y + 1.5, pageWidth - margin, y + 1.5);
                         y += 5;
                     }
                     if (section.body) {
                         doc.setFontSize(9).setFont(undefined, 'normal');
                         const bodyLines = doc.splitTextToSize(section.body, contentWidth);
-                        doc.text(bodyLines, margin, y);
-                        y += doc.getTextDimensions(bodyLines).h + 2;
+                        const lineHeight = doc.getTextDimensions('T').h;
+                        for (const line of bodyLines) {
+                            if (y + lineHeight > pageHeight - margin) {
+                                doc.addPage();
+                                y = margin;
+                            }
+                            doc.text(line, margin, y);
+                            y += lineHeight;
+                        }
+                        y += 2; // Padding after the block
                     }
                     if (section.flavorText) {
                         doc.setFontSize(8).setFont(undefined, 'italic').setTextColor(100);
                         const flavorLines = doc.splitTextToSize(section.flavorText, contentWidth);
-                        doc.text(flavorLines, margin, y);
-                        y += doc.getTextDimensions(flavorLines).h + 2;
+                        const lineHeight = doc.getTextDimensions('T').h;
+                        for (const line of flavorLines) {
+                            if (y + lineHeight > pageHeight - margin) {
+                                doc.addPage();
+                                y = margin;
+                            }
+                            doc.text(line, margin, y);
+                            y += lineHeight;
+                        }
+                        y += 2; // Padding after the block
                         doc.setTextColor(0);
                     }
                 }
@@ -2089,7 +2109,6 @@
             showMessage('Generating PDF for download...');
             try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
-                console.log(`[Debug] Print Scope: ${appState.printScope}, Cards to Process: ${cardsToProcess.length}`);
                 const foldOverride = appState.printScope === 'all' ? isFoldedCheckbox.checked : null;
                 const pdf = await generatePdfDocument(cardsToProcess, foldOverride);
                 const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;

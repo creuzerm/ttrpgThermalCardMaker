@@ -1659,7 +1659,7 @@
             }
 
             return `
-                <div style="width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center;">
+                <div style="width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center; transform: rotate(180deg);">
                     ${backContentHtml}
                 </div>
             `;
@@ -1890,15 +1890,15 @@
                 const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                 const pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO;
                 doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeightMm] });
-                if (doc.internal.getNumberOfPages() > 0) {
-                    doc.deletePage(1);
-                }
 
                 for (let i = 0; i < cards.length; i++) {
                     const card = cards[i];
 
+                    if (i > 0) {
+                        doc.addPage();
+                    }
+
                     const pageNumBefore = doc.internal.getNumberOfPages();
-                    doc.addPage();
                     await generatePdfWithText(doc, card);
                     const pageNumAfter = doc.internal.getNumberOfPages();
                     const contentPagesForThisCard = pageNumAfter - pageNumBefore;

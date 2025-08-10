@@ -65,3 +65,11 @@
 
 *   **No `alert()` or `confirm()`:** These native browser dialogs are disruptive and break the "vibe."
 *   **No `console.log` for user-facing messages:** Use the `showMessage` utility for user feedback. `console.error` and `console.warn` are acceptable for developer debugging.
+
+### PDF Generation Logic
+*   **Multi-Page Content:** Card content must correctly flow onto subsequent pages if it is too long to fit on a single page. Text should not be cut off at the bottom of a page.
+*   **Folded Card Page Count:** When generating a PDF for a folded card:
+    1.  Render all content pages first.
+    2.  The back image of the card must be on the final page of the document.
+    3.  The total number of pages in the document (content pages + back image page + any blank pages) must be an even number.
+    4.  If the number of content pages plus the back page would result in an odd total, a single blank page must be inserted just before the final back image page to make the total count even.

@@ -1769,18 +1769,13 @@
         }
 
         async function generatePdfWithText(doc, card) {
-            // This function renders a single card to the current page of the jsPDF document.
-            // It uses jsPDF's text and drawing functions, not html2canvas.
-
             const pageHeight = doc.internal.pageSize.getHeight();
             const pageWidth = doc.internal.pageSize.getWidth();
             const margin = 2; // mm
             let y = margin;
 
-            // --- FONT SETUP ---
             doc.setFont('helvetica');
 
-            // --- ICON ---
             if (card.icon) {
                 let iconUrl = null;
                 if (card.icon in iconManifest) {
@@ -1788,7 +1783,6 @@
                 } else if (isURL(card.icon)) {
                     iconUrl = card.icon;
                 }
-
                 if (iconUrl) {
                     try {
                         const img = await loadImage(iconUrl);
@@ -1798,7 +1792,7 @@
                         canvas.height = img.naturalHeight;
                         ctx.drawImage(img, 0, 0);
                         const dataUrl = canvas.toDataURL('image/png');
-                        const iconSize = 6; // mm
+                        const iconSize = 6;
                         doc.addImage(dataUrl, 'PNG', pageWidth - iconSize - margin, y, iconSize, iconSize);
                     } catch (e) {
                         console.error("Could not load icon for PDF:", e);
@@ -1806,85 +1800,64 @@
                 }
             }
 
-            // --- TITLE ---
             if (card.title) {
-                doc.setFontSize(16);
-                doc.setFont(undefined, 'bold');
+                doc.setFontSize(16).setFont(undefined, 'bold');
                 doc.text(card.title, pageWidth / 2, y + 5, { align: 'center' });
                 y += 8;
             }
-
-            // --- TYPE ---
             if (card.type) {
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10).setFont(undefined, 'normal');
                 doc.text(card.type, pageWidth / 2, y, { align: 'center' });
                 y += 5;
             }
-
-            // --- STATS ---
             if (card.stats && Object.keys(card.stats).length > 0) {
-                const statsText = Object.entries(card.stats)
-                    .map(([key, value]) => `${key}: ${value}`)
-                    .join(' | ');
-                doc.setFontSize(8);
-                doc.setFont(undefined, 'bold');
+                const statsText = Object.entries(card.stats).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                doc.setFontSize(8).setFont(undefined, 'bold');
                 doc.text(statsText, pageWidth / 2, y, { align: 'center' });
                 y += 5;
             }
 
-            // --- SECTIONS (using AutoTable) ---
             if (card.sections && card.sections.length > 0) {
-                const body = card.sections.map(section => [section]);
-
-                doc.autoTable({
-                    startY: y,
-                    body: body,
-                    theme: 'plain',
-                    tableWidth: 'auto',
-                    margin: { left: margin, right: margin },
-                    styles: { cellPadding: 0 },
-                    didDrawCell: (data) => {
-                        const section = data.cell.raw;
-                        let cursorY = data.cell.y;
-                        if (section.heading) {
-                            doc.setFontSize(10);
-                            doc.setFont(undefined, 'bold');
-                            doc.text(section.heading, data.cell.x + 1, cursorY + 4);
-                            doc.setDrawColor(150);
-                            doc.line(data.cell.x, cursorY + 5.5, data.cell.x + data.cell.width, cursorY + 5.5);
-                            cursorY += 8;
-                        }
-                        if (section.body) {
-                            doc.setFontSize(9);
-                            doc.setFont(undefined, 'normal');
-                            const bodyText = doc.splitTextToSize(section.body, data.cell.width - 2);
-                            doc.text(bodyText, data.cell.x + 1, cursorY);
-                            cursorY += (bodyText.length * 3.5) + 2;
-                        }
-                        if (section.flavorText) {
-                            doc.setFontSize(8);
-                            doc.setFont(undefined, 'italic');
-                            doc.setTextColor(100);
-                            const flavorText = doc.splitTextToSize(section.flavorText, data.cell.width - 2);
-                            doc.text(flavorText, data.cell.x + 1, cursorY);
-                            doc.setTextColor(0);
-                        }
-                    },
-                });
-                y = doc.autoTable.previous.finalY;
+                const contentWidth = pageWidth - (margin * 2);
+                for (const section of card.sections) {
+                    const headingHeight = section.heading ? (doc.setFontSize(10).getTextDimensions(section.heading).h + 4) : 0;
+                    const bodyHeight = section.body ? (doc.setFontSize(9).getTextDimensions(section.body, { maxWidth: contentWidth }).h + 2) : 0;
+                    const flavorHeight = section.flavorText ? (doc.setFontSize(8).getTextDimensions(section.flavorText, { maxWidth: contentWidth }).h + 2) : 0;
+                    const sectionHeight = headingHeight + bodyHeight + flavorHeight;
+                    if (y + sectionHeight > pageHeight - margin) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    if (section.heading) {
+                        doc.setFontSize(10).setFont(undefined, 'bold');
+                        doc.text(section.heading, margin, y);
+                        doc.setDrawColor(150);
+                        doc.line(margin, y + 1, pageWidth - margin, y + 1);
+                        y += 5;
+                    }
+                    if (section.body) {
+                        doc.setFontSize(9).setFont(undefined, 'normal');
+                        const bodyLines = doc.splitTextToSize(section.body, contentWidth);
+                        doc.text(bodyLines, margin, y);
+                        y += doc.getTextDimensions(bodyLines).h + 2;
+                    }
+                    if (section.flavorText) {
+                        doc.setFontSize(8).setFont(undefined, 'italic').setTextColor(100);
+                        const flavorLines = doc.splitTextToSize(section.flavorText, contentWidth);
+                        doc.text(flavorLines, margin, y);
+                        y += doc.getTextDimensions(flavorLines).h + 2;
+                        doc.setTextColor(0);
+                    }
+                }
             }
 
-            // --- TAGS AND FOOTER ---
             const footerY = pageHeight - 5;
             if (card.tags && card.tags.length > 0) {
-                doc.setFontSize(7);
-                doc.setFont(undefined, 'normal');
+                doc.setFontSize(7).setFont(undefined, 'normal');
                 doc.text(`Tags: ${card.tags.join(', ')}`, pageWidth/2, footerY, { align: 'center' });
             }
             if (card.footer) {
-                doc.setFontSize(7);
-                doc.setFont(undefined, 'italic');
+                doc.setFontSize(7).setFont(undefined, 'italic');
                 doc.text(card.footer, pageWidth/2, footerY + 3, { align: 'center' });
             }
         }
@@ -1897,19 +1870,38 @@
                 const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
                 const pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO;
                 doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeightMm] });
+                if (doc.internal.getNumberOfPages() > 0) {
+                    doc.deletePage(1);
+                }
 
                 for (let i = 0; i < cards.length; i++) {
                     const card = cards[i];
-                    if (i > 0) doc.addPage();
+
+                    const pageNumBefore = doc.internal.getNumberOfPages();
+                    doc.addPage();
                     await generatePdfWithText(doc, card);
-                    if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeightMm);
+                    const pageNumAfter = doc.internal.getNumberOfPages();
+                    const contentPagesForThisCard = pageNumAfter - pageNumBefore;
+
+                    if (appState.includeCornerDots) {
+                        for(let p=pageNumBefore + 1; p<=pageNumAfter; p++) {
+                            doc.setPage(p);
+                            addCornerDots(doc, pdfWidthMm, pdfHeightMm);
+                        }
+                    }
 
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
+                        if ((contentPagesForThisCard + 1) % 2 !== 0) {
+                            doc.addPage();
+                        }
+
                         doc.addPage();
+                        const backPageNum = doc.internal.getNumberOfPages();
+                        doc.setPage(backPageNum);
+
                         if (card.foldContent.type === 'text' && card.foldContent.text) {
-                            doc.setFontSize(10);
-                            doc.setFont(undefined, 'normal');
+                            doc.setFontSize(10).setFont(undefined, 'normal');
                             doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
                             let finalImageUrl = null;

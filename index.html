@@ -2611,7 +2611,8 @@
 
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
-                        if ((contentPagesForThisCard + 1) % 2 !== 0) {
+                        const numContentPages = contentPagesForThisCard + 1;
+                        if (numContentPages % 2 === 0) {
                             doc.addPage();
                         }
 

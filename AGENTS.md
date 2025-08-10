@@ -73,3 +73,83 @@
     2.  The back image of the card must be on the final page of the document.
     3.  The total number of pages in the document (content pages + back image page + any blank pages) must be an even number.
     4.  If the number of content pages plus the back page would result in an odd total, a single blank page must be inserted just before the final back image page to make the total count even.
+
+## JSON Import Specifications
+
+This section details the expected JSON formats for the "Import Cards" functionality.
+
+### 1. `rpg-cards` Format
+
+This format is based on the [rpg-cards project by crobi](https://crobi.github.io/rpg-cards/). The importer supports a subset of the official specification.
+
+#### Top-Level Card Properties
+
+| Key                | Type             | Description                                                                                                                              |
+| ------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`            | `string`         | The title of the card.                                                                                                                   |
+| `count`            | `number`         | The number of copies of this card to create. Parsed into the `numCopies` field.                                                          |
+| `color`            | `string`         | A CSS color name or hex code for the card's theme color (used in 'Color' printer mode).                                                  |
+| `icon`             | `string`         | The name of a game-icon.net icon (e.g., "magic-swirl") or a Font Awesome class name.                                                       |
+| `icon_back`        | `string`         | The icon for the back of a folded card. If present, sets `isFolded: true` and `foldContent.type: 'imageUrl'`.                              |
+| `contents`         | `Array<string>`  | An array of strings that define the card's layout and content, processed in order.                                                       |
+| `background_image` | `string`         | A URL for a background image on the card back. Takes precedence over `icon_back`.                                                        |
+
+#### Card `contents` Elements
+
+Each element in the `contents` array is a string formatted as `"element_name | parameter1 | parameter2 | ..."`.
+
+| Element Name    | Parameters                                    | Description                                                                                                                                                                  |
+| --------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `subtitle`      | `text`, `aside_text`                          | Sets the `type` property of the card, with an optional second parameter for right-aligned text.                                                                              |
+| `rule`          | (none)                                        | Adds a dashed horizontal separator.                                                                                                                                          |
+| `property`      | `name`, `description`                         | Adds an inline key-value property line. Parsed as a distinct section type to preserve order.                                                                                 |
+| `dndstats`      | `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`      | Adds a D&D-style stat block.                                                                                                                                                 |
+| `text`          | `text`                                        | Appends text to the `body` of the current section. Handles multi-line text and basic tables (using `｜` as a separator).                                                     |
+| `description`   | `heading`, `body`                             | Creates a new section with a heading and body text.                                                                                                                          |
+| `bullet`        | `text`                                        | Adds a bullet point (`•`) to the body of the current section.                                                                                                                |
+| `section`       | `heading`, `aside_text`                       | Creates a new section with the given heading, with an optional second parameter for right-aligned text.                                                                      |
+| `fill`          | `weight`                                      | Dynamically resized empty element for vertical spacing.                                                                                                                      |
+| `boxes`         | `count`, `size`, `text`                       | A line of empty boxes for tracking charges, with optional descriptive text.                                                                                                  |
+| `swstats`       | (various)                                     | A stat block for Savage Worlds.                                                                                                                                              |
+| `picture`       | `url`, `height`                               | An inline picture, centered in the card content area.                                                                                                                        |
+| `p2e_stats`     | (various)                                     | A stat block for Pathfinder 2nd Edition.                                                                                                                                     |
+| `p2e_activity`  | `name`, `actions`, `description`              | An activity block for Pathfinder 2nd Edition, with action icons.                                                                                                             |
+| `p2e_trait`     | `rarity`, `text`                              | A trait badge for Pathfinder 2nd Edition. Must be wrapped in `p2e_start_trait_section` and `p2e_end_trait_section`.                                                          |
+| `ruler`         | (none)                                        | A thin, solid horizontal line for content separation.                                                                                                                        |
+
+---
+
+### 2. `5e.tools` Format (Creature/Monster JSON)
+
+This importer is designed to handle JSON objects for creatures, as found on sites like 5e.tools. It maps common creature attributes to the card structure.
+
+*   **Structure:** Can be a single JSON object or an array of objects.
+*   **Key Mappings:**
+    *   `name` -> `title`
+    *   `type` -> `type`
+    *   `hp.average` or `hp` -> `stats.HP`
+    *   `str`, `dex`, `con`, `int`, `wis`, `cha` -> `stats.STR`, `stats.DEX`, etc.
+    *   `cr` -> `stats.CR`
+    *   `trait` (array) -> Each trait becomes a new `section` with `name` as the heading and `entries` as the body.
+    *   `action` (array) -> Each action becomes a new `section` with `name` as the heading and `entries` as the body.
+    *   `description` -> Becomes a new section titled "Description".
+
+---
+
+### 3. Generic Card JSON
+
+This is the most direct import method, using the application's internal card data structure. It's useful for exporting and re-importing cards created with this tool.
+
+*   **Structure:** Can be a single card object or an array of card objects.
+*   **Object Properties:** The JSON object should match the `appState.cards[n]` structure defined in `index.html`. Key fields include:
+    *   `title` (string)
+    *   `type` (string)
+    *   `icon` (string)
+    *   `color` (string, hex format)
+    *   `tags` (Array<string>)
+    *   `footer` (string)
+    *   `stats` (Object, e.g., `{"HP": "100", "AC": "15"}`)
+    *   `sections` (Array<Object>, where each object is `{"heading": "...", "body": "...", "flavorText": "..."}`)
+    *   `isFolded` (boolean)
+    *   `foldContent` (Object, `{"type": "text|imageUrl|qrCode", "text": "...", "imageUrl": "...", "qrCodeData": "..."}`)
+    *   `numCopies` (number)

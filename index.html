@@ -2154,7 +2154,9 @@
                 const canvas = await html2canvas(tempContainer.firstElementChild, { useCORS: true, logging: false, backgroundColor: null, removeContainer: true });
                 document.body.removeChild(tempContainer);
 
-                const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
+                const widthPx = getPixelWidth(appState.thermalPaperWidth, appState.thermalDpi);
+                const physicalWidthInches = widthPx / appState.thermalDpi;
+                const pdfWidthMm = physicalWidthInches * 25.4;
                 const physicalWidthInches = pdfWidthMm / 25.4;
                 const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
                 const cardWidth = downsampled.width;

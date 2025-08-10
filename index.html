@@ -2089,6 +2089,7 @@
             showMessage('Generating PDF for download...');
             try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
+                console.log(`[Debug] Print Scope: ${appState.printScope}, Cards to Process: ${cardsToProcess.length}`);
                 const foldOverride = appState.printScope === 'all' ? isFoldedCheckbox.checked : null;
                 const pdf = await generatePdfDocument(cardsToProcess, foldOverride);
                 const fileName = cardsToProcess.length > 1 ? 'TTRPG_Cards.pdf' : `${cardsToProcess[0].title.replace(/\s/g, '_')}.pdf`;

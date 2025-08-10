@@ -2150,7 +2150,6 @@
                 const widthPx = getPixelWidth(appState.thermalPaperWidth, appState.thermalDpi);
                 const physicalWidthInches = widthPx / appState.thermalDpi;
                 const pdfWidthMm = physicalWidthInches * 25.4;
-                const physicalWidthInches = pdfWidthMm / 25.4;
                 const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
                 const cardWidth = downsampled.width;
                 const cardHeight = downsampled.height;

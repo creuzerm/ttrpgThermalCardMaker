@@ -188,11 +188,37 @@
             </div>
 
             <div id="thermal-paper-size-container" class="mb-4">
-                <label for="thermal-paper-size" class="block text-sm font-medium text-gray-300 mb-1">Thermal Paper Size</label>
-                <select id="thermal-paper-size" name="thermalPaperSize" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
-                    <option value="58mm">58mm (Print Width ~48mm)</option>
-                    <option value="80mm">80mm (Print Width ~72mm)</option>
+                <label for="thermal-paper-width" class="block text-sm font-medium text-gray-300 mb-1">Thermal Paper Width</label>
+                <select id="thermal-paper-width" name="thermalPaperWidth" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="2in">2 inch (50.8mm)</option>
+                    <option value="3in">3 inch (76.2mm)</option>
+                    <option value="4in">4 inch (101.6mm)</option>
+                    <option value="58mm">58mm</option>
+                    <option value="80mm">80mm</option>
+                    <option value="custom">Other (Custom)</option>
                 </select>
+            </div>
+
+            <div id="standard-size-container" class="mb-4">
+                <label for="standard-size" class="block text-sm font-medium text-gray-300 mb-1">Standard Size</label>
+                <select id="standard-size" name="standardSize" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                    <!-- Options will be populated by JS based on paper width -->
+                </select>
+            </div>
+
+            <div id="custom-size-container" class="hidden mb-4 p-4 bg-gray-700 rounded-md">
+                <h4 class="text-lg font-semibold mb-2 text-purple-200">Custom Card Dimensions</h4>
+                <div class="flex space-x-4">
+                    <div>
+                        <label for="custom-width" class="block text-sm font-medium text-gray-300 mb-1">Width (inches)</label>
+                        <input type="number" id="custom-width" name="customWidth" step="0.1" placeholder="e.g., 2.5" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                    </div>
+                    <div>
+                        <label for="custom-length" class="block text-sm font-medium text-gray-300 mb-1">Length (inches)</label>
+                        <input type="number" id="custom-length" name="customLength" step="0.1" placeholder="e.g., 4.0" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Note: The card's printable area may be slightly smaller than the paper width.</p>
             </div>
 
             <div id="thermal-dpi-container" class="mb-4">
@@ -368,7 +394,10 @@
             ],
             currentCardIndex: 0, // Index of the currently displayed card
             printerType: 'thermal', // 'thermal' or 'color'
-            thermalPaperSize: '58mm', // '58mm', '80mm'
+            thermalPaperWidth: '2in',
+            standardSize: 'bridge',
+            customWidth: 2,
+            customLength: 3.5,
             numCopies: 1, // Number of copies for the current card
             printScope: 'current', // 'current' or 'all'
             thermalDpi: 203, // 180, 200, 203, 300
@@ -408,7 +437,12 @@
         const printerTypeSelect = document.getElementById('printer-type');
         const thermalPaperSizeContainer = document.getElementById('thermal-paper-size-container');
         const thermalDpiContainer = document.getElementById('thermal-dpi-container');
-        const thermalPaperSizeSelect = document.getElementById('thermal-paper-size');
+        const thermalPaperWidthSelect = document.getElementById('thermal-paper-width');
+        const standardSizeContainer = document.getElementById('standard-size-container');
+        const standardSizeSelect = document.getElementById('standard-size');
+        const customSizeContainer = document.getElementById('custom-size-container');
+        const customWidthInput = document.getElementById('custom-width');
+        const customLengthInput = document.getElementById('custom-length');
         const thermalDpiSelect = document.getElementById('thermal-dpi');
         const numCopiesInput = document.getElementById('num-copies');
         const includeCornerDotsCheckbox = document.getElementById('include-corner-dots');
@@ -576,12 +610,62 @@
             saveState();
         }
 
+        const STANDARD_SIZES = {
+            '2in': [
+                { value: 'bridge', label: 'Bridge (2" x 3.5")', width: 2, length: 3.5 },
+                { value: '2x3', label: '2" x 3"', width: 2, length: 3 },
+                { value: 'continuous', label: 'Continuous Roll', width: 2, length: null }
+            ],
+            '3in': [
+                { value: '3x2', label: '3" x 2"', width: 3, length: 2 },
+                { value: '3x5', label: '3" x 5"', width: 3, length: 5 },
+                { value: 'continuous', label: 'Continuous Roll', width: 3, length: null }
+            ],
+            '4in': [
+                { value: '4x6', label: '4" x 6" (Standard Shipping)', width: 4, length: 6 },
+                { value: '4x3', label: '4" x 3"', width: 4, length: 3 },
+                { value: '4x8', label: '4" x 8"', width: 4, length: 8 },
+                { value: 'continuous', label: 'Continuous Roll', width: 4, length: null }
+            ],
+            '58mm': [
+                { value: 'continuous', label: 'Continuous Roll', width: 2.28, length: null }
+            ],
+            '80mm': [
+                { value: 'continuous', label: 'Continuous Roll', width: 3.15, length: null }
+            ]
+        };
+
         function updateCardPreview() {
             const card = appState.cards[appState.currentCardIndex];
             const printerType = appState.printerType;
-            const thermalPaperSize = appState.thermalPaperSize;
+            const thermalPaperWidth = appState.thermalPaperWidth;
 
-            const widthClass = thermalPaperSize === '58mm' ? 'w-[48mm]' : 'w-[72mm]';
+            let cardWidth, cardHeight;
+
+            if (thermalPaperWidth === 'custom') {
+                cardWidth = appState.customWidth;
+                cardHeight = appState.customLength;
+            } else {
+                const standardSize = STANDARD_SIZES[thermalPaperWidth]?.find(s => s.value === appState.standardSize);
+                if (standardSize) {
+                    cardWidth = standardSize.width;
+                    cardHeight = standardSize.length;
+                } else {
+                    // Fallback for default when appState is inconsistent.
+                    const widthMap = { '58mm': 1.89, '80mm': 2.83, '2in': 1.89, '3in': 2.83, '4in': 4.09 };
+                    cardWidth = widthMap[thermalPaperWidth] || 1.89;
+                    cardHeight = null; // Ensure it's calculated below
+                }
+            }
+
+            // If cardHeight is not set (e.g., for continuous roll or fallback), calculate it based on aspect ratio.
+            if (cardHeight == null) {
+                cardHeight = cardWidth * CARD_HEIGHT_RATIO;
+            }
+
+            const widthClass = `w-[${cardWidth}in]`;
+            cardFrontPreview.style.height = `${cardHeight}in`;
+
             const textColor = printerType === 'thermal' ? 'text-black' : 'text-gray-900';
             const bgColor = printerType === 'thermal' ? 'bg-white' : card.color || 'bg-white';
             const borderColor = printerType === 'thermal' ? 'border-gray-400' : 'border-gray-300';
@@ -687,14 +771,43 @@
             }
         }
 
+        function updateStandardSizes() {
+            const width = appState.thermalPaperWidth;
+            standardSizeSelect.innerHTML = '';
+
+            if (width === 'custom') {
+                standardSizeContainer.classList.add('hidden');
+                customSizeContainer.classList.remove('hidden');
+            } else {
+                standardSizeContainer.classList.remove('hidden');
+                customSizeContainer.classList.add('hidden');
+                const sizes = STANDARD_SIZES[width] || [];
+                sizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size.value;
+                    option.textContent = size.label;
+                    standardSizeSelect.appendChild(option);
+                });
+                if (sizes.length > 0) {
+                    appState.standardSize = sizes[0].value;
+                    standardSizeSelect.value = appState.standardSize;
+                }
+            }
+            updateCardPreview();
+        }
+
         function togglePrinterTypeOptions() {
             if (appState.printerType === 'thermal') {
                 thermalPaperSizeContainer.classList.remove('hidden');
+                standardSizeContainer.classList.remove('hidden');
                 thermalDpiContainer.classList.remove('hidden');
                 printThermalBtn.classList.remove('hidden');
                 printColorPhotoBtn.classList.add('hidden');
+                updateStandardSizes();
             } else {
                 thermalPaperSizeContainer.classList.add('hidden');
+                standardSizeContainer.classList.add('hidden');
+                customSizeContainer.classList.add('hidden');
                 thermalDpiContainer.classList.add('hidden');
                 printThermalBtn.classList.add('hidden');
                 printColorPhotoBtn.classList.remove('hidden');
@@ -740,7 +853,10 @@
             printerTypeSelect.value = appState.printerType;
             outputFormatSelect.value = appState.outputFormat;
             isScrollingCheckbox.checked = appState.isScrolling;
-            thermalPaperSizeSelect.value = appState.thermalPaperSize;
+            thermalPaperWidthSelect.value = appState.thermalPaperWidth;
+            standardSizeSelect.value = appState.standardSize;
+            customWidthInput.value = appState.customWidth;
+            customLengthInput.value = appState.customLength;
             thermalDpiSelect.value = appState.thermalDpi;
             numCopiesInput.value = appState.numCopies;
             includeCornerDotsCheckbox.checked = appState.includeCornerDots;
@@ -797,7 +913,8 @@
 
                     if (decodedData.settings) {
                         appState.printerType = decodedData.settings.printerType || appState.printerType;
-                        appState.thermalPaperSize = decodedData.settings.thermalPaperSize || appState.thermalPaperSize;
+                        appState.thermalPaperWidth = decodedData.settings.thermalPaperWidth || appState.thermalPaperWidth;
+                        appState.standardSize = decodedData.settings.standardSize || appState.standardSize;
                         appState.thermalDpi = decodedData.settings.thermalDpi || appState.thermalDpi;
                         appState.numCopies = decodedData.settings.numCopies || appState.numCopies;
                     }
@@ -815,7 +932,10 @@
                             }
                         }
                         if (parsedState.printerType) appState.printerType = parsedState.printerType;
-                        if (parsedState.thermalPaperSize) appState.thermalPaperSize = parsedState.thermalPaperSize;
+                        if (parsedState.thermalPaperWidth) appState.thermalPaperWidth = parsedState.thermalPaperWidth;
+                        if (parsedState.standardSize) appState.standardSize = parsedState.standardSize;
+                        if (parsedState.customWidth) appState.customWidth = parsedState.customWidth;
+                        if (parsedState.customLength) appState.customLength = parsedState.customLength;
                         if (parsedState.thermalDpi) appState.thermalDpi = parsedState.thermalDpi;
                         if (parsedState.numCopies) {
                             let loadedNumCopies = parseInt(parsedState.numCopies, 10);
@@ -1177,6 +1297,31 @@
             saveState();
         });
 
+        thermalPaperWidthSelect.addEventListener('change', (e) => {
+            appState.thermalPaperWidth = e.target.value;
+            updateStandardSizes();
+            saveState();
+        });
+
+        standardSizeSelect.addEventListener('change', (e) => {
+            appState.standardSize = e.target.value;
+            updateCardPreview();
+            saveState();
+        });
+
+        customWidthInput.addEventListener('input', (e) => {
+            appState.customWidth = parseFloat(e.target.value) || 0;
+            updateCardPreview();
+            saveState();
+        });
+
+        customLengthInput.addEventListener('input', (e) => {
+            appState.customLength = parseFloat(e.target.value) || 0;
+            updateCardPreview();
+            saveState();
+        });
+        });
+
         thermalDpiSelect.addEventListener('change', (e) => {
             appState.thermalDpi = parseInt(e.target.value, 10);
             updateCardPreview();
@@ -1350,21 +1495,32 @@
         // --- End of Shared Card Rendering Configuration ---
 
 
-        function getPixelWidth(paperSize, dpi) {
-            // Based on the table provided in README.md
-            // 1 inch = 25.4 mm
+        function getPixelWidth(paperWidth, dpi) {
+            if (appState.thermalPaperWidth === 'custom') {
+                return Math.round(appState.customWidth * dpi);
+            }
+
+            const standardSize = STANDARD_SIZES[paperWidth]?.find(s => s.value === appState.standardSize);
+            if (standardSize && standardSize.width) {
+                 return Math.round(standardSize.width * dpi);
+            }
+
+            // Fallback for continuous roll or default
             const printableWidthMm = {
                 '58mm': 48,
-                '80mm': 72
+                '80mm': 72,
+                '2in': 48, // approx
+                '3in': 72, // approx
+                '4in': 104 // approx
             };
-            const printableWidthIn = printableWidthMm[paperSize] / 25.4;
+            const printableWidthIn = (printableWidthMm[paperWidth] || 48) / 25.4;
             return Math.round(printableWidthIn * dpi);
         }
 
         async function generateCardHtml(card, options = { isScrolling: false }) {
             const { isScrolling } = options;
             const dpi = appState.thermalDpi;
-            const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
+            const widthPx = getPixelWidth(appState.thermalPaperWidth, dpi);
 
             let iconRenderHtml = '';
             if (card.icon && (!card.isContinuation || isScrolling)) {
@@ -1641,7 +1797,7 @@
 
         async function generateFoldedBackHtmlForCard(card) {
             const dpi = appState.thermalDpi;
-            const widthPx = getPixelWidth(appState.thermalPaperSize, dpi);
+            const widthPx = getPixelWidth(appState.thermalPaperWidth, dpi);
             let backContentHtml = '';
 
             if (card.foldContent) {
@@ -1887,8 +2043,26 @@
             let doc;
 
             if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
-                const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                const pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO;
+                let pdfWidthMm, pdfHeightMm;
+
+                if (appState.thermalPaperWidth === 'custom') {
+                    pdfWidthMm = appState.customWidth * 25.4;
+                    pdfHeightMm = appState.customLength * 25.4;
+                } else {
+                    const standardSize = STANDARD_SIZES[appState.thermalPaperWidth]?.find(s => s.value === appState.standardSize);
+                    if (standardSize && standardSize.width && standardSize.length) {
+                        pdfWidthMm = standardSize.width * 25.4;
+                        pdfHeightMm = standardSize.length * 25.4;
+                    } else {
+                        const widthMapMm = { '58mm': 48, '80mm': 72, '2in': 48, '3in': 72, '4in': 104 };
+                        pdfWidthMm = widthMapMm[appState.thermalPaperWidth] || 48;
+                        pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO;
+                    }
+                }
+                if (appState.standardSize === 'bridge') {
+                    pdfHeightMm = 3.5 * 25.4;
+                }
+
                 doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeightMm] });
 
                 for (let i = 0; i < cards.length; i++) {
@@ -1980,7 +2154,9 @@
                 const canvas = await html2canvas(tempContainer.firstElementChild, { useCORS: true, logging: false, backgroundColor: null, removeContainer: true });
                 document.body.removeChild(tempContainer);
 
-                const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                const widthPx = getPixelWidth(appState.thermalPaperWidth, appState.thermalDpi);
+                const physicalWidthInches = widthPx / appState.thermalDpi;
+                const pdfWidthMm = physicalWidthInches * 25.4;
                 const physicalWidthInches = pdfWidthMm / 25.4;
                 const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
                 const cardWidth = downsampled.width;
@@ -1999,7 +2175,7 @@
                     let firstCanvas = canvases[0];
                     if (!firstCanvas) continue;
 
-                    const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
                     const physicalWidthInches = pdfWidthMm / 25.4;
                     firstCanvas = await downsampleCanvas(firstCanvas, appState.thermalDpi, physicalWidthInches);
                     const cardWidth = firstCanvas.width;
@@ -2028,7 +2204,7 @@
                 for (const card of foldedCardsWithBacks) {
                     let backCanvas = await generateBackCanvas(card);
                     if (!backCanvas) continue;
-                    const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
+                    const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
                     const physicalWidthInches = pdfWidthMm / 25.4;
                     backCanvas = await downsampleCanvas(backCanvas, appState.thermalDpi, physicalWidthInches);
                     const cardWidth = backCanvas.width;

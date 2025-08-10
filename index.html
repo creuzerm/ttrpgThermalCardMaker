@@ -528,6 +528,19 @@
             }
         }
 
+        function getP2eActionIcon(actions) {
+            const actionMap = { '0': 'F', '1': '1A', '2': '2A', '3': '3A', 'R': 'R' };
+            const actionText = actionMap[actions] || actions;
+            let bgColor = 'bg-gray-500';
+            if (actions === '1') bgColor = 'bg-blue-600';
+            if (actions === '2') bgColor = 'bg-yellow-600';
+            if (actions === '3') bgColor = 'bg-purple-600';
+            if (actions === 'R') bgColor = 'bg-red-600';
+            if (actions === '0') bgColor = 'bg-green-600';
+
+            return `<div class="flex items-center justify-center w-8 h-5 rounded text-white text-xs font-bold ${bgColor}">${actionText}</div>`;
+        }
+
         // Render functions (called by updateUIFromAppState and event handlers)
         function renderSections() {
             const currentCard = appState.cards[appState.currentCardIndex];
@@ -537,15 +550,100 @@
             sectionsToRender.forEach((section, index) => {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'bg-gray-700 p-4 rounded-md mb-3 relative';
-                sectionDiv.innerHTML = `
-                    <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                    <label for="section-heading-${index}" class="block text-sm font-medium text-gray-300 mb-1">Heading (Optional)</label>
-                    <input type="text" id="section-heading-${index}" data-field="heading" data-index="${index}" value="${section.heading || ''}" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500 mb-2">
-                    <label for="section-body-${index}" class="block text-sm font-medium text-gray-300 mb-1">Body Text (Markdown-like)</label>
-                    <textarea id="section-body-${index}" data-field="body" data-index="${index}" rows="4" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500 mb-2" placeholder="Use **bold**, *italic*, and newlines.">${section.body || ''}</textarea>
-                    <label for="section-flavorText-${index}" class="block text-sm font-medium text-gray-300 mb-1">Flavor Text (Optional)</label>
-                    <textarea id="section-flavorText-${index}" data-field="flavorText" data-index="${index}" rows="2" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Optional italicized text.">${section.flavorText || ''}</textarea>
-                `;
+
+                if (section.type === 'rule') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">--- Horizontal Rule ---</div>
+                    `;
+                } else if (section.type === 'fill') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">Fill Element (weight: ${section.weight || 1})</div>
+                    `;
+                } else if (section.type === 'property') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-sm text-gray-300"><strong class="font-semibold">${section.key}:</strong> ${section.value}</div>
+                    `;
+                } else if (section.type === 'dndstats') {
+                    const statsHtml = Object.entries(section.stats).map(([k, v]) => `<strong>${k}</strong> ${v}`).join(' | ');
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">D&D Stats: ${statsHtml}</div>
+                    `;
+                } else if (section.type === 'picture') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">
+                            <img src="${sanitizeHTML(section.url)}" style="max-height: ${section.height}px; margin: auto; border-radius: 4px;" alt="Card Picture" onerror="this.src='https://placehold.co/100x50/000/FFF?text=Image'; this.style.border='1px dashed #555';">
+                            <p class="text-xs mt-1">Picture Element</p>
+                        </div>
+                    `;
+                } else if (section.type === 'boxes') {
+                    let boxesHtml = '';
+                    const boxCount = section.count || 1;
+                    const boxSize = section.size || 1.0;
+                    for (let i = 0; i < boxCount; i++) {
+                        boxesHtml += `<input type="checkbox" style="width: ${boxSize}em; height: ${boxSize}em;" class="mx-1" disabled>`;
+                    }
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">
+                            ${section.text ? `<p class="text-sm mb-1">${sanitizeHTML(section.text)}</p>` : ''}
+                            <div>${boxesHtml}</div>
+                            <p class="text-xs mt-1">Boxes Element</p>
+                        </div>
+                    `;
+                } else if (section.type === 'ruler') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">--- Thin Rule ---</div>
+                    `;
+                } else if (section.type === 'swstats') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">Savage Worlds Stat Block</div>
+                    `;
+                } else if (section.type === 'p2e_stats') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-center text-gray-400">Pathfinder 2e Stat Block</div>
+                    `;
+                } else if (section.type === 'p2e_activity') {
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-gray-400">
+                            <p><strong>Activity:</strong> ${sanitizeHTML(section.name)} (${sanitizeHTML(section.actions)})</p>
+                            <p class="text-xs">${sanitizeHTML(section.description)}</p>
+                        </div>
+                    `;
+                } else if (section.type === 'p2e_traits') {
+                    const traitsPreview = section.traits.map(t => t.text).join(', ');
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="text-gray-400 text-sm"><strong>Traits:</strong> ${sanitizeHTML(traitsPreview)}</div>
+                    `;
+                }
+                else { // Default to content section
+                    sectionDiv.innerHTML = `
+                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
+                        <div class="grid grid-cols-2 gap-x-2 mb-2">
+                            <div>
+                                <label for="section-heading-${index}" class="block text-sm font-medium text-gray-300 mb-1">Heading</label>
+                                <input type="text" id="section-heading-${index}" data-field="heading" data-index="${index}" value="${section.heading || ''}" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                            </div>
+                            <div>
+                                <label for="section-heading-aside-${index}" class="block text-sm font-medium text-gray-300 mb-1">Heading Aside</label>
+                                <input type="text" id="section-heading-aside-${index}" data-field="headingAside" data-index="${index}" value="${section.headingAside || ''}" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                            </div>
+                        </div>
+                        <label for="section-body-${index}" class="block text-sm font-medium text-gray-300 mb-1">Body Text (Markdown-like)</label>
+                        <textarea id="section-body-${index}" data-field="body" data-index="${index}" rows="4" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500 mb-2" placeholder="Use **bold**, *italic*, and newlines.">${section.body || ''}</textarea>
+                        <label for="section-flavorText-${index}" class="block text-sm font-medium text-gray-300 mb-1">Flavor Text (Optional)</label>
+                        <textarea id="section-flavorText-${index}" data-field="flavorText" data-index="${index}" rows="2" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Optional italicized text.">${section.flavorText || ''}</textarea>
+                    `;
+                }
                 sectionsContainer.appendChild(sectionDiv);
             });
             document.querySelectorAll('.section-input').forEach(input => {
@@ -669,9 +767,17 @@
             cardFrontPreview.className = `relative mx-auto p-2 border border-dashed border-gray-400 rounded-md ${widthClass} min-h-[150px] flex flex-col justify-between`;
             cardFrontPreview.innerHTML = `
                 ${iconHtml}
-                <div class="flex flex-col items-center mb-2">
+                <div class="flex flex-col mb-2">
                     <h1 class="text-2xl font-extrabold text-center mb-1 leading-tight">${sanitizeHTML(card.title || '')}</h1>
-                    ${card.type ? `<p class="text-lg text-center mb-2">${sanitizeHTML(card.type)}</p>` : ''}
+                    ${card.type ?
+                        (typeof card.type === 'object' ?
+                            `<div class="flex justify-between items-baseline text-lg">
+                                <span>${sanitizeHTML(card.type.text || '')}</span>
+                                <span class="text-sm font-light">${sanitizeHTML(card.type.aside || '')}</span>
+                            </div>` :
+                            `<p class="text-lg text-center">${sanitizeHTML(card.type)}</p>`
+                        )
+                    : ''}
                 </div>
 
                 ${(card.stats && Object.keys(card.stats).length > 0) ? `
@@ -684,14 +790,97 @@
                     </div>
                 ` : ''}
 
-                <div class="flex-grow overflow-hidden">
-                    ${(card.sections && Array.isArray(card.sections)) ? card.sections.map((section, index) => `
-                        <div class="mb-2">
-                            ${section.heading ? `<h2 class="text-lg font-semibold border-b border-gray-300 pb-1 mb-1">${sanitizeHTML(section.heading)}</h2>` : ''}
-                            <p class="text-sm leading-snug card-content">${formatText(section.body || '')}</p>
-                            ${section.flavorText ? `<p class="text-xs italic text-gray-600 mt-1 card-content">${formatText(section.flavorText || '')}</p>` : ''}
-                        </div>
-                    `).join('') : ''}
+                <div class="flex-grow overflow-hidden flex flex-col">
+                    ${(card.sections && Array.isArray(card.sections)) ? card.sections.map((section, index) => {
+                        switch (section.type) {
+                            case 'rule':
+                                return '<hr class="border-gray-400 my-1 border-dashed"/>';
+                            case 'fill':
+                                return `<div style="flex-grow: ${section.weight || 1};"></div>`;
+                            case 'property':
+                                return `<div class="text-sm"><strong class="font-semibold">${sanitizeHTML(section.key)}:</strong> ${sanitizeHTML(section.value)}</div>`;
+                            case 'dndstats':
+                                const statsHtml = Object.entries(section.stats)
+                                    .map(([k, v]) => `<div class="flex flex-col items-center mx-2">
+                                                        <strong class="font-bold">${sanitizeHTML(k)}</strong>
+                                                        <span>${sanitizeHTML(v)}</span>
+                                                     </div>`)
+                                    .join('');
+                                return `<div class="flex justify-around my-2 p-1 bg-gray-100 rounded-md">${statsHtml}</div>`;
+                            case 'picture':
+                                return `<div class="my-2 flex justify-center"><img src="${sanitizeHTML(section.url)}" style="height: ${section.height}px;" class="rounded-md" alt="Card Picture" onerror="this.src='https://placehold.co/100x${section.height}/000/FFF?text=Image';"></div>`;
+                            case 'boxes':
+                                let boxesHtml = '';
+                                const boxCount = section.count || 1;
+                                const boxSize = section.size || 1.0;
+                                for (let i = 0; i < boxCount; i++) {
+                                    boxesHtml += `<span style="font-size: ${boxSize}em; line-height: 1; vertical-align: middle;" class="mx-1 border border-black inline-block w-[1em] h-[1em] bg-white"></span>`;
+                                }
+                                const textHtml = section.text ? `<p class="text-sm mb-1">${sanitizeHTML(section.text)}</p>` : '';
+                                return `<div class="my-2 text-center">
+                                            ${textHtml}
+                                            <div>${boxesHtml}</div>
+                                        </div>`;
+                            case 'ruler':
+                                return '<hr class="border-gray-500 my-1 border-solid"/>';
+                            case 'swstats':
+                                const swStatItems = Object.entries(section.stats)
+                                    .map(([key, value]) => {
+                                        if (!value) return null;
+                                        return `<div class="flex flex-col items-center p-1 bg-gray-100 rounded-md">
+                                                    <strong class="text-xs uppercase font-bold">${sanitizeHTML(key)}</strong>
+                                                    <span>${sanitizeHTML(value)}</span>
+                                                </div>`
+                                    })
+                                    .filter(Boolean)
+                                    .join('');
+                                return `<div class="grid grid-cols-5 gap-1 my-2 text-center">${swStatItems}</div>`;
+                            case 'p2e_stats':
+                                const p2eStatItems = Object.entries(section.stats)
+                                    .map(([key, value]) => {
+                                        if (!value) return null;
+                                        return `<div class="flex flex-col items-center p-1 bg-gray-100 rounded-md">
+                                                    <strong class="text-xs uppercase font-bold">${sanitizeHTML(key)}</strong>
+                                                    <span>${sanitizeHTML(value)}</span>
+                                                </div>`
+                                    })
+                                    .filter(Boolean)
+                                    .join('');
+                                return `<div class="grid grid-cols-6 gap-1 my-2 text-center">${p2eStatItems}</div>`;
+                            case 'p2e_activity':
+                                const actionIconHtml = getP2eActionIcon(section.actions);
+                                return `<div class="my-2">
+                                            <div class="flex items-center gap-2">
+                                                ${actionIconHtml}
+                                                <strong class="font-bold">${sanitizeHTML(section.name)}</strong>
+                                            </div>
+                                            <p class="text-sm pl-10">${formatText(section.description)}</p>
+                                        </div>`;
+                            case 'p2e_traits':
+                                const traitsHtml = section.traits.map(trait => {
+                                    let rarityClass = 'bg-gray-500'; // common
+                                    if (trait.rarity === 'uncommon') rarityClass = 'bg-blue-700';
+                                    if (trait.rarity === 'rare') rarityClass = 'bg-purple-700';
+                                    if (trait.rarity === 'unique') rarityClass = 'bg-yellow-600';
+                                    return `<span class="text-xs text-white ${rarityClass} rounded-full px-3 py-1 font-semibold uppercase tracking-wider">${sanitizeHTML(trait.text)}</span>`;
+                                }).join('');
+                                return `<div class="flex flex-wrap items-center gap-2 my-2">${traitsHtml}</div>`;
+                            case 'content':
+                            default:
+                                return `
+                                    <div class="mb-2">
+                                        ${section.heading ? `
+                                            <div class="flex justify-between items-baseline border-b border-gray-300 pb-1 mb-1">
+                                                <h2 class="text-lg font-semibold">${sanitizeHTML(section.heading)}</h2>
+                                                ${section.headingAside ? `<span class="text-sm font-light">${sanitizeHTML(section.headingAside)}</span>` : ''}
+                                            </div>
+                                        ` : ''}
+                                        <p class="text-sm leading-snug card-content">${formatText(section.body || '')}</p>
+                                        ${section.flavorText ? `<p class="text-xs italic text-gray-600 mt-1 card-content">${formatText(section.flavorText || '')}</p>` : ''}
+                                    </div>
+                                `;
+                        }
+                    }).join('') : ''}
                 </div>
 
                 ${(card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
@@ -708,6 +897,8 @@
 
                 if (foldContent.type === 'text' && foldContent.text) {
                     foldContentHtml = `<p class="text-sm text-center card-content">${formatText(foldContent.text)}</p>`;
+                } else if (foldContent.type === 'backgroundImageUrl' && foldContent.imageUrl) {
+                    foldContentHtml = `<img src="${sanitizeHTML(foldContent.imageUrl)}" alt="Card Back" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/96x96/000/FFF?text=BG+IMG';" />`;
                 } else if (foldContent.type === 'imageUrl' && foldContent.imageUrl) {
                     let backImagePath = foldContent.imageUrl;
                     if (iconManifest[backImagePath]) {
@@ -822,7 +1013,12 @@
             const currentCard = appState.cards[appState.currentCardIndex];
 
             titleInput.value = currentCard.title || '';
-            typeInput.value = currentCard.type || '';
+            if (typeof currentCard.type === 'object' && currentCard.type !== null) {
+                typeInput.value = currentCard.type.text || '';
+                // The aside is not editable in the main UI for now.
+            } else {
+                typeInput.value = currentCard.type || '';
+            }
             iconInput.value = currentCard.icon || ''; // Icon name or URL
             colorInput.value = currentCard.color || '#ffffff';
             tagsInput.value = (currentCard.tags && Array.isArray(currentCard.tags)) ? currentCard.tags.join(', ') : '';
@@ -1045,13 +1241,15 @@
                     newCard.type = '';
 
                     if (data.contents && Array.isArray(data.contents)) {
-                        let currentSection = { heading: '', body: '', flavorText: '' };
+                        let inP2eTraitSection = false;
+                        let currentTraitSection = null;
+                        let currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
 
                         function pushCurrentSection() {
                             if (currentSection.body || currentSection.heading || currentSection.flavorText) {
                                 newCard.sections.push({ ...currentSection });
                             }
-                            currentSection = { heading: '', body: '', flavorText: '' };
+                            currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
                         }
 
                         for (let i = 0; i < data.contents.length; i++) {
@@ -1059,9 +1257,18 @@
 
                             if (line.startsWith('subtitle | ')) {
                                 pushCurrentSection();
-                                newCard.type = line.substring('subtitle | '.length).trim();
+                                const parts = line.substring('subtitle | '.length).split(' | ');
+                                newCard.type = {
+                                    text: parts[0] ? parts[0].trim() : '',
+                                    aside: parts[1] ? parts[1].trim() : ''
+                                };
                             } else if (line.startsWith('rule')) {
                                 pushCurrentSection();
+                                newCard.sections.push({ type: 'rule' });
+                            } else if (line.startsWith('fill | ')) {
+                                pushCurrentSection();
+                                const parts = line.substring('fill | '.length).split(' | ');
+                                newCard.sections.push({ type: 'fill', weight: parseInt(parts[0], 10) || 1 });
                             } else if (line.startsWith('text | ')) {
                                 const textGroup = [line.substring('text | '.length).trim()];
                                 while (i + 1 < data.contents.length && data.contents[i + 1].startsWith('text | ')) {
@@ -1076,22 +1283,27 @@
                                     currentSection.body = processedText;
                                 }
                             } else if (line.startsWith('property | ')) {
+                                pushCurrentSection();
                                 const parts = line.substring('property | '.length).split(' | ');
                                 if (parts.length >= 2) {
-                                    newCard.stats[parts[0].trim()] = parts[1].trim();
+                                    newCard.sections.push({ type: 'property', key: parts[0].trim(), value: parts[1].trim() });
                                 }
                             } else if (line.startsWith('dndstats | ')) {
+                                pushCurrentSection();
                                 const statKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
                                 const stats = line.substring('dndstats | '.length).split(' | ').map(s => s.trim());
                                 if (stats.length === statKeys.length) {
+                                    const statValues = {};
                                     statKeys.forEach((key, index) => {
-                                        newCard.stats[key] = stats[index];
+                                        statValues[key] = stats[index];
                                     });
+                                    newCard.sections.push({ type: 'dndstats', stats: statValues });
                                 }
                             } else if (line.startsWith('description | ')) {
                                 pushCurrentSection();
                                 const parts = line.substring('description | '.length).split(' | ').map(p => p.trim());
                                 currentSection = {
+                                    type: 'content',
                                     heading: parts.length >= 2 ? parts[0] : '',
                                     body: parts.length >= 2 ? parts[1] : parts[0],
                                     flavorText: ''
@@ -1103,9 +1315,78 @@
                                 } else {
                                     currentSection.body = bulletText;
                                 }
+                            } else if (line.startsWith('picture | ')) {
+                                pushCurrentSection();
+                                const parts = line.substring('picture | '.length).split(' | ');
+                                newCard.sections.push({
+                                    type: 'picture',
+                                    url: parts[0] ? parts[0].trim() : '',
+                                    height: parts[1] ? parseInt(parts[1].trim(), 10) : 50
+                                });
+                            } else if (line.startsWith('ruler')) {
+                                pushCurrentSection();
+                                newCard.sections.push({ type: 'ruler' });
+                            } else if (line.startsWith('swstats | ')) {
+                                pushCurrentSection();
+                                const p = line.substring('swstats | '.length).split(' | ').map(s => s.trim());
+                                newCard.sections.push({
+                                    type: 'swstats',
+                                    stats: {
+                                        agility: p[0] || '', smarts: p[1] || '', spirit: p[2] || '', strength: p[3] || '', vigor: p[4] || '',
+                                        pace: p[5] || '', parry: p[6] || '', toughness: p[7] || '', loot: p[8] || ''
+                                    }
+                                });
+                            } else if (line.startsWith('p2e_stats | ')) {
+                                pushCurrentSection();
+                                const p = line.substring('p2e_stats | '.length).split(' | ').map(s => s.trim());
+                                newCard.sections.push({
+                                    type: 'p2e_stats',
+                                    stats: {
+                                        str: p[0] || '', dex: p[1] || '', con: p[2] || '', int: p[3] || '', wis: p[4] || '', cha: p[5] || '',
+                                        ac: p[6] || '', fort: p[7] || '', ref: p[8] || '', will: p[9] || '', hp: p[10] || ''
+                                    }
+                                });
+                            } else if (line.startsWith('p2e_activity | ')) {
+                                pushCurrentSection();
+                                const p = line.substring('p2e_activity | '.length).split(' | ').map(s => s.trim());
+                                newCard.sections.push({
+                                    type: 'p2e_activity',
+                                    name: p[0] || '',
+                                    actions: p[1] || '',
+                                    description: p[2] || ''
+                                });
+                            } else if (line.startsWith('p2e_start_trait_section')) {
+                                pushCurrentSection();
+                                inP2eTraitSection = true;
+                                currentTraitSection = { type: 'p2e_traits', traits: [] };
+                            } else if (line.startsWith('p2e_end_trait_section')) {
+                                if (currentTraitSection && currentTraitSection.traits.length > 0) {
+                                    newCard.sections.push(currentTraitSection);
+                                }
+                                inP2eTraitSection = false;
+                                currentTraitSection = null;
+                            } else if (line.startsWith('p2e_trait | ')) {
+                                if (inP2eTraitSection) {
+                                    const parts = line.substring('p2e_trait | '.length).split(' | ');
+                                    currentTraitSection.traits.push({
+                                        rarity: parts[0] ? parts[0].trim().toLowerCase() : 'common',
+                                        text: parts[1] ? parts[1].trim() : ''
+                                    });
+                                }
                             } else if (line.startsWith('section | ')) {
                                 pushCurrentSection();
-                                currentSection.heading = line.substring('section | '.length).trim();
+                                const parts = line.substring('section | '.length).split(' | ');
+                                currentSection.heading = parts[0] ? parts[0].trim() : '';
+                                currentSection.headingAside = parts[1] ? parts[1].trim() : '';
+                            } else if (line.startsWith('boxes | ')) {
+                                pushCurrentSection();
+                                const parts = line.substring('boxes | '.length).split(' | ');
+                                newCard.sections.push({
+                                    type: 'boxes',
+                                    count: parts[0] ? parseInt(parts[0].trim(), 10) : 1,
+                                    size: parts[1] ? parseFloat(parts[1].trim()) : 1.0,
+                                    text: parts[2] ? parts[2].trim() : ''
+                                });
                             }
                         }
                         pushCurrentSection();
@@ -1120,7 +1401,10 @@
                     newCard.isFolded = typeof data.isFolded === 'boolean' ? data.isFolded : false;
                     newCard.foldContent = (data.foldContent && typeof data.foldContent === 'object') ? data.foldContent : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
 
-                    if (data.icon_back) {
+                    if (data.background_image) {
+                        newCard.isFolded = true;
+                        newCard.foldContent = { type: 'backgroundImageUrl', imageUrl: data.background_image };
+                    } else if (data.icon_back) {
                         newCard.isFolded = true;
                         newCard.foldContent.type = 'imageUrl';
                         newCard.foldContent.imageUrl = data.icon_back;
@@ -1203,7 +1487,16 @@
 
         // Event Listeners for main card inputs
         titleInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].title = e.target.value; saveState(); updateCardPreview(); updateCardNavigationUI(); });
-        typeInput.addEventListener('input', (e) => { appState.cards[appState.currentCardIndex].type = e.target.value; saveState(); updateCardPreview(); });
+        typeInput.addEventListener('input', (e) => {
+            const currentCard = appState.cards[appState.currentCardIndex];
+            if (typeof currentCard.type === 'object' && currentCard.type !== null) {
+                currentCard.type.text = e.target.value;
+            } else {
+                currentCard.type = e.target.value;
+            }
+            saveState();
+            updateCardPreview();
+        });
         iconInput.addEventListener('input', (e) => {
             appState.cards[appState.currentCardIndex].icon = e.target.value;
             rememberIcon(e.target.value);
@@ -1563,13 +1856,94 @@
                     ` : ''}
 
                     <div class="card-content-area" style="${contentAreaStyle}">
-                        ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => `
-                            <div class="mb-2">
-                                ${section.heading ? `<h2 style="font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;">${sanitizeHTML(section.heading)}</h2>` : ''}
-                                <p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-bottom: ${toPx(SECTION_BODY_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.4;">${formatText(section.body || '')}</p>
-                                ${section.flavorText ? `<p style="font-size: ${ptToPx(FONT_SIZE_FLAVOR_PT, dpi)}px; font-style: italic; color: #555; margin-top: ${toPx(FLAVOR_MARGIN_TOP_IN, dpi)}px;">${formatText(section.flavorText || '')}</p>` : ''}
-                            </div>
-                        `).join('') : ''}
+                        ${(card.sections && Array.isArray(card.sections)) ? card.sections.map(section => {
+                            switch (section.type) {
+                                case 'rule':
+                                    return `<div style="width: 100%; height: 1px; background-color: #999; margin: ${toPx(0.05, dpi)}px 0;"></div>`;
+                                case 'fill':
+                                    return `<div style="flex-grow: ${section.weight || 1};"></div>`;
+                                case 'property':
+                                    return `<div style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px;"><strong>${sanitizeHTML(section.key)}:</strong> ${sanitizeHTML(section.value)}</div>`;
+                                case 'dndstats':
+                                    const statsHtml = Object.entries(section.stats)
+                                        .map(([k, v]) => `<div style="display: flex; flex-direction: column; align-items: center; margin: 0 ${toPx(0.1, dpi)}px;">
+                                                            <strong style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px;">${sanitizeHTML(k)}</strong>
+                                                            <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px;">${sanitizeHTML(v)}</span>
+                                                         </div>`)
+                                        .join('');
+                                    return `<div style="display: flex; justify-content: space-around; margin: ${toPx(0.08, dpi)}px 0; padding: ${toPx(0.04, dpi)}px; background-color: #f3f4f6; border-radius: 4px;">${statsHtml}</div>`;
+                                case 'picture':
+                                    return `<div style="margin: ${toPx(0.08, dpi)}px 0; text-align: center;"><img src="${sanitizeHTML(section.url)}" style="height: ${section.height}px; border-radius: 4px;" alt="Card Picture"></div>`;
+                                case 'boxes':
+                                    let boxesHtml = '';
+                                    const boxSizePt = (section.size || 1.0) * 10; // 1em ~ 10pt for PDF context
+                                    const boxSizePx = ptToPx(boxSizePt, dpi);
+                                    const boxCount = section.count || 1;
+                                    for (let i = 0; i < boxCount; i++) {
+                                        boxesHtml += `<div style="display: inline-block; width: ${boxSizePx}px; height: ${boxSizePx}px; border: 1px solid #000; margin: 0 2px; background-color: #fff;"></div>`;
+                                    }
+                                    const textHtml = section.text ? `<p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-bottom: 2px;">${sanitizeHTML(section.text)}</p>` : '';
+                                    return `<div style="text-align: center; margin: 4px 0;">${textHtml}<div>${boxesHtml}</div></div>`;
+                                case 'ruler':
+                                    return `<div style="width: 100%; height: 0.5px; background-color: #333; margin: ${toPx(0.05, dpi)}px 0;"></div>`;
+                                case 'swstats':
+                                    const swStatItems = Object.entries(section.stats)
+                                        .map(([key, value]) => {
+                                            if (!value) return null;
+                                            return `<div style="display: flex; flex-direction: column; align-items: center; padding: 2px; background-color: #f3f4f6; border-radius: 4px;">
+                                                        <strong style="font-size: ${ptToPx(8, dpi)}px; text-transform: uppercase; font-weight: bold;">${sanitizeHTML(key)}</strong>
+                                                        <span style="font-size: ${ptToPx(10, dpi)}px;">${sanitizeHTML(value)}</span>
+                                                    </div>`
+                                        })
+                                        .filter(Boolean)
+                                        .join('');
+                                    return `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin: ${toPx(0.08, dpi)}px 0; text-align: center;">${swStatItems}</div>`;
+                                case 'p2e_stats':
+                                    const p2eStatItems = Object.entries(section.stats)
+                                        .map(([key, value]) => {
+                                            if (!value) return null;
+                                            return `<div style="display: flex; flex-direction: column; align-items: center; padding: 2px; background-color: #f3f4f6; border-radius: 4px;">
+                                                        <strong style="font-size: ${ptToPx(8, dpi)}px; text-transform: uppercase; font-weight: bold;">${sanitizeHTML(key)}</strong>
+                                                        <span style="font-size: ${ptToPx(10, dpi)}px;">${sanitizeHTML(value)}</span>
+                                                    </div>`
+                                        })
+                                        .filter(Boolean)
+                                        .join('');
+                                    return `<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin: ${toPx(0.08, dpi)}px 0; text-align: center;">${p2eStatItems}</div>`;
+                                case 'p2e_activity':
+                                    const actionText = { '0': 'F', '1': '1A', '2': '2A', '3': '3A', 'R': 'R' }[section.actions] || section.actions;
+                                    return `<div style="margin: ${toPx(0.04, dpi)}px 0;">
+                                                <div style="display: flex; align-items: center; gap: 4px;">
+                                                    <div style="display: flex; align-items: center; justify-content: center; width: ${ptToPx(16, dpi)}px; height: ${ptToPx(12, dpi)}px; border-radius: 4px; background-color: #333; color: #fff; font-size: ${ptToPx(8, dpi)}px; font-weight: bold;">${actionText}</div>
+                                                    <strong style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: bold;">${sanitizeHTML(section.name)}</strong>
+                                                </div>
+                                                <p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-left: ${ptToPx(20, dpi)}px;">${formatText(section.description)}</p>
+                                            </div>`;
+                                case 'p2e_traits':
+                                    const traitsHtml = section.traits.map(trait => {
+                                        return `<span style="font-size: ${ptToPx(8, dpi)}px; color: #fff; background-color: #555; border-radius: 9999px; padding: 2px 8px; text-transform: uppercase;">${sanitizeHTML(trait.text)}</span>`;
+                                    }).join('');
+                                    return `<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: ${toPx(0.08, dpi)}px 0;">${traitsHtml}</div>`;
+                                case 'content':
+                                default:
+                                    const headingStyle = `font-size: ${ptToPx(FONT_SIZE_SECTION_HEAD_PT, dpi)}px; margin-bottom: ${toPx(SECTION_HEAD_MARGIN_BOTTOM_IN, dpi)}px; border-bottom: 1px dashed #999; padding-bottom: ${toPx(SECTION_HEAD_PADDING_BOTTOM_IN, dpi)}px;`;
+                                    const headingAsideStyle = `font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;`;
+                                    const headingHtml = section.heading ? `
+                                        <div style="display: flex; justify-content: space-between; align-items: baseline; ${headingStyle}">
+                                            <h2 style="margin:0; padding:0;">${sanitizeHTML(section.heading)}</h2>
+                                            ${section.headingAside ? `<span style="${headingAsideStyle}">${sanitizeHTML(section.headingAside)}</span>` : ''}
+                                        </div>
+                                    ` : '';
+
+                                    return `
+                                        <div style="margin-bottom: ${toPx(0.08, dpi)}px;">
+                                            ${headingHtml}
+                                            <p style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; margin-top: ${toPx(0.04, dpi)}px; margin-bottom: 0; line-height: 1.4;">${formatText(section.body || '')}</p>
+                                            ${section.flavorText ? `<p style="font-size: ${ptToPx(FONT_SIZE_FLAVOR_PT, dpi)}px; font-style: italic; color: #555; margin-top: ${toPx(FLAVOR_MARGIN_TOP_IN, dpi)}px;">${formatText(section.flavorText || '')}</p>` : ''}
+                                        </div>
+                                    `;
+                            }
+                        }).join('') : ''}
                     </div>
 
                     <div>
@@ -1811,7 +2185,9 @@
             let backContentHtml = '';
 
             if (card.foldContent) {
-                if (card.foldContent.type === 'text' && card.foldContent.text) {
+                if (card.foldContent.type === 'backgroundImageUrl' && card.foldContent.imageUrl) {
+                    backContentHtml = `<img src="${sanitizeHTML(card.foldContent.imageUrl)}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BG+IMG';" />`;
+                } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                     backContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
                 } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
                     const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
@@ -1987,7 +2363,152 @@
                 const contentWidth = pageWidth - (margin * 2);
 
                 for (const section of card.sections) {
-                    // Check for page overflow before drawing each section
+                    if (section.type === 'picture' && section.url) {
+                        try {
+                            const img = await loadImage(section.url);
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            ctx.drawImage(img, 0, 0);
+                            const dataUrl = canvas.toDataURL('image/png');
+
+                            const dpi = appState.thermalDpi || 203;
+                            const imgHeightMm = (section.height / dpi) * 25.4;
+                            const imgProps = doc.getImageProperties(dataUrl);
+                            const imgWidthMm = (imgProps.width * imgHeightMm) / imgProps.height;
+
+                            if (y + imgHeightMm > pageHeight - margin) {
+                                doc.addPage();
+                                y = margin;
+                            }
+                            const x = (pageWidth - imgWidthMm) / 2;
+                            doc.addImage(dataUrl, 'PNG', x, y, imgWidthMm, imgHeightMm);
+                            y += imgHeightMm + 2;
+                        } catch (e) {
+                            console.error("Could not load picture for PDF:", e);
+                            const errorText = '[Image could not be loaded]';
+                            if (y + 5 > pageHeight - margin) { doc.addPage(); y = margin; }
+                            doc.text(errorText, pageWidth / 2, y, { align: 'center' });
+                            y += 5;
+                        }
+                        continue;
+                    } else if (section.type === 'boxes') {
+                        const boxSizeMm = ((section.size || 1.0) * 10 * 25.4) / 72; // 1em ~ 10pt -> inches -> mm
+                        const boxSpacingMm = 1;
+                        const boxCount = section.count || 1;
+                        const totalBoxesWidth = boxCount * boxSizeMm + Math.max(0, boxCount - 1) * boxSpacingMm;
+                        let textHeight = 0;
+
+                        if (section.text) {
+                            doc.setFontSize(9).setFont(undefined, 'normal');
+                            const textLines = doc.splitTextToSize(section.text, contentWidth);
+                            textHeight = doc.getTextDimensions(textLines).h + 2;
+                        }
+
+                        if (y + textHeight + boxSizeMm + 2 > pageHeight - margin) {
+                            doc.addPage();
+                            y = margin;
+                        }
+
+                        if (section.text) {
+                            doc.text(section.text, pageWidth / 2, y, { align: 'center' });
+                            y += textHeight;
+                        }
+
+                        let currentX = (pageWidth - totalBoxesWidth) / 2;
+                        for (let i = 0; i < boxCount; i++) {
+                            doc.rect(currentX, y, boxSizeMm, boxSizeMm);
+                            currentX += boxSizeMm + boxSpacingMm;
+                        }
+                        y += boxSizeMm + 2; // Padding after the block
+                        continue;
+                    } else if (section.type === 'ruler') {
+                        if (y + 2 > pageHeight - margin) { doc.addPage(); y = margin; }
+                        doc.setDrawColor(50);
+                        doc.setLineWidth(0.1);
+                        doc.line(margin, y, pageWidth - margin, y);
+                        y += 2;
+                        continue;
+                    } else if (section.type === 'swstats' || section.type === 'p2e_stats') {
+                        const stats = Object.entries(section.stats).filter(([k, v]) => v);
+                        const colCount = section.type === 'swstats' ? 5 : 6;
+                        const cellWidth = (contentWidth - (colCount - 1)) / colCount; // 1mm gap
+                        const cellHeight = 8; // Fixed height for stat cells
+
+                        if (y + cellHeight > pageHeight - margin) { doc.addPage(); y = margin; }
+
+                        let currentX = margin;
+                        for (let i = 0; i < stats.length; i++) {
+                            const [key, value] = stats[i];
+                            doc.setFillColor(243, 244, 246);
+                            doc.roundedRect(currentX, y, cellWidth, cellHeight, 1, 1, 'F');
+
+                            doc.setFontSize(6).setFont(undefined, 'bold').setTextColor(0);
+                            doc.text(key.toUpperCase(), currentX + cellWidth / 2, y + 3, { align: 'center' });
+
+                            doc.setFontSize(8).setFont(undefined, 'normal');
+                            doc.text(value, currentX + cellWidth / 2, y + 6.5, { align: 'center' });
+
+                            currentX += cellWidth + 1;
+                            if ((i + 1) % colCount === 0) {
+                                currentX = margin;
+                                y += cellHeight + 1;
+                                if (i + 1 < stats.length && y + cellHeight > pageHeight - margin) {
+                                    doc.addPage();
+                                    y = margin;
+                                }
+                            }
+                        }
+                        y += cellHeight + 2;
+                        continue;
+                    } else if (section.type === 'p2e_traits') {
+                        if (y + 5 > pageHeight - margin) { doc.addPage(); y = margin; }
+                        let currentX = margin;
+                        doc.setFontSize(7).setFont(undefined, 'bold');
+
+                        for (const trait of section.traits) {
+                            const text = trait.text.toUpperCase();
+                            const textWidth = doc.getTextWidth(text) + 4; // with padding
+
+                            if (currentX + textWidth > pageWidth - margin) {
+                                currentX = margin;
+                                y += 5;
+                                if (y + 5 > pageHeight - margin) { doc.addPage(); y = margin; }
+                            }
+
+                            doc.setFillColor(100);
+                            doc.roundedRect(currentX, y, textWidth, 4, 2, 2, 'F');
+                            doc.setTextColor(255);
+                            doc.text(text, currentX + textWidth / 2, y + 2.8, { align: 'center' });
+
+                            currentX += textWidth + 2;
+                        }
+                        y += 6;
+                        continue;
+                    } else if (section.type === 'p2e_activity') {
+                        if (y + 8 > pageHeight - margin) { doc.addPage(); y = margin; }
+
+                        const actionText = { '0': 'F', '1': '1A', '2': '2A', '3': '3A', 'R': 'R' }[section.actions] || section.actions;
+                        doc.setFillColor(50);
+                        doc.roundedRect(margin, y, 6, 4, 1, 1, 'F');
+                        doc.setFontSize(7).setTextColor(255).setFont(undefined, 'bold');
+                        doc.text(actionText, margin + 3, y + 2.8, { align: 'center' });
+
+                        doc.setTextColor(0).setFontSize(9).setFont(undefined, 'bold');
+                        doc.text(section.name, margin + 8, y + 3);
+                        y += 5;
+
+                        doc.setFontSize(9).setFont(undefined, 'normal');
+                        const descLines = doc.splitTextToSize(section.description, contentWidth - 8);
+                        const descHeight = doc.getTextDimensions(descLines).h;
+                        if (y + descHeight > pageHeight - margin) { doc.addPage(); y = margin; }
+                        doc.text(descLines, margin + 8, y);
+                        y += descHeight + 2;
+                        continue;
+                    }
+
+                    // Fallback for other types or default content sections
                     const headingHeight = section.heading ? (doc.setFontSize(10).getTextDimensions(section.heading).h + 4) : 0;
                     const bodyHeight = section.body ? (doc.setFontSize(9).getTextDimensions(section.body, { maxWidth: contentWidth }).h + 2) : 0;
                     const flavorHeight = section.flavorText ? (doc.setFontSize(8).getTextDimensions(section.flavorText, { maxWidth: contentWidth }).h + 2) : 0;
@@ -2000,7 +2521,16 @@
 
                     if (section.heading) {
                         doc.setFontSize(10).setFont(undefined, 'bold');
-                        doc.text(section.heading, margin, y);
+                        const headingText = section.heading;
+                        doc.text(headingText, margin, y);
+
+                        if (section.headingAside) {
+                            doc.setFontSize(8).setFont(undefined, 'normal');
+                            const asideText = section.headingAside;
+                            const asideWidth = doc.getTextWidth(asideText);
+                            doc.text(asideText, pageWidth - margin - asideWidth, y);
+                        }
+
                         doc.setDrawColor(150);
                         doc.line(margin, y + 1.5, pageWidth - margin, y + 1.5);
                         y += 5;
@@ -2088,7 +2618,21 @@
                         const backPageNum = doc.internal.getNumberOfPages();
                         doc.setPage(backPageNum);
 
-                        if (card.foldContent.type === 'text' && card.foldContent.text) {
+                        if (card.foldContent.type === 'backgroundImageUrl' && card.foldContent.imageUrl) {
+                            try {
+                                const img = await loadImage(card.foldContent.imageUrl);
+                                const canvas = document.createElement('canvas');
+                                canvas.width = img.naturalWidth;
+                                canvas.height = img.naturalHeight;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0);
+                                const dataUrl = canvas.toDataURL('image/png');
+                                doc.addImage(dataUrl, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
+                            } catch (e) {
+                                console.error("Could not load background image for PDF:", e);
+                                doc.text('BG Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                            }
+                        } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                             doc.setFontSize(10).setFont(undefined, 'normal');
                             doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {

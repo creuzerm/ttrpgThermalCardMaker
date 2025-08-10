@@ -1,0 +1,32 @@
+{
+    "title": "Comprehensive Test Card",
+    "color": "#4a148c",
+    "icon": "test-tube",
+    "background_image": "https://i.imgur.com/8i2nJ9R.jpg",
+    "contents": [
+        "subtitle | All The Things | For Verification",
+        "p2e_start_trait_section",
+        "p2e_trait | common | Test",
+        "p2e_trait | uncommon | Comprehensive",
+        "p2e_trait | rare | Artifact",
+        "p2e_end_trait_section",
+        "rule",
+        "property | Key 1 | Value 1",
+        "property | Key 2 | A much longer value to see how the text wraps around and if it aligns properly.",
+        "ruler",
+        "text | This is a paragraph of text. It can contain **bold** and *italic* words. It can also span multiple lines.",
+        "text | This is another paragraph, to test spacing.",
+        "fill | 1",
+        "section | A Test Section | With Aside Text",
+        "bullet | This is the first bullet point.",
+        "bullet | This is the second bullet point.",
+        "p2e_activity | Test Activity | 2 | This is the description for the test activity. It should appear below the activity name.",
+        "fill | 1",
+        "dndstats | 18 | 16 | 14 | 12 | 10 | 8",
+        "swstats | d12 | d10 | d8 | d6 | d4 | 6 | 5 | 4 | 100gp",
+        "p2e_stats | +5 | +4 | +3 | +2 | +1 | +0 | 20 | 15 | 14 | 13 | 50",
+        "section | Pictures & Boxes",
+        "picture | https://i.imgur.com/tG3aI3m.png | 80",
+        "boxes | 5 | 1.2 | Use these boxes to track charges"
+    ]
+}

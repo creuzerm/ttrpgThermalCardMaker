@@ -541,6 +541,21 @@
             return `<div class="flex items-center justify-center w-8 h-5 rounded text-white text-xs font-bold ${bgColor}">${actionText}</div>`;
         }
 
+        function renderStatBlock(stats, columns) {
+            const statItems = Object.entries(stats)
+                .map(([key, value]) => {
+                    if (!value) return null;
+                    return `<div class="flex flex-col items-center p-1 bg-gray-100 rounded-md">
+                                <strong class="text-xs uppercase font-bold">${sanitizeHTML(key)}</strong>
+                                <span>${sanitizeHTML(value)}</span>
+                            </div>`
+                })
+                .filter(Boolean)
+                .join('');
+            const gridClass = `grid-cols-${columns}`;
+            return `<div class="grid ${gridClass} gap-1 my-2 text-center">${statItems}</div>`;
+        }
+
         // Render functions (called by updateUIFromAppState and event handlers)
         function renderSections() {
             const currentCard = appState.cards[appState.currentCardIndex];
@@ -824,29 +839,9 @@
                             case 'ruler':
                                 return '<hr class="border-gray-500 my-1 border-solid"/>';
                             case 'swstats':
-                                const swStatItems = Object.entries(section.stats)
-                                    .map(([key, value]) => {
-                                        if (!value) return null;
-                                        return `<div class="flex flex-col items-center p-1 bg-gray-100 rounded-md">
-                                                    <strong class="text-xs uppercase font-bold">${sanitizeHTML(key)}</strong>
-                                                    <span>${sanitizeHTML(value)}</span>
-                                                </div>`
-                                    })
-                                    .filter(Boolean)
-                                    .join('');
-                                return `<div class="grid grid-cols-5 gap-1 my-2 text-center">${swStatItems}</div>`;
+                                return renderStatBlock(section.stats, 5);
                             case 'p2e_stats':
-                                const p2eStatItems = Object.entries(section.stats)
-                                    .map(([key, value]) => {
-                                        if (!value) return null;
-                                        return `<div class="flex flex-col items-center p-1 bg-gray-100 rounded-md">
-                                                    <strong class="text-xs uppercase font-bold">${sanitizeHTML(key)}</strong>
-                                                    <span>${sanitizeHTML(value)}</span>
-                                                </div>`
-                                    })
-                                    .filter(Boolean)
-                                    .join('');
-                                return `<div class="grid grid-cols-6 gap-1 my-2 text-center">${p2eStatItems}</div>`;
+                                return renderStatBlock(section.stats, 6);
                             case 'p2e_activity':
                                 const actionIconHtml = getP2eActionIcon(section.actions);
                                 return `<div class="my-2">
@@ -1762,6 +1757,20 @@
         // Helper to convert points to pixels based on a given DPI
         const ptToPx = (points, dpi) => Math.round((points / 72) * dpi);
 
+        function renderPdfStatBlock(stats, columns, dpi) {
+            const statItems = Object.entries(stats)
+                .map(([key, value]) => {
+                    if (!value) return null;
+                    return `<div style="display: flex; flex-direction: column; align-items: center; padding: 2px; background-color: #f3f4f6; border-radius: 4px;">
+                                <strong style="font-size: ${ptToPx(8, dpi)}px; text-transform: uppercase; font-weight: bold;">${sanitizeHTML(key)}</strong>
+                                <span style="font-size: ${ptToPx(10, dpi)}px;">${sanitizeHTML(value)}</span>
+                            </div>`
+                })
+                .filter(Boolean)
+                .join('');
+            return `<div style="display: grid; grid-template-columns: repeat(${columns}, 1fr); gap: 2px; margin: ${toPx(0.08, dpi)}px 0; text-align: center;">${statItems}</div>`;
+        }
+
         // --- Start of Refactored Dimension Calculation ---
 
         const FALLBACK_WIDTH_MAP_INCHES = { '58mm': 1.89, '80mm': 2.83, '2in': 1.89, '3in': 2.83, '4in': 4.09 };
@@ -1887,29 +1896,9 @@
                                 case 'ruler':
                                     return `<div style="width: 100%; height: 0.5px; background-color: #333; margin: ${toPx(0.05, dpi)}px 0;"></div>`;
                                 case 'swstats':
-                                    const swStatItems = Object.entries(section.stats)
-                                        .map(([key, value]) => {
-                                            if (!value) return null;
-                                            return `<div style="display: flex; flex-direction: column; align-items: center; padding: 2px; background-color: #f3f4f6; border-radius: 4px;">
-                                                        <strong style="font-size: ${ptToPx(8, dpi)}px; text-transform: uppercase; font-weight: bold;">${sanitizeHTML(key)}</strong>
-                                                        <span style="font-size: ${ptToPx(10, dpi)}px;">${sanitizeHTML(value)}</span>
-                                                    </div>`
-                                        })
-                                        .filter(Boolean)
-                                        .join('');
-                                    return `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin: ${toPx(0.08, dpi)}px 0; text-align: center;">${swStatItems}</div>`;
+                                    return renderPdfStatBlock(section.stats, 5, dpi);
                                 case 'p2e_stats':
-                                    const p2eStatItems = Object.entries(section.stats)
-                                        .map(([key, value]) => {
-                                            if (!value) return null;
-                                            return `<div style="display: flex; flex-direction: column; align-items: center; padding: 2px; background-color: #f3f4f6; border-radius: 4px;">
-                                                        <strong style="font-size: ${ptToPx(8, dpi)}px; text-transform: uppercase; font-weight: bold;">${sanitizeHTML(key)}</strong>
-                                                        <span style="font-size: ${ptToPx(10, dpi)}px;">${sanitizeHTML(value)}</span>
-                                                    </div>`
-                                        })
-                                        .filter(Boolean)
-                                        .join('');
-                                    return `<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin: ${toPx(0.08, dpi)}px 0; text-align: center;">${p2eStatItems}</div>`;
+                                    return renderPdfStatBlock(section.stats, 6, dpi);
                                 case 'p2e_activity':
                                     const actionText = { '0': 'F', '1': '1A', '2': '2A', '3': '3A', 'R': 'R' }[section.actions] || section.actions;
                                     return `<div style="margin: ${toPx(0.04, dpi)}px 0;">

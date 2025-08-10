@@ -2349,7 +2349,19 @@
             }
             if (card.type) {
                 doc.setFontSize(10).setFont(undefined, 'normal');
-                doc.text(card.type, pageWidth / 2, y, { align: 'center' });
+                if (typeof card.type === 'object' && card.type !== null) {
+                    const mainText = card.type.text || '';
+                    const asideText = card.type.aside || '';
+
+                    doc.text(mainText, margin, y);
+                    if (asideText) {
+                        const asideWidth = doc.getTextWidth(asideText);
+                        doc.setFontSize(8).setFont(undefined, 'normal');
+                        doc.text(asideText, pageWidth - margin - asideWidth, y);
+                    }
+                } else {
+                    doc.text(card.type, pageWidth / 2, y, { align: 'center' });
+                }
                 y += 5;
             }
             if (card.stats && Object.keys(card.stats).length > 0) {

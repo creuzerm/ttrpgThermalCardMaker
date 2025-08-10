@@ -1928,12 +1928,44 @@
 
                     // Handle folded card back
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
-                    if (shouldPrintBack && card.foldContent && card.foldContent.text) {
+                    if (shouldPrintBack && card.foldContent) {
                         doc.addPage();
-                        // Simple text rendering for the back
-                        doc.setFontSize(10);
-                        doc.setFont(undefined, 'normal');
-                        doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+
+                        if (card.foldContent.type === 'text' && card.foldContent.text) {
+                            // Simple text rendering for the back
+                            doc.setFontSize(10);
+                            doc.setFont(undefined, 'normal');
+                            doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                        } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
+                            let imageUrl;
+                            if (card.foldContent.type === 'qrCode') {
+                                const qrSize = toPx(QR_CODE_SIZE_IN, appState.thermalDpi);
+                                imageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
+                            } else {
+                                imageUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                            }
+
+                            try {
+                                const img = await loadImage(imageUrl);
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                canvas.width = img.naturalWidth;
+                                canvas.height = img.naturalHeight;
+                                ctx.drawImage(img, 0, 0);
+                                const dataUrl = canvas.toDataURL('image/png');
+
+                                // Center the image on the page
+                                const imgProps = doc.getImageProperties(dataUrl);
+                                const imgWidthMm = (imgProps.width * pdfHeightMm) / imgProps.height;
+                                const x = (pdfWidthMm - imgWidthMm) / 2;
+
+                                doc.addImage(dataUrl, 'PNG', x, 0, imgWidthMm, pdfHeightMm);
+                            } catch (e) {
+                                console.error("Could not load image for card back:", e);
+                                doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                            }
+                        }
+
                         if (appState.includeCornerDots) {
                              addCornerDots(doc, pdfWidthMm, pdfHeightMm);
                         }

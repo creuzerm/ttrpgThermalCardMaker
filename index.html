@@ -1471,6 +1471,8 @@
 
         // --- Start of Refactored Dimension Calculation ---
 
+        const FALLBACK_WIDTH_MAP_INCHES = { '58mm': 1.89, '80mm': 2.83, '2in': 1.89, '3in': 2.83, '4in': 4.09 };
+
         function getCardDimensionsInInches() {
             const thermalPaperWidth = appState.thermalPaperWidth;
             let cardWidth, cardHeight;
@@ -1485,8 +1487,7 @@
                     cardHeight = standardSize.length;
                 } else {
                     // Fallback for default when appState is inconsistent.
-                    const widthMap = { '58mm': 1.89, '80mm': 2.83, '2in': 1.89, '3in': 2.83, '4in': 4.09 };
-                    cardWidth = widthMap[thermalPaperWidth] || 1.89;
+                    cardWidth = FALLBACK_WIDTH_MAP_INCHES[thermalPaperWidth] || FALLBACK_WIDTH_MAP_INCHES['2in'];
                     cardHeight = null; // Ensure it's calculated below
                 }
             }

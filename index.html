@@ -1368,11 +1368,9 @@
 
             let iconRenderHtml = '';
             if (card.icon && (!card.isContinuation || isScrolling)) {
-                const iconSize = toPx(ICON_SIZE_IN, dpi);
-                const iconOffset = toPx(ICON_OFFSET_IN, dpi);
                 const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : `https://placehold.co/60x60/000/FFF?text=${encodeURIComponent(card.icon.toUpperCase())}`);
 
-                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" width="${iconSize}" height="${iconSize}" style="position: absolute; top: ${iconOffset}px; right: ${iconOffset}px; width: ${iconSize}px; height: ${iconSize}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" style="position: absolute; top: ${ICON_OFFSET_IN}in; right: ${ICON_OFFSET_IN}in; width: ${ICON_SIZE_IN}in; height: ${ICON_SIZE_IN}in; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
             }
 
             const containerHeight = isScrolling ? 'auto' : `${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px`;
@@ -1780,30 +1778,31 @@
             let y = margin;
 
             // --- FONT SETUP ---
-            // jsPDF requires fonts to be added to the VFS. For simplicity, we'll use standard fonts.
-            // This generator uses 'Inter', so we'll map to 'helvetica'.
             doc.setFont('helvetica');
 
             // --- ICON ---
             if (card.icon) {
-                try {
-                    const iconUrl = iconManifest[card.icon] || (isURL(card.icon) ? card.icon : null);
-                    if (iconUrl) {
-                        const img = await loadImage(iconUrl);
+                let iconUrl = null;
+                if (card.icon in iconManifest) {
+                    iconUrl = iconManifest[card.icon];
+                } else if (isURL(card.icon)) {
+                    iconUrl = card.icon;
+                }
 
-                        // Use a canvas to convert the image to a data URL
+                if (iconUrl) {
+                    try {
+                        const img = await loadImage(iconUrl);
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         canvas.width = img.naturalWidth;
                         canvas.height = img.naturalHeight;
                         ctx.drawImage(img, 0, 0);
                         const dataUrl = canvas.toDataURL('image/png');
-
                         const iconSize = 6; // mm
                         doc.addImage(dataUrl, 'PNG', pageWidth - iconSize - margin, y, iconSize, iconSize);
+                    } catch (e) {
+                        console.error("Could not load icon for PDF:", e);
                     }
-                } catch (e) {
-                    console.error("Could not load icon for PDF:", e);
                 }
             }
 
@@ -1836,10 +1835,7 @@
 
             // --- SECTIONS (using AutoTable) ---
             if (card.sections && card.sections.length > 0) {
-                const body = card.sections.map(section => {
-                    // Each section is a single "cell" in our table. We'll handle rendering inside the hook.
-                    return [section];
-                });
+                const body = card.sections.map(section => [section]);
 
                 doc.autoTable({
                     startY: y,
@@ -1847,40 +1843,32 @@
                     theme: 'plain',
                     tableWidth: 'auto',
                     margin: { left: margin, right: margin },
-                    styles: {
-                        cellPadding: 0,
-                    },
+                    styles: { cellPadding: 0 },
                     didDrawCell: (data) => {
                         const section = data.cell.raw;
                         let cursorY = data.cell.y;
-
-                        // Draw heading
                         if (section.heading) {
                             doc.setFontSize(10);
                             doc.setFont(undefined, 'bold');
                             doc.text(section.heading, data.cell.x + 1, cursorY + 4);
-                            doc.setDrawColor(150); // light grey
+                            doc.setDrawColor(150);
                             doc.line(data.cell.x, cursorY + 5.5, data.cell.x + data.cell.width, cursorY + 5.5);
                             cursorY += 8;
                         }
-
-                        // Draw body
                         if (section.body) {
                             doc.setFontSize(9);
                             doc.setFont(undefined, 'normal');
                             const bodyText = doc.splitTextToSize(section.body, data.cell.width - 2);
                             doc.text(bodyText, data.cell.x + 1, cursorY);
-                            cursorY += (bodyText.length * 3.5) + 2; // Estimate line height
+                            cursorY += (bodyText.length * 3.5) + 2;
                         }
-
-                        // Draw flavor text
                         if (section.flavorText) {
                             doc.setFontSize(8);
                             doc.setFont(undefined, 'italic');
-                            doc.setTextColor(100); // grey
+                            doc.setTextColor(100);
                             const flavorText = doc.splitTextToSize(section.flavorText, data.cell.width - 2);
                             doc.text(flavorText, data.cell.x + 1, cursorY);
-                            doc.setTextColor(0); // reset color
+                            doc.setTextColor(0);
                         }
                     },
                 });
@@ -1888,9 +1876,7 @@
             }
 
             // --- TAGS AND FOOTER ---
-            const finalY = Math.max(y, doc.autoTable.previous.finalY || 0);
-            const footerY = pageHeight - 5; // Place at bottom
-
+            const footerY = pageHeight - 5;
             if (card.tags && card.tags.length > 0) {
                 doc.setFontSize(7);
                 doc.setFont(undefined, 'normal');
@@ -1907,75 +1893,63 @@
             const { jsPDF } = window.jspdf;
             let doc;
 
-            // --- TEXT-BASED PDF LOGIC ---
             if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
                 const pdfWidthMm = (appState.thermalPaperSize === '58mm' ? 48 : 72);
-                const pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO; // Maintain aspect ratio
-
-                doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: [pdfWidthMm, pdfHeightMm]
-                });
+                const pdfHeightMm = pdfWidthMm * CARD_HEIGHT_RATIO;
+                doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeightMm] });
 
                 for (let i = 0; i < cards.length; i++) {
                     const card = cards[i];
                     if (i > 0) doc.addPage();
                     await generatePdfWithText(doc, card);
-                    if (appState.includeCornerDots) {
-                        addCornerDots(doc, pdfWidthMm, pdfHeightMm);
-                    }
+                    if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeightMm);
 
-                    // Handle folded card back
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
                         doc.addPage();
-
                         if (card.foldContent.type === 'text' && card.foldContent.text) {
-                            // Simple text rendering for the back
                             doc.setFontSize(10);
                             doc.setFont(undefined, 'normal');
                             doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
-                            let imageUrl;
+                            let finalImageUrl = null;
                             if (card.foldContent.type === 'qrCode') {
                                 const qrSize = toPx(QR_CODE_SIZE_IN, appState.thermalDpi);
-                                imageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
+                                finalImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
                             } else {
-                                imageUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                                const backImageValue = card.foldContent.imageUrl;
+                                if (backImageValue && backImageValue in iconManifest) {
+                                    finalImageUrl = iconManifest[backImageValue];
+                                } else if (isURL(backImageValue)) {
+                                    finalImageUrl = backImageValue;
+                                }
                             }
-
-                            try {
-                                const img = await loadImage(imageUrl);
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                canvas.width = img.naturalWidth;
-                                canvas.height = img.naturalHeight;
-                                ctx.drawImage(img, 0, 0);
-                                const dataUrl = canvas.toDataURL('image/png');
-
-                                // Center the image on the page
-                                const imgProps = doc.getImageProperties(dataUrl);
-                                const imgWidthMm = (imgProps.width * pdfHeightMm) / imgProps.height;
-                                const x = (pdfWidthMm - imgWidthMm) / 2;
-
-                                doc.addImage(dataUrl, 'PNG', x, 0, imgWidthMm, pdfHeightMm);
-                            } catch (e) {
-                                console.error("Could not load image for card back:", e);
-                                doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                            if (finalImageUrl) {
+                                try {
+                                    const img = await loadImage(finalImageUrl);
+                                    const canvas = document.createElement('canvas');
+                                    const ctx = canvas.getContext('2d');
+                                    canvas.width = img.naturalWidth;
+                                    canvas.height = img.naturalHeight;
+                                    ctx.drawImage(img, 0, 0);
+                                    const dataUrl = canvas.toDataURL('image/png');
+                                    const imgProps = doc.getImageProperties(dataUrl);
+                                    const imgWidthMm = (imgProps.width * pdfHeightMm) / imgProps.height;
+                                    const x = (pdfWidthMm - imgWidthMm) / 2;
+                                    doc.addImage(dataUrl, 'PNG', x, 0, imgWidthMm, pdfHeightMm);
+                                } catch (e) {
+                                    console.error("Could not load image for card back:", e);
+                                    doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                                }
                             }
                         }
-
-                        if (appState.includeCornerDots) {
-                             addCornerDots(doc, pdfWidthMm, pdfHeightMm);
-                        }
+                        if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeightMm);
                     }
                 }
                 return doc;
             }
 
             // --- IMAGE-BASED PDF LOGIC (Legacy) ---
-            // This part handles PNG output and "scrolling" PDFs, which are image-based by nature.
             if (appState.isScrolling) {
                 let fullHtml = '<div>';
                 for (const card of cards) {

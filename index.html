@@ -2628,14 +2628,16 @@
                                 const ctx = canvas.getContext('2d');
                                 ctx.drawImage(img, 0, 0);
                                 const dataUrl = canvas.toDataURL('image/png');
-                                doc.addImage(dataUrl, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
+                                // Add image rotated. The rotation is around the center of the image.
+                                doc.addImage(dataUrl, 'PNG', pdfWidthMm / 2, pdfHeightMm / 2, pdfWidthMm, pdfHeightMm, null, 'NONE', 180);
                             } catch (e) {
                                 console.error("Could not load background image for PDF:", e);
-                                doc.text('BG Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                                doc.text('BG Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                             }
                         } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                             doc.setFontSize(10).setFont(undefined, 'normal');
-                            doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                            // Add text rotated 180 degrees around the center of the page.
+                            doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
                             let finalImageUrl = null;
                             if (card.foldContent.type === 'qrCode') {
@@ -2659,12 +2661,17 @@
                                     ctx.drawImage(img, 0, 0);
                                     const dataUrl = canvas.toDataURL('image/png');
                                     const imgProps = doc.getImageProperties(dataUrl);
-                                    const imgWidthMm = (imgProps.width * pdfHeightMm) / imgProps.height;
-                                    const x = (pdfWidthMm - imgWidthMm) / 2;
-                                    doc.addImage(dataUrl, 'PNG', x, 0, imgWidthMm, pdfHeightMm);
+
+                                    // Scale image to fit width while maintaining aspect ratio
+                                    const imgHeightMm = (imgProps.height * pdfWidthMm) / imgProps.width;
+                                    const y = (pdfHeightMm - imgHeightMm) / 2;
+
+                                    // Add image rotated. The rotation is around the center of the image.
+                                    doc.addImage(dataUrl, 'PNG', pdfWidthMm / 2, y + (imgHeightMm/2), pdfWidthMm, imgHeightMm, null, 'NONE', 180);
+
                                 } catch (e) {
                                     console.error("Could not load image for card back:", e);
-                                    doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                                    doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                                 }
                             }
                         }

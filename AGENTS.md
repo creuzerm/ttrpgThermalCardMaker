@@ -1,107 +1,94 @@
-# AGENTS.md: Guidelines
+# AGENTS.md: AI Code Generation Guidelines
 
-## Core Principles
+## 1. The Vibe: Core Principles
 
-1.  **Aesthetics First (but not exclusively):** Prioritize clean, modern, and visually appealing designs. Good design enhances usability and user satisfaction.
-2.  **Seamless Interaction:** Ensure user flows are intuitive, responsive, and free from friction. Every click, tap, or input should feel natural and provide immediate, understandable feedback.
-3.  **Emotional Resonance:** Aim for outputs that evoke positive feelings – whether it's joy, calm, efficiency, or excitement. Avoid frustration, confusion, or visual clutter.
-4.  **Clarity & Readability:** The generated code itself should be a pleasure to read and understand, reflecting the same "vibe" as the end-user experience.
-5.  **Anticipatory Design:** Think ahead to common user needs and potential pain points, addressing them proactively in the design and implementation.
+The primary goal is to create web experiences that feel modern, intuitive, and emotionally resonant. The AI's output should reflect a "vibe" that is clean, delightful, and slightly playful, while remaining highly functional.
 
-## Design Specifications
+* **Aesthetics First**: Prioritize clean, modern, and visually appealing designs. The default aesthetic should be dark mode. Good design enhances usability and user satisfaction.
+* **Seamless Interaction**: User flows must be intuitive and responsive. Every interaction should feel natural and provide immediate, understandable feedback.
+* **Emotional Resonance**: Aim for outputs that evoke positive feelings—calm, efficiency, or delight. The interface should feel like a helpful partner, not a cold tool. Avoid frustration, confusion, or visual clutter.
+* **Clarity & Readability**: The generated code itself should be a pleasure to read and understand, reflecting the same quality as the end-user experience.
+* **Anticipatory Design**: Proactively address common user needs and potential pain points in the design and implementation.
+
+## 2. Design Specifications
 
 ### Visual Aesthetics
 
-*   **Modern & Clean:** Utilize contemporary design trends. Favor ample whitespace, clear typography, and a balanced layout.
-*   **Consistent Styling:** Maintain a cohesive visual language across all elements.
-*   **Rounded Corners:** Apply `rounded` classes (e.g., Tailwind's `rounded-lg`, `rounded-xl`) generously to elements for a softer, more inviting feel.
-*   **Thoughtful Color Palettes:** Use colors that are harmonious and contribute to the desired mood (e.g., calming blues, energetic purples, warm greens). Avoid jarring combinations.
-*   **Legible Typography:** Choose fonts (like 'Inter' by default) and font sizes that ensure readability on all devices. Ensure sufficient contrast between text and background.
-*   **Responsive Design:** All layouts must be fully responsive, adapting gracefully to mobile, tablet, and desktop screens. No horizontal scrolling.
+* **Default to Dark Mode**: All designs should start with a dark theme. The primary background color should be a dark slate (slate-900 or slate-950).
+* **Aurora Backgrounds**: For primary pages or dashboards, implement a subtle, slow-moving "aurora" background effect using CSS. This effect should use shades from the approved color palette (mauve, pink, rose) to create a gentle, shifting gradient behind the main content.
+* **Color Palette**: Use a specific, harmonious color palette.
+    * **Background**: slate-900 / slate-950
+    * **Content Panels/Cards**: slate-800 / slate-900 with subtle borders (slate-700).
+    * **Primary Accent/Action**: mauve-500 / pink-500
+    * **Secondary Accent**: rose-500
+    * **Text (Primary)**: slate-100 / slate-200
+    * **Text (Secondary)**: slate-400
+* **Typography**: Use the "Inter" font. Ensure text is highly legible with sufficient contrast.
+* **Rounded Corners**: Apply rounded-lg or rounded-xl generously to all elements (buttons, cards, inputs, containers) for a soft, modern feel.
+* **Icons**: Use lucide-react for all icons. They should be clean, consistent, and generally have a stroke-width of 1.5 for a lighter feel.
+* **Layout**: Use ample whitespace and balanced layouts. Avoid clutter. All layouts must be fully responsive using Tailwind's responsive prefixes (sm:, md:, lg:).
 
 ### User Experience & Interaction
 
-*   **Smooth Transitions & Animations:** Employ subtle CSS transitions and animations to make interactions feel fluid and dynamic, rather than abrupt.
-*   **Clear Feedback:** Provide immediate visual or textual feedback for user actions (e.g., loading indicators, success messages, error states).
-*   **Intuitive Navigation:** Design navigation paths that are easy to understand and follow.
-*   **Accessible Touch Targets:** Ensure interactive elements (buttons, links) are large enough and spaced appropriately for easy tapping on touchscreens.
-*   **Error Prevention & Handling:** Guide users away from errors and provide clear, helpful messages when errors occur, without interrupting the flow with native `alert()` or `confirm()` dialogs.
+* **Bubble Buttons**: Buttons should have a "bubble-like" feel.
+    * **Style**: Use a gradient from the accent colors (e.g., bg-gradient-to-br from-mauve-500 to-pink-500).
+    * **Interaction**: On hover, the gradient should subtly shift or brighten. On click (active:), the button should scale down slightly (scale-95) to provide tactile feedback.
+* **Smooth Transitions**: Employ subtle CSS transitions (transition-all duration-300) for all state changes (hover, focus, active) to make interactions feel fluid.
+* **Clear Feedback**: Use non-intrusive loading indicators (like spinners or skeleton loaders) and custom-styled toast messages or modals for success/error states.
+* **No Native Alerts**: Never use `alert()` or `confirm()`. They are disruptive and break the "vibe".
 
-### Emotional Resonance
+## 3. Architectural Mandates
 
-*   **Delightful Micro-interactions:** Look for opportunities to add small, pleasing details (e.g., hover effects, subtle animations on state changes).
-*   **Positive Affirmation:** Frame success messages positively.
-*   **User Empowerment:** Design interfaces that make users feel in control and capable.
+* **Single-File Structure**: This project must be maintained within a single `index.html` file. All CSS (via Tailwind CDN), HTML, and JavaScript logic must reside in this file. Do not create or suggest external .js or .css files. This is a deliberate choice for project simplicity.
+* **Global appState**: All application data and settings must be stored in the global `appState` object. Any function that changes what the user sees must do so by first modifying `appState` and then calling `updateUIFromAppState()`.
 
-## Code Architecture Overview
+### Key Functions Overview
 
-The application is currently implemented as a single-page application within a single file, `index.html`. All JavaScript logic, including state management, DOM manipulation, and utility functions, is contained within a large `<script>` tag at the end of the `<body>`.
+* **`appState` (Global Object)**: The single source of truth. Holds all card data, the current card index, and all user settings.
+* **`updateUIFromAppState()`**: The primary rendering function. Call this after any change to `appState` to update the UI.
+* **`saveState()` & `loadState()`**: Handle persistence to `localStorage`.
+* **`generateCardHtml()`**: Generates the raw HTML for a card. This is a primary target for visual modifications.
+* **`generatePdfDocument()`**: The core function for creating PDFs, containing complex logic for scaling and formatting.
+* **`parseAndSetCardData()`**: The entry point for all JSON import logic.
 
-### Key Components & Functions
+## 4. Code Generation Instructions
 
-*   **`appState` (Global Object):** This is the single source of truth for the application. It holds all card data (`appState.cards`), the index of the currently active card (`appState.currentCardIndex`), and all user-configurable settings (printer type, paper size, etc.). Modifying this object is the first step to changing the application's state.
+* **Completeness**: Always provide self-contained, runnable code. No `...` placeholders.
+* **Extensive Comments**: Comment everything to explain logic, algorithms, and the purpose of functions.
+* **Error Handling**: Use `try/catch` blocks and provide user-friendly error messages through custom UI elements.
+* **Modularity & DRY**: Break down complex logic into smaller, reusable functions. Don't Repeat Yourself.
+* **Tailwind CSS ONLY**: Use only Tailwind CSS classes for all styling. Always include `<script src="https://cdn.tailwindcss.com"></script>` in the `<head>`.
 
-*   **`updateUIFromAppState()`:** This is the primary rendering function. After any change to `appState`, this function should be called to ensure the UI reflects the new state. It populates input fields, renders the card preview, and updates navigation elements.
+## 5. PDF Generation Logic (For Thermal Printers)
 
-*   **`saveState()` & `loadState()`:** These functions handle persistence. `saveState()` serializes the `appState` object to `localStorage`. `loadState()` is called on page load and deserializes the data from `localStorage` or from URL parameters if they exist.
+This process is specifically designed for continuous-feed thermal printers and requires a precise sequence to correctly scale a card's content to a narrow, physically constrained printable area.
 
-*   **Rendering & Exporting:**
-    *   `updateCardPreview()`: Renders the live preview of the card in the main UI.
-    *   `generatePdfDocument()`: The core function for creating PDFs. It contains complex logic for handling different card formats (standard, scrolling, folded) and output types (image-based vs. text-based).
-    *   `generateCardCanvas()`: Uses `html2canvas` to render a card's HTML into a `<canvas>` element, which is then used for generating PNGs or image-based PDFs.
-    *   `generateCardHtml()`: Generates the raw HTML for a card, which is used by both the live preview and the canvas generation functions.
+### Key Concepts
 
-*   **Data Import:**
-    *   `parseAndSetCardData()`: This function is the entry point for all JSON import logic. It detects the format (`rpg-cards`, `5e-tools`, or `generic`) and transforms the imported data into the internal `appState` structure.
+* **Logical Size**: The ideal, intended dimensions of the card (e.g., a "Bridge" card is 2.25" wide by 3.5" long). The logical width is critical for determining the layout, text wrapping, and element flow of the card's content.
+* **Printable Area Width**: A user-configurable setting based on the specific printer and paper combination. This is the maximum physical width that the printer can mark (e.g., 47mm on 58mm paper). This value dictates the final width of the PDF page itself.
+* **Content Length**: Because the printer uses a continuous roll, the "page" length is variable. It is determined dynamically by the amount of content rendered within the logical width.
 
-*   **Event Listeners:** The script sets up numerous event listeners that tie UI elements (buttons, inputs) to functions that update the `appState` and trigger UI refreshes.
+### PDF Generation Sequence
 
-## Code Generation Instructions
+The AI must follow these steps exactly:
 
-### General Code Quality
+1.  **Render to Off-Screen Container**: Create a temporary, off-screen `<div>` element and append it to the `<body>`. This container must be styled to have the card's logical width (e.g., `style="width: 2.25in;"`) and be positioned off-screen (e.g., `position: absolute; left: -9999px;`).
+2.  **Render Card Content**: Render the complete card content, generated by `generateCardHtml()`, inside this container.
+3.  **Measure True Content Height**: Once the content is fully rendered in the off-screen container, measure its `scrollHeight`. This value represents the true, unconstrained height of the card content and will become the length of our PDF page.
+4.  **Initialize PDF Document**: Using a library like `jsPDF`, create a new PDF document. The page dimensions must be set explicitly:
+    * **Width**: The user-defined `printableAreaWidth`.
+    * **Height**: The measured `scrollHeight` from Step 3.
+5.  **Capture and Scale Content**: Use `html2canvas` to generate a canvas image of the off-screen container from Step 1. Then, draw this captured image onto the PDF page created in Step 3. The image must be scaled down proportionally to fit the `printableAreaWidth` while maintaining its original aspect ratio.
+6.  **Handle Folded Cards**:
+    * The entire front of the card is rendered and drawn onto the first page of the PDF as described above.
+    * The back content is then rendered and drawn onto a second PDF page.
+    * This second page must have the exact same dimensions as the first page.
+    * The content on this back page must be rotated 180 degrees (`transform: rotate(180deg)`).
+    * If the card front itself requires multiple pages, ensure the back page is added after all front pages, and that the total page count is even to facilitate duplex printing. Add a blank page if necessary before the final back page.
+7.  **Optimize and Clean Up**: Use `jsPDF` and `html2canvas` settings that prioritize a small file size (< 10MB), such as adjusting image quality or resolution. After the PDF is generated, it is critical to remove the off-screen container from the DOM to prevent memory leaks or layout issues.
 
-*   **Single Source of Truth:** Avoid duplicating function definitions. If a function needs to be modified, update the original definition. For example, the `saveState` function should be defined only once.
-*   **Completeness:** Always provide self-contained, runnable code. No `...` placeholders.
-*   **Extensive Comments:** Comment *everything*. Explain logic, algorithms, function purposes, and complex sections thoroughly. This enhances the "vibe" for anyone reading or maintaining the code.
-*   **Error Handling:** Implement `try/catch` blocks for asynchronous operations and potential failures. The `window.addEventListener('load', ...)` callback should be `async` and `await` any initialization functions. Provide user-friendly error messages through custom UI elements, not native `alert()`.
-*   **Safe DOM Manipulation:** Avoid destructive operations like `document.body.innerHTML = ''`. Instead, target specific elements for removal or modification (e.g., `element.remove()`).
-*   **Modularity:** Break down complex logic into smaller, reusable functions or components.
-*   **DRY** Don't Repeat Yourself, use common functions when practicle so changes easily cascade.
-
-
-### HTML & CSS (Tailwind Emphasis)
-
-*   **Tailwind CSS ONLY for Styling:** Unless explicitly creating a game where custom CSS is encouraged for visual flair, use **only** Tailwind CSS classes for all styling.
-*   **Load Tailwind CDN:** Always include `<script src="https://cdn.tailwindcss.com"></script>` in the `<head>`.
-*   **Font:** Default to "Inter" unless specified otherwise.
-*   **Rounded Corners:** Apply `rounded-md`, `rounded-lg`, `rounded-xl`, or `rounded-full` to all appropriate elements (buttons, cards, input fields, containers).
-*   **Responsive Units:** **Never use fixed pixel widths** for layout elements. Strongly prefer relative units (`%`, `vw`) or Tailwind's responsive classes (`w-full`, `md:w-1/2`).
-*   **Full Responsiveness:** Utilize Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`) to ensure layouts, spacing, and typography adapt perfectly across all screen sizes and orientations. Avoid horizontal scrolling.
-*   **Image Fallbacks:** For `<img>` tags, always include an `onerror` attribute with a `placehold.co` fallback.
-*   **Content Richness:** Populate web pages with detailed and meaningful mock content to demonstrate functionality and aesthetics.
-
-### User Feedback & Responsiveness
-
-*   **Loading Indicators:** Implement clear loading states (e.g., spinners, skeleton screens) for asynchronous operations, especially API calls or image generation.
-*   **Custom Modals/Messages:** For user confirmations or alerts, create custom, styled UI elements instead of `alert()` or `confirm()`.
-*   **Smooth Input Updates:** Ensure UI elements update smoothly and immediately in response to user input.
-
-### Avoiding Disruptive Elements
-
-*   **No `alert()` or `confirm()`:** These native browser dialogs are disruptive and break the "vibe."
-*   **No `console.log` for user-facing messages:** Use the `showMessage` utility for user feedback. `console.error` and `console.warn` are acceptable for developer debugging.
-
-### PDF Generation Logic
-*   **PDF Page size** is the size of the 'card'. For example the 2inch width card with the 'bridge' size selected shall be 3.5 inches long by the printable width for the printer settings selected.
-*   **Multi-Page Content:** Card content must correctly flow onto subsequent pages if it is too long to fit on a single page. Text should not be cut off at the bottom of a page.
-*   **Folded Card Page Count:** When generating a PDF for a folded card:
-    1.  Render all content pages first.
-    2.  The back image of the card must be on the final page of the document rotated 180 degrees so it is upside down and centered Vertically and scaled to width.
-    3.  The total number of pages in the document (content pages + back image page + any blank pages) must be an even number.
-    4.  If the number of content pages plus the back page would result in an odd total, a single blank page must be inserted just before the final back image page to make the total count even.
-    5.  PDF Size must be small enough to be shareable via intents, so under 10mb for most platforms. This can be accomplished by limiting the image resolutions.
-
-## JSON Import Specifications
+## 6. JSON Import Specifications
 
 This section details the expected JSON formats for the "Import Cards" functionality.
 
@@ -111,72 +98,83 @@ This format is based on the [rpg-cards project by crobi](https://crobi.github.io
 
 #### Top-Level Card Properties
 
-| Key                | Type             | Description                                                                                                                              |
-| ------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`            | `string`         | The title of the card.                                                                                                                   |
-| `count`            | `number`         | The number of copies of this card to create. Parsed into the `numCopies` field.                                                          |
-| `color`            | `string`         | A CSS color name or hex code for the card's theme color (used in 'Color' printer mode).                                                  |
-| `icon`             | `string`         | The name of a game-icon.net icon (e.g., "magic-swirl") or a Font Awesome class name.                                                       |
-| `icon_back`        | `string`         | The icon for the back of a folded card. If present, sets `isFolded: true` and `foldContent.type: 'imageUrl'`.                              |
-| `contents`         | `Array<string>`  | An array of strings that define the card's layout and content, processed in order.                                                       |
-| `background_image` | `string`         | A URL for a background image on the card back. Takes precedence over `icon_back`.                                                        |
+| Key                | Type            | Description                                                                                                                      |
+| :----------------- | :-------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| `title`            | `string`        | The title of the card.                                                                                                           |
+| `count`            | `number`        | The number of copies of this card to create. Parsed into the `numCopies` field.                                                  |
+| `color`            | `string`        | A CSS color name or hex code for the card's theme color (used in 'Color' printer mode).                                          |
+| `icon`             | `string`        | The name of a game-icon.net icon (e.g., "magic-swirl") or a Font Awesome class name.                                              |
+| `icon_back`        | `string`        | The icon for the back of a folded card. If present, sets `isFolded: true` and `foldContent.type: 'imageUrl'`.                      |
+| `contents`         | `Array<string>` | An array of strings that define the card's layout and content, processed in order.                                               |
+| `background_image` | `string`        | A URL for a background image on the card back. Takes precedence over `icon_back`.                                                |
 
 #### Card `contents` Elements
 
 Each element in the `contents` array is a string formatted as `"element_name | parameter1 | parameter2 | ..."`.
 
-| Element Name    | Parameters                                    | Description                                                                                                                                                                  |
-| --------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `subtitle`      | `text`, `aside_text`                          | Sets the `type` property of the card, with an optional second parameter for right-aligned text.                                                                              |
-| `rule`          | (none)                                        | Adds a dashed horizontal separator.                                                                                                                                          |
-| `property`      | `name`, `description`                         | Adds an inline key-value property line. Parsed as a distinct section type to preserve order.                                                                                 |
-| `dndstats`      | `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`      | Adds a D&D-style stat block.                                                                                                                                                 |
-| `text`          | `text`                                        | Appends text to the `body` of the current section. Handles multi-line text and basic tables (using `｜` as a separator).                                                     |
-| `description`   | `heading`, `body`                             | Creates a new section with a heading and body text.                                                                                                                          |
-| `bullet`        | `text`                                        | Adds a bullet point (`•`) to the body of the current section.                                                                                                                |
-| `section`       | `heading`, `aside_text`                       | Creates a new section with the given heading, with an optional second parameter for right-aligned text.                                                                      |
-| `fill`          | `weight`                                      | Dynamically resized empty element for vertical spacing.                                                                                                                      |
-| `boxes`         | `count`, `size`, `text`                       | A line of empty boxes for tracking charges, with optional descriptive text.                                                                                                  |
-| `swstats`       | (various)                                     | A stat block for Savage Worlds.                                                                                                                                              |
-| `picture`       | `url`, `height`                               | An inline picture, centered in the card content area.                                                                                                                        |
-| `p2e_stats`     | (various)                                     | A stat block for Pathfinder 2nd Edition.                                                                                                                                     |
-| `p2e_activity`  | `name`, `actions`, `description`              | An activity block for Pathfinder 2nd Edition, with action icons.                                                                                                             |
-| `p2e_trait`     | `rarity`, `text`                              | A trait badge for Pathfinder 2nd Edition. Must be wrapped in `p2e_start_trait_section` and `p2e_end_trait_section`.                                                          |
-| `ruler`         | (none)                                        | A thin, solid horizontal line for content separation.                                                                                                                        |
+| Element Name   | Parameters                            | Description                                                                                                                                  |
+| :------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| `subtitle`     | `text`, `aside_text`                  | Sets the `type` property of the card, with an optional second parameter for right-aligned text.                                              |
+| `rule`         | (none)                                | Adds a dashed horizontal separator.                                                                                                          |
+| `property`     | `name`, `description`                 | Adds an inline key-value property line. Parsed as a distinct section type to preserve order.                                                 |
+| `dndstats`     | `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA` | Adds a D&D-style stat block.                                                                                                                 |
+| `text`         | `text`                                | Appends text to the `body` of the current section. Handles multi-line text and basic tables (using `｜` as a separator).                         |
+| `description`  | `heading`, `body`                     | Creates a new section with a heading and body text.                                                                                          |
+| `bullet`       | `text`                                | Adds a bullet point (`•`) to the body of the current section.                                                                                |
+| `section`      | `heading`, `aside_text`               | Creates a new section with the given heading, with an optional second parameter for right-aligned text.                                      |
+| `fill`         | `weight`                              | Dynamically resized empty element for vertical spacing.                                                                                      |
+| `boxes`        | `count`, `size`, `text`               | A line of empty boxes for tracking charges, with optional descriptive text.                                                                  |
+| `swstats`      | (various)                             | A stat block for Savage Worlds.                                                                                                              |
+| `picture`      | `url`, `height`                       | An inline picture, centered in the card content area.                                                                                        |
+| `p2e_stats`    | (various)                             | A stat block for Pathfinder 2nd Edition.                                                                                                     |
+| `p2e_activity` | `name`, `actions`, `description`      | An activity block for Pathfinder 2nd Edition, with action icons.                                                                             |
+| `p2e_trait`    | `rarity`, `text`                      | A trait badge for Pathfinder 2nd Edition. Must be wrapped in `p2e_start_trait_section` and `p2e_end_trait_section`.                             |
+| `ruler`        | (none)                                | A thin, solid horizontal line for content separation.                                                                                        |
 
----
+### Example `rpg-cards` JSON
 
-### 2. `5e.tools` Format (Creature/Monster JSON)
+```json
+[
+    {
+        "count": 1,
+        "color": "#4a6898",
+        "title": "Alarm",
+        "icon": "magic-swirl",
+        "icon_back": "magic-swirl",
+        "contents": [
+            "subtitle | Level 1 Abjuration",
+            "rule",
+            "property | Casting Time | 1 minute or Ritual",
+            "property | Range | 30 feet",
+            "property | Components | V, S, M (a bell and silver wire)",
+            "property | Duration | 8 hours",
+            "rule",
+            "text | You set an alarm against intrusion. Choose a door, a window, or an area within range that is no larger than a 20-foot Cube. Until the spell ends, an alarm alerts you whenever a creature touches or enters the warded area. When you cast \nthe spell, you can designate creatures that won't set off the alarm. You also choose whether the alarm is audible or mental:",
+            "bullet | <b>Audible Alarm.</b> The alarm produces the sound of a handbell for 10 seconds within 60 feet of the warded area.",
+            "bullet | <b>Mental Alarm.</b> You are alerted by a mental ping if you are within 1 mile of the warded area. This ping awakens you if you're asleep."
+        ],
+        "tags": [
+            "spell",
+            "PHB'24",
+            "1st level",
+            "Abjuration",
+            "Ranger",
+            "Wizard",
+            "Artificer",
+            "ritual"
+        ]
+    }
+]
+```
 
-This importer is designed to handle JSON objects for creatures, as found on sites like 5e.tools. It maps common creature attributes to the card structure.
+## 7. Walkthrough: Adding a New Feature 
 
-*   **Structure:** Can be a single JSON object or an array of objects.
-*   **Key Mappings:**
-    *   `name` -> `title`
-    *   `type` -> `type`
-    *   `hp.average` or `hp` -> `stats.HP`
-    *   `str`, `dex`, `con`, `int`, `wis`, `cha` -> `stats.STR`, `stats.DEX`, etc.
-    *   `cr` -> `stats.CR`
-    *   `trait` (array) -> Each trait becomes a new `section` with `name` as the heading and `entries` as the body.
-    *   `action` (array) -> Each action becomes a new `section` with `name` as the heading and `entries` as the body.
-    *   `description` -> Becomes a new section titled "Description".
+**Scenario**: Add a 'rarity' badge to the top-left corner of a card.
 
----
-
-### 3. Generic Card JSON
-
-This is the most direct import method, using the application's internal card data structure. It's useful for exporting and re-importing cards created with this tool.
-
-*   **Structure:** Can be a single card object or an array of card objects.
-*   **Object Properties:** The JSON object should match the `appState.cards[n]` structure defined in `index.html`. Key fields include:
-    *   `title` (string)
-    *   `type` (string)
-    *   `icon` (string)
-    *   `color` (string, hex format)
-    *   `tags` (Array<string>)
-    *   `footer` (string)
-    *   `stats` (Object, e.g., `{"HP": "100", "AC": "15"}`)
-    *   `sections` (Array<Object>, where each object is `{"heading": "...", "body": "...", "flavorText": "..."}`)
-    *   `isFolded` (boolean)
-    *   `foldContent` (Object, `{"type": "text|imageUrl|qrCode", "text": "...", "imageUrl": "...", "qrCodeData": "..."}`)
-    *   `numCopies` (number)
+1.  **Modify State**: First, add a `rarity` property (e.g., 'common', 'uncommon', 'rare') to the card object schema within the default `appState`.
+2.  **Update HTML Generation**: Next, modify the `generateCardHtml()` function. Add a `div` that conditionally renders based on the `card.rarity` property.
+3.  **Style with Tailwind**: Use Tailwind CSS to style the badge. It should be positioned absolutely and use the approved color palette. For example:
+      * `rare` -\> `bg-mauve-500 text-white` 
+      * `uncommon` -\> `bg-slate-600 text-slate-100` 
+      * `common` -\> `bg-slate-700 text-slate-300` 
+4.  **Trigger Render**: Ensure `updateUIFromAppState()` is called after the state changes. This function will call `updateCardPreview()`, which in turn uses the modified `generateCardHtml()`, automatically displaying the new badge[cite: 143]. No other functions need to be called.

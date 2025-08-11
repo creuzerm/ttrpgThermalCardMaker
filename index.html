@@ -2611,7 +2611,8 @@
 
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
-                        if ((contentPagesForThisCard + 1) % 2 !== 0) {
+                        const numContentPages = contentPagesForThisCard + 1;
+                        if (numContentPages % 2 === 0) {
                             doc.addPage();
                         }
 
@@ -2623,19 +2624,21 @@
                             try {
                                 const img = await loadImage(card.foldContent.imageUrl);
                                 const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
                                 canvas.width = img.naturalWidth;
                                 canvas.height = img.naturalHeight;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0);
+                                ctx.translate(canvas.width / 2, canvas.height / 2);
+                                ctx.rotate(Math.PI); // 180 degrees
+                                ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
                                 const dataUrl = canvas.toDataURL('image/png');
                                 doc.addImage(dataUrl, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
                             } catch (e) {
                                 console.error("Could not load background image for PDF:", e);
-                                doc.text('BG Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                                doc.text('BG Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                             }
                         } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                             doc.setFontSize(10).setFont(undefined, 'normal');
-                            doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                            doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
                             let finalImageUrl = null;
                             if (card.foldContent.type === 'qrCode') {
@@ -2656,15 +2659,20 @@
                                     const ctx = canvas.getContext('2d');
                                     canvas.width = img.naturalWidth;
                                     canvas.height = img.naturalHeight;
-                                    ctx.drawImage(img, 0, 0);
+                                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                                    ctx.rotate(Math.PI); // 180 degrees
+                                    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
                                     const dataUrl = canvas.toDataURL('image/png');
                                     const imgProps = doc.getImageProperties(dataUrl);
-                                    const imgWidthMm = (imgProps.width * pdfHeightMm) / imgProps.height;
-                                    const x = (pdfWidthMm - imgWidthMm) / 2;
-                                    doc.addImage(dataUrl, 'PNG', x, 0, imgWidthMm, pdfHeightMm);
+
+                                    // Scale image to fit width, maintaining aspect ratio, and center it
+                                    const imgHeightMm = (imgProps.height * pdfWidthMm) / imgProps.width;
+                                    const y = (pdfHeightMm - imgHeightMm) / 2;
+                                    doc.addImage(dataUrl, 'PNG', 0, y, pdfWidthMm, imgHeightMm);
+
                                 } catch (e) {
                                     console.error("Could not load image for card back:", e);
-                                    doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { align: 'center', baseline: 'middle' });
+                                    doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                                 }
                             }
                         }

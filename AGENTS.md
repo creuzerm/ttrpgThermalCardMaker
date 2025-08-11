@@ -190,13 +190,30 @@ This section details how images and icons are sourced, placed, and sized within 
 
 ### Sourcing Priority
 
-The application uses a three-tiered priority system to resolve the value provided in any icon or image URL field (e.g., `icon`, `icon_back`, `foldContent.imageUrl`):
+The application resolves image and icon references from different fields using specific priority rules. It's important to use the correct format for each field.
 
-1.  **Local Icon Manifest (Primary):** The application first checks if the provided name (e.g., `magic-swirl`) exists as a key in the `icon-lookup.json` manifest file. If a match is found, it uses the corresponding local SVG file path (e.g., `game-icons/lorc/magic-swirl.svg`). This is the preferred method for including standard icons.
+#### Main Icon (`icon` field)
 
-2.  **Direct URL (Secondary):** If the name is not found in the manifest, the application checks if the string is a valid URL (e.g., `https://example.com/image.png`). If it is, the URL is used directly as the source for an `<img>` tag.
+The primary card icon uses a three-tiered priority system:
 
-3.  **Font Awesome (Fallback):** If the input is neither a manifest key nor a URL, the application treats it as a Font Awesome icon class name (e.g., `fa-user`). It will attempt to render it using an `<i>` tag. Note that this relies on the Font Awesome CDN linked in `index.html`.
+1.  **Local Icon Manifest (Primary):** The application first checks if the provided name (e.g., `magic-swirl`) exists as a key in the `icon-lookup.json` manifest file. If found, it uses the local SVG file path. This is the preferred method.
+2.  **Direct URL (Secondary):** If not in the manifest, it checks if the value is a valid URL (e.g., `https://example.com/image.png`) and uses it directly.
+3.  **Font Awesome (Fallback):** If neither of the above, it's treated as a Font Awesome icon class (e.g., `fa-user`).
+
+#### Folded Card Back Icon (`icon_back` field)
+
+The icon on the back of a folded card uses a two-tiered priority:
+
+1.  **Local Icon Manifest:** Checks `icon-lookup.json` first.
+2.  **Direct URL:** If not in the manifest, the value is used directly as a URL.
+    *Note: Font Awesome is not supported for `icon_back`.*
+
+#### Other Image Fields
+
+The following fields expect a direct URL only and do not use the manifest or Font Awesome:
+
+*   **`background_image`**: A URL for an image to cover the entire card back.
+*   **`picture` content element**: The URL for an inline image within the card body.
 
 ### Types of Images
 

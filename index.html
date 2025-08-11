@@ -1063,6 +1063,10 @@
 
         // Load state from localStorage or URL parameters
         function loadState() {
+            // This function defines the data loading priority:
+            // 1. Check for card data in the URL ('data' or 'cardData' parameter). This is for bookmarkable links.
+            // 2. If no URL data, check for a saved state in localStorage.
+            // 3. If neither is found, it uses the default initial appState.
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const cardDataParam = urlParams.get('data') || urlParams.get('cardData');
@@ -2580,9 +2584,15 @@
         }
 
         async function generatePdfDocument(cards, foldOverride = null) {
+            // This function generates a PDF document from a list of cards.
+            // It has two main logic paths:
+            // 1. TEXT-BASED (if !isScrolling): Creates a PDF with selectable text and vector shapes. This is higher quality and preferred.
+            // 2. IMAGE-BASED (if isScrolling or for legacy thermal): Renders card HTML to a canvas, then places the resulting image into a PDF. This is used for scrolling cards or as a fallback.
             const { jsPDF } = window.jspdf;
             let doc;
 
+            // --- TEXT-BASED PDF LOGIC ---
+            // This path is used for standard, high-quality PDF generation.
             if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
                 const { cardWidth, cardHeight } = getCardDimensionsInInches();
                 const pdfWidthMm = cardWidth * 25.4;
@@ -2611,12 +2621,16 @@
 
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
+                        // This logic ensures the total page count for a duplex-printed card is even.
+                        // If the content pages are an odd number, a blank page is inserted before the back page.
+                        // The logic `(contentPagesForThisCard + 1) % 2 === 0` is functionally equivalent to
+                        // `contentPagesForThisCard % 2 !== 0` (is the number of content pages odd?).
                         const numContentPages = contentPagesForThisCard + 1;
                         if (numContentPages % 2 === 0) {
-                            doc.addPage();
+                            doc.addPage(); // Add a blank page to ensure the back prints correctly.
                         }
 
-                        doc.addPage();
+                        doc.addPage(); // Add the final page for the back content.
                         const backPageNum = doc.internal.getNumberOfPages();
                         doc.setPage(backPageNum);
 
@@ -2682,8 +2696,10 @@
                 return doc;
             }
 
-            // --- IMAGE-BASED PDF LOGIC (Legacy) ---
+            // --- IMAGE-BASED PDF LOGIC (Scrolling and Fallback) ---
             if (appState.isScrolling) {
+                // This path handles the "Scrolling Card" option. It renders all cards into a single
+                // long HTML block, converts it to one canvas, and puts that canvas onto a single PDF page.
                 let fullHtml = '<div>';
                 for (const card of cards) {
                     if (!card) continue;

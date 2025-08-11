@@ -33,6 +33,29 @@
 *   **Positive Affirmation:** Frame success messages positively.
 *   **User Empowerment:** Design interfaces that make users feel in control and capable.
 
+## Code Architecture Overview
+
+The application is currently implemented as a single-page application within a single file, `index.html`. All JavaScript logic, including state management, DOM manipulation, and utility functions, is contained within a large `<script>` tag at the end of the `<body>`.
+
+### Key Components & Functions
+
+*   **`appState` (Global Object):** This is the single source of truth for the application. It holds all card data (`appState.cards`), the index of the currently active card (`appState.currentCardIndex`), and all user-configurable settings (printer type, paper size, etc.). Modifying this object is the first step to changing the application's state.
+
+*   **`updateUIFromAppState()`:** This is the primary rendering function. After any change to `appState`, this function should be called to ensure the UI reflects the new state. It populates input fields, renders the card preview, and updates navigation elements.
+
+*   **`saveState()` & `loadState()`:** These functions handle persistence. `saveState()` serializes the `appState` object to `localStorage`. `loadState()` is called on page load and deserializes the data from `localStorage` or from URL parameters if they exist.
+
+*   **Rendering & Exporting:**
+    *   `updateCardPreview()`: Renders the live preview of the card in the main UI.
+    *   `generatePdfDocument()`: The core function for creating PDFs. It contains complex logic for handling different card formats (standard, scrolling, folded) and output types (image-based vs. text-based).
+    *   `generateCardCanvas()`: Uses `html2canvas` to render a card's HTML into a `<canvas>` element, which is then used for generating PNGs or image-based PDFs.
+    *   `generateCardHtml()`: Generates the raw HTML for a card, which is used by both the live preview and the canvas generation functions.
+
+*   **Data Import:**
+    *   `parseAndSetCardData()`: This function is the entry point for all JSON import logic. It detects the format (`rpg-cards`, `5e-tools`, or `generic`) and transforms the imported data into the internal `appState` structure.
+
+*   **Event Listeners:** The script sets up numerous event listeners that tie UI elements (buttons, inputs) to functions that update the `appState` and trigger UI refreshes.
+
 ## Code Generation Instructions
 
 ### General Code Quality

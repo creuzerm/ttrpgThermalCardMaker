@@ -9,7 +9,7 @@ This web application provides a seamless, mobile-first experience for Tabletop R
 *   **Customizable Stats:** Include key-value pair statistics relevant to your card.
 *   **Icon Support:** Use icon names from the included manifest or direct image URLs for card visuals.
 *   **Card Color Selection:** Choose a background color for your cards (for color printers).
-*   **Folded Card Option:** Create cards with content on the back for a folded design, supporting text, image URLs, or QR codes.
+*   **Flexible Card Formats:** Supports standard cards, folded cards (with back content), and long scrolling cards for continuous paper.
 *   **Multi-Card Management:** Load, navigate, and manage multiple cards within the application.
 *   **JSON Import:** Easily import card data from `rpg-cards.vercel.app` JSON format, `5e.tools` JSON, or generic JSON structures.
 *   **Live Preview:** See a real-time preview of your card as you design it, adapting to chosen printer type.
@@ -22,6 +22,8 @@ This web application provides a seamless, mobile-first experience for Tabletop R
 *   **Local Storage Persistence:** Your current card data and settings are automatically saved in your browser's local storage.
 
 ## How to Use
+
+![Application Screenshot](https://raw.githubusercontent.com/loopeds/thermal-printer-card-generator/main/docs/screenshot.png)
 
 ### 1. Editing Card Details
 
@@ -44,13 +46,12 @@ The "Card Details" section allows you to customize the front of your card:
 *   **Tags (Comma-separated):** Enter keywords related to your card, separated by commas (e.g., `Fire, Spell, Evocation`).
 *   **Footer Text (Optional):** Small text displayed at the bottom of the card (e.g., "Source: PHB").
 
-### 2. Card Folding Options
+### 2. Card Format Options
 
-*   **Folded Card Checkbox:** Check this box to enable the back/bottom content for a folded card design.
-*   **Content Type:** Choose what appears on the back of the card:
-    *   **Text:** Enter plain text.
-    *   **Image URL:** Paste a URL to an image for the back.
-    *   **QR Code:** Enter data (e.g., a URL) to generate a QR code on the back.
+This section provides options to control the physical layout of your card.
+
+*   **Folded Card:** Check this box to create a card designed to be folded in half. This enables the "Back/Bottom Fold Content" section, where you can add content to the other side of the card. You can choose between text, an image/icon, or a QR code for the back.
+*   **Scrolling Card (Single Page PDF):** Check this box if you have a lot of content that won't fit on a standard-sized card. This format will generate a single, long PDF page that is ideal for continuous roll thermal printers, preventing your content from being split across multiple pages.
 
 ### 3. Navigating Multiple Cards
 
@@ -75,8 +76,10 @@ You can import existing card data from JSON files or pasted JSON:
 *   **Select Printer Type:**
     *   **Thermal Receipt Printer (Monochrome):** Optimizes the preview and output for black-and-white thermal printers.
     *   **Color Photo Printer (Kodak Zink / Fujifilm Instax):** Optimizes the preview and output for color photo printers.
-*   **Thermal Paper Size:** (Only visible for Thermal Printer type) Select the paper width (58mm or 80mm) to adjust the preview and print output.
+*   **Thermal Paper Width:** (For Thermal Printers) Choose from common thermal paper widths (`2in`, `3in`, `4in`, `58mm`, `80mm`). You can also select `Other (Custom)` to define your own card dimensions in inches.
+*   **Standard Size:** (For Thermal Printers) Based on the selected paper width, choose a standard card size (e.g., `Bridge`, `3" x 5"`) or `Continuous Roll` for a variable length card.
 *   **Number of Copies (1-10):** Specify how many copies of the card(s) you want to print or download.
+*   **Output Format:** Choose whether you want to generate a `PDF` or a `PNG` file. This selection will change the available "Download" and "Share" buttons.
 *   **Card Preview:** A live representation of your card, updating as you make changes.
 *   **Print/Export Scope:**
     *   **Current Card:** Only the currently displayed card will be processed for printing or downloading.
@@ -101,6 +104,15 @@ Enjoy generating your TTRPG cards!
 
 -----
 ## Supported Paper Sizes
+
+The tool's UI allows you to select from the most common thermal paper widths and standard card sizes.
+
+*   **Thermal Paper Width:** `2in`, `3in`, `4in`, `58mm`, `80mm`.
+*   **Standard Sizes:** Depending on the width, you can select common label sizes (e.g., `Bridge (2" x 3.5")`, `4" x 6"`) or `Continuous Roll`.
+*   **Custom Size:** You can select `Other (Custom)` to input your own card dimensions (width and length) in inches.
+
+<details>
+<summary>Technical Paper Size & DPI Details (Click to Expand)</summary>
 
 The tool supports various thermal paper sizes and printer resolutions. The final output is padded to the *printable width* to ensure accurate sizing.
                                        |
@@ -127,7 +139,7 @@ The tool supports various thermal paper sizes and printer resolutions. The final
 | A4 (8.27 in) | 8.27 in (210 mm) | 203 DPI | 8.27" × 203 | 1680 pixels | European standard for thermal documents, similar uses to Letter size but with international compatibility. |
 | A4 (8.27 in) | 8.27 in (210 mm) | 300 DPI | 8.27" × 300 | 2480 pixels | High-resolution international documents or forms requiring high-quality, inkless printing. |
 
-
+</details>
 
 ### Standard Thermal Label Sizes (2x3 inches and larger)
 

@@ -183,3 +183,52 @@ Each element in the `contents` array is a string formatted as `"element_name | p
       * `uncommon` -\> `bg-slate-600 text-slate-100` 
       * `common` -\> `bg-slate-700 text-slate-300` 
 4.  **Trigger Render**: Ensure `updateUIFromAppState()` is called after the state changes. This function will call `updateCardPreview()`, which in turn uses the modified `generateCardHtml()`, automatically displaying the new badge[cite: 143]. No other functions need to be called.
+
+## 8. Image & Icon Handling
+
+This section details how images and icons are sourced, placed, and sized within the application. Understanding this system is crucial for correctly displaying visual elements on cards.
+
+### Sourcing Priority
+
+The application uses a three-tiered priority system to resolve the value provided in any icon or image URL field (e.g., `icon`, `icon_back`, `foldContent.imageUrl`):
+
+1.  **Local Icon Manifest (Primary):** The application first checks if the provided name (e.g., `magic-swirl`) exists as a key in the `icon-lookup.json` manifest file. If a match is found, it uses the corresponding local SVG file path (e.g., `game-icons/lorc/magic-swirl.svg`). This is the preferred method for including standard icons.
+
+2.  **Direct URL (Secondary):** If the name is not found in the manifest, the application checks if the string is a valid URL (e.g., `https://example.com/image.png`). If it is, the URL is used directly as the source for an `<img>` tag.
+
+3.  **Font Awesome (Fallback):** If the input is neither a manifest key nor a URL, the application treats it as a Font Awesome icon class name (e.g., `fa-user`). It will attempt to render it using an `<i>` tag. Note that this relies on the Font Awesome CDN linked in `index.html`.
+
+### Types of Images
+
+The application supports several distinct types of images on cards:
+
+*   **Main Icon**: The primary icon for the card, typically displayed in the top-right corner.
+*   **Inline Picture**: An image embedded within the card's content flow. This is added via the `picture` content type in the JSON data, which specifies a URL and height.
+*   **Folded Card Back Image**: An image or icon centered on the back of a folded card. This is sourced from the `foldContent.imageUrl` property.
+*   **Folded Card Background Image**: A special image URL that is stretched to cover the entire back surface of a folded card. This is sourced from the `background_image` property in the input JSON.
+*   **QR Code**: A dynamically generated image based on data provided in the `foldContent.qrCodeData` property.
+
+### Adding New Local Icons
+
+To add a new icon to the local manifest for easy reuse:
+
+1.  **Add the File**: Place the new `.svg` file into the appropriate subdirectory within the `game-icons/` directory. The folder structure helps organize icons by artist or category.
+2.  **Name the Icon**: The name used to reference the icon will be its filename without the `.svg` extension. For example, `game-icons/lorc/my-new-icon.svg` will be referenced as `my-new-icon`.
+3.  **Update the Manifest**: Run the build script from the project's root directory:
+    ```bash
+    node build-icon-manifest.js
+    ```
+4.  **Verify**: The script will overwrite `icon-lookup.json`. Check the file to ensure your new icon and its correct path have been added. The script will also warn you about any duplicate icon names.
+
+### Placement and Sizing
+
+Image sizing is handled differently for the on-screen preview versus the final generated output.
+
+*   **Placement**:
+    *   **Main Icon**: Positioned absolutely in the top-right corner of the card.
+    *   **Inline/Back Images**: Centered within their respective containers.
+    *   **Background Images**: Stretched to fill their container.
+
+*   **Sizing**:
+    *   **Live Preview**: The on-screen preview uses CSS with inch (`in`) units to simulate the final physical dimensions. This provides a rough but useful approximation of the final look.
+    *   **Final Output (PDF/PNG)**: For generating the final output, the `generateCardHtml` function performs precise calculations. It converts all layout dimensions (defined in inches or points, e.g., `ICON_SIZE_IN = 0.25`) into exact pixel values based on the user-selected printer DPI. This pixel-perfect HTML is then rendered to a canvas using `html2canvas`, ensuring that the final image is accurately scaled for the chosen physical paper size.

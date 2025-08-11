@@ -183,3 +183,69 @@ Each element in the `contents` array is a string formatted as `"element_name | p
       * `uncommon` -\> `bg-slate-600 text-slate-100` 
       * `common` -\> `bg-slate-700 text-slate-300` 
 4.  **Trigger Render**: Ensure `updateUIFromAppState()` is called after the state changes. This function will call `updateCardPreview()`, which in turn uses the modified `generateCardHtml()`, automatically displaying the new badge[cite: 143]. No other functions need to be called.
+
+## 8. Image & Icon Handling
+
+This section details how images and icons are sourced, placed, and sized within the application. Understanding this system is crucial for correctly displaying visual elements on cards.
+
+### Sourcing Priority
+
+The application resolves image and icon references from different fields using specific priority rules. It's important to use the correct format for each field.
+
+#### Main Icon (`icon` field)
+
+The primary card icon uses a three-tiered priority system:
+
+1.  **Local Icon Manifest (Primary):** The application first checks if the provided name (e.g., `magic-swirl`) exists as a key in the `icon-lookup.json` manifest file. If found, it uses the local SVG file path. This is the preferred method.
+2.  **Direct URL (Secondary):** If not in the manifest, it checks if the value is a valid URL (e.g., `https://example.com/image.png`) and uses it directly.
+3.  **Font Awesome (Fallback):** If neither of the above, it's treated as a Font Awesome icon class (e.g., `fa-user`).
+
+#### Folded Card Back Icon (`icon_back` field)
+
+The icon on the back of a folded card uses a two-tiered priority:
+
+1.  **Local Icon Manifest:** Checks `icon-lookup.json` first.
+2.  **Direct URL:** If not in the manifest, the value is used directly as a URL.
+    *Note: Font Awesome is not supported for `icon_back`.*
+
+#### Other Image Fields
+
+The following fields expect a direct URL only and do not use the manifest or Font Awesome:
+
+*   **`background_image`**: A URL for an image to cover the entire card back.
+*   **`picture` content element**: The URL for an inline image within the card body.
+
+### Types of Images
+
+The application supports several distinct types of images on cards:
+
+*   **Main Icon**: The primary icon for the card, typically displayed in the top-right corner.
+*   **Inline Picture**: An image embedded within the card's content flow. This is added via the `picture` content type in the JSON data, which specifies a URL and height.
+*   **Folded Card Back Image**: An image or icon centered on the back of a folded card. This is sourced from the `icon_back` property.
+*   **Folded Card Background Image**: A special image URL that is stretched to cover the entire back surface of a folded card. This is sourced from the `background_image` property in the input JSON.
+*   **QR Code**: A dynamically generated image based on data provided in the `foldContent.qrCodeData` property.
+
+### Adding New Local Icons
+
+To add a new icon to the local manifest for easy reuse:
+
+1.  **Add the File**: Place the new `.svg` file into the appropriate subdirectory within the `game-icons/` directory. The folder structure helps organize icons by artist or category.
+2.  **Name the Icon**: The name used to reference the icon will be its filename without the `.svg` extension. For example, `game-icons/lorc/my-new-icon.svg` will be referenced as `my-new-icon`.
+3.  **Update the Manifest**: Run the build script from the project's root directory:
+    ```bash
+    node build-icon-manifest.js
+    ```
+4.  **Verify**: The script will overwrite `icon-lookup.json`. Check the file to ensure your new icon and its correct path have been added. The script will also warn you about any duplicate icon names.
+
+### Placement and Sizing
+
+Image sizing is handled differently for the on-screen preview versus the final generated output.
+
+*   **Placement**:
+    *   **Main Icon**: Positioned absolutely in the top-right corner of the card.
+    *   **Inline/Back Images**: Centered within their respective containers.
+    *   **Background Images**: Stretched to fill their container.
+
+*   **Sizing**:
+    *   **Live Preview**: The on-screen preview uses CSS with inch (`in`) units to simulate the final physical dimensions. This provides a rough but useful approximation of the final look.
+    *   **Final Output (PDF/PNG)**: For generating the final output, the `generateCardHtml` function performs precise calculations. It converts all layout dimensions (defined in inches or points, e.g., `ICON_SIZE_IN = 0.25`) into exact pixel values based on the user-selected printer DPI. This pixel-perfect HTML is then rendered to a canvas using `html2canvas`, ensuring that the final image is accurately scaled for the chosen physical paper size.

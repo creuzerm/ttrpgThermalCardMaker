@@ -204,7 +204,7 @@ The application supports several distinct types of images on cards:
 
 *   **Main Icon**: The primary icon for the card, typically displayed in the top-right corner.
 *   **Inline Picture**: An image embedded within the card's content flow. This is added via the `picture` content type in the JSON data, which specifies a URL and height.
-*   **Folded Card Back Image**: An image or icon centered on the back of a folded card. This is sourced from the `foldContent.imageUrl` property.
+*   **Folded Card Back Image**: An image or icon centered on the back of a folded card. This is sourced from the `icon_back` property.
 *   **Folded Card Background Image**: A special image URL that is stretched to cover the entire back surface of a folded card. This is sourced from the `background_image` property in the input JSON.
 *   **QR Code**: A dynamically generated image based on data provided in the `foldContent.qrCodeData` property.
 

@@ -13,13 +13,13 @@ This web application provides a seamless, mobile-first experience for Tabletop R
 *   **Multi-Card Management:** Load, navigate, and manage multiple cards within the application.
 *   **JSON Import:** Easily import card data from `rpg-cards.vercel.app` JSON format, `5e.tools` JSON, or generic JSON structures.
 *   **Live Preview:** See a real-time preview of your card as you design it, adapting to chosen printer type.
-*   **Direct Android Printing:** On Android, a "Print to Thermal Printer" button appears, allowing for direct printing via the Looped Labs ESC/POS Print Service.
+*   **Direct Android Printing:** On Android, a "Print to Thermal Printer" button may appear depending on configuratio, allowing for direct printing via the Looped Labs ESC/POS Print Service.
 *   **Card View:** A clean, clutter-free view of your card, perfect for sharing or manual printing.
 *   **Color Photo Printer Export:** Generate high-resolution images suitable for color photo printers (e.g., Kodak Zink, Fujifilm Instax).
 *   **Image Download:** Download card images (single or all) for offline use or manual printing.
 *   **Web Share API Integration:** Share generated card images directly to compatible apps on your mobile device.
 *   **Bookmarkable Links:** Generate a unique URL for your current card's data, allowing you to save and share specific card designs easily.
-*   **Local Storage Persistence:** Your current card data and settings are automatically saved in your browser's local storage.
+*   **Local Storage Persistence:** Your current card data and settings are automatically saved in your browser's local storage remembering the last card(s) you worked on.
 
 ## How to Use
 
@@ -34,7 +34,7 @@ The "Card Details" section allows you to customize the front of your card:
 *   **Icon Name or Image URL:**
     *   Enter an icon name (e.g., `magic-swirl`, `crossed-swords`) to display a scalable icon. A list of available icons is provided in a datalist.
     *   Alternatively, paste a direct URL to an image (e.g., `https://example.com/my-icon.png`).
-*   **Card Color (Hex, Optional):** Select a color for the card's background. This is primarily for color photo printing; thermal printers will convert to grayscale.
+*   **Card Color (Hex, Optional):** Select a color for the card's background. This is primarily for color photo printing; B&W thermal printers will convert to grayscale.
 *   **Content Sections:**
     *   Click "Add Section" to add new content blocks.
     *   Each section can have an optional **Heading**, **Body Text** (supports `**bold**`, `*italic*`, and `[links](url)`), and optional **Flavor Text** (displayed in italic).
@@ -76,7 +76,7 @@ You can import existing card data from JSON files or pasted JSON:
 *   **Select Printer Type:**
     *   **Thermal Receipt Printer (Monochrome):** Optimizes the preview and output for black-and-white thermal printers.
     *   **Color Photo Printer (Kodak Zink / Fujifilm Instax):** Optimizes the preview and output for color photo printers.
-*   **Thermal Paper Width:** (For Thermal Printers) Choose from common thermal paper widths (`2in`, `3in`, `4in`, `58mm`, `80mm`). You can also select `Other (Custom)` to define your own card dimensions in inches.
+*   **Thermal Paper Width:** (For Thermal Printers) Choose from common thermal paper widths (`2in` (`58mm`), `3in` (`80mm`), `4in`（101.6mm) ). You can also select `Other (Custom)` to define your own size dimensions in inches.
 *   **Standard Size:** (For Thermal Printers) Based on the selected paper width, choose a standard card size (e.g., `Bridge`, `3" x 5"`) or `Continuous Roll` for a variable length card.
 *   **Number of Copies (1-10):** Specify how many copies of the card(s) you want to print or download.
 *   **Output Format:** Choose whether you want to generate a `PDF` or a `PNG` file. This selection will change the available "Download" and "Share" buttons.
@@ -96,7 +96,7 @@ You can import existing card data from JSON files or pasted JSON:
 
 ## Important Notes
 
-*   **Direct Printing:** Direct printing from a web browser to a thermal printer requires a companion mobile app. This web app is specifically designed to integrate with the Looped Labs ESC/POS Print Service on Android.
+*   **Direct Printing:** Direct printing from a web browser to a thermal printer requires a companion mobile app. This web app is currently specifically designed to integrate with the Looped Labs ESC/POS Print Service on Android (more to come in the future).
 *   **Offline Access (PWA):** This application is a Progressive Web App (PWA). If accessed via HTTPS or on localhost, it can be "installed" to your device's home screen for offline use.
 *   **Data Persistence:** Your card data and application settings are saved in your browser's local storage, so they will persist even if you close and reopen the browser tab.
 
@@ -107,7 +107,7 @@ Enjoy generating your TTRPG cards!
 
 The tool's UI allows you to select from the most common thermal paper widths and standard card sizes.
 
-*   **Thermal Paper Width:** `2in`, `3in`, `4in`, `58mm`, `80mm`.
+*   **Thermal Paper Width:** `2in`, `3in`, `4in`, `58mm`, `80mm`, 101mm.
 *   **Standard Sizes:** Depending on the width, you can select common label sizes (e.g., `Bridge (2" x 3.5")`, `4" x 6"`) or `Continuous Roll`.
 *   **Custom Size:** You can select `Other (Custom)` to input your own card dimensions (width and length) in inches.
 

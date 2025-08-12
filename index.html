@@ -862,12 +862,12 @@
                                 return `<div class="text-sm"><strong class="font-semibold">${sanitizeHTML(section.key)}:</strong> ${sanitizeHTML(section.value)}</div>`;
                             case 'dndstats':
                                 const statsHtml = Object.entries(section.stats)
-                                    .map(([k, v]) => `<div class="flex flex-col items-center mx-1">
-                                                        <strong class="font-bold">${sanitizeHTML(k)}</strong>
-                                                        <span>${sanitizeHTML(v)}</span>
+                                    .map(([k, v]) => `<div class="flex flex-col items-center mx-0.5">
+                                                        <strong class="font-bold text-sm">${sanitizeHTML(k)}</strong>
+                                                        <span class="text-xs">${sanitizeHTML(v)}</span>
                                                      </div>`)
                                     .join('');
-                                return `<div class="flex justify-center my-2 p-1 bg-gray-100 rounded-md">${statsHtml}</div>`;
+                                return `<div class="flex justify-center my-1 p-1 bg-gray-100 rounded-md">${statsHtml}</div>`;
                             case 'picture':
                                 return `<div class="my-2 flex justify-center"><img src="${sanitizeHTML(section.url)}" style="height: ${section.height}px;" class="rounded-md" alt="Card Picture" onerror="this.src='https://placehold.co/100x${section.height}/000/FFF?text=Image';"></div>`;
                             case 'boxes':
@@ -1926,12 +1926,12 @@
                                     return `<div style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px;"><strong>${sanitizeHTML(section.key)}:</strong> ${sanitizeHTML(section.value)}</div>`;
                                 case 'dndstats':
                                     const statsHtml = Object.entries(section.stats)
-                                        .map(([k, v]) => `<div style="display: flex; flex-direction: column; align-items: center; margin: 0 ${toPx(0.05, dpi)}px;">
-                                                            <strong style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px;">${sanitizeHTML(k)}</strong>
-                                                            <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px;">${sanitizeHTML(v)}</span>
+                                        .map(([k, v]) => `<div style="display: flex; flex-direction: column; align-items: center; margin: 0 ${toPx(0.02, dpi)}px;">
+                                                            <strong style="font-size: ${ptToPx(9, dpi)}px; font-weight: bold;">${sanitizeHTML(k)}</strong>
+                                                            <span style="font-size: ${ptToPx(8, dpi)}px;">${sanitizeHTML(v)}</span>
                                                          </div>`)
                                         .join('');
-                                    return `<div style="display: flex; justify-content: center; margin: ${toPx(0.08, dpi)}px 0; padding: ${toPx(0.04, dpi)}px; background-color: #f3f4f6; border-radius: 4px;">${statsHtml}</div>`;
+                                    return `<div style="display: flex; justify-content: center; margin: ${toPx(0.04, dpi)}px 0; padding: ${toPx(0.04, dpi)}px; background-color: #f3f4f6; border-radius: 4px;">${statsHtml}</div>`;
                                 case 'picture':
                                     return `<div style="margin: ${toPx(0.08, dpi)}px 0; text-align: center;"><img src="${sanitizeHTML(section.url)}" style="height: ${section.height}px; border-radius: 4px;" alt="Card Picture"></div>`;
                                 case 'boxes':
@@ -2557,6 +2557,31 @@
                         if (y + descHeight > pageHeight - margin) { doc.addPage(); y = margin; }
                         doc.text(descLines, margin + 8, y);
                         y += descHeight + 2;
+                        continue;
+                    } else if (section.type === 'dndstats') {
+                        const stats = Object.entries(section.stats).filter(([k, v]) => v);
+                        const colCount = 6;
+                        const cellWidth = (contentWidth - ((colCount - 1) * 2)) / colCount; // 2mm gap
+                        const cellHeight = 8;
+
+                        if (y + cellHeight > pageHeight - margin) { doc.addPage(); y = margin; }
+
+                        doc.setFillColor(243, 244, 246); // bg-gray-100
+                        doc.roundedRect(margin, y, contentWidth, cellHeight, 1, 1, 'F');
+
+                        let currentX = margin + 1; // 1mm padding
+                        for (let i = 0; i < stats.length; i++) {
+                            const [key, value] = stats[i];
+
+                            doc.setFontSize(7).setFont(undefined, 'bold').setTextColor(0);
+                            doc.text(key.toUpperCase(), currentX + cellWidth / 2, y + 3, { align: 'center' });
+
+                            doc.setFontSize(8).setFont(undefined, 'normal');
+                            doc.text(value, currentX + cellWidth / 2, y + 6.5, { align: 'center' });
+
+                            currentX += cellWidth + 2; // 2mm gap
+                        }
+                        y += cellHeight + 2; // Padding after the block
                         continue;
                     }
 

@@ -69,6 +69,15 @@ All generated code must integrate seamlessly with the current HTML structure, re
   - 5e.tools JSON paste (`5e-tools-json-paste`)
   - Generic JSON paste (`generic-json-paste`)
 
+**Header & Modals**
+- Header container: `<header>`
+- Menu Button: `menu-btn`
+- Menu Dropdown: `menu-dropdown`
+- About Link: `about-link`
+- About Modal: `about-modal`
+- About Modal Content: `about-modal-content`
+- About Modal Close Button: `close-about-modal-btn`
+
 ---
 
 

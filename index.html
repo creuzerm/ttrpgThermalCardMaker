@@ -1785,6 +1785,8 @@
         const FONT_SIZE_FLAVOR_PT = 9;
         const FONT_SIZE_TAGS_FOOTER_PT = 8;
         const FONT_SIZE_FOLD_TEXT_PT = 10;
+        const FONT_SIZE_DND_STATS_KEY_PT = 9;
+        const FONT_SIZE_DND_STATS_VALUE_PT = 8;
 
         // Spacing
         const TITLE_MARGIN_BOTTOM_IN = 0.04;
@@ -1927,8 +1929,8 @@
                                 case 'dndstats':
                                     const statsHtml = Object.entries(section.stats)
                                         .map(([k, v]) => `<div style="display: flex; flex-direction: column; align-items: center; margin: 0 ${toPx(0.02, dpi)}px;">
-                                                            <strong style="font-size: ${ptToPx(9, dpi)}px; font-weight: bold;">${sanitizeHTML(k)}</strong>
-                                                            <span style="font-size: ${ptToPx(8, dpi)}px;">${sanitizeHTML(v)}</span>
+                                                            <strong style="font-size: ${ptToPx(FONT_SIZE_DND_STATS_KEY_PT, dpi)}px; font-weight: bold;">${sanitizeHTML(k)}</strong>
+                                                            <span style="font-size: ${ptToPx(FONT_SIZE_DND_STATS_VALUE_PT, dpi)}px;">${sanitizeHTML(v)}</span>
                                                          </div>`)
                                         .join('');
                                     return `<div style="display: flex; justify-content: center; margin: ${toPx(0.04, dpi)}px 0; padding: ${toPx(0.04, dpi)}px; background-color: #f3f4f6; border-radius: 4px;">${statsHtml}</div>`;
@@ -2560,17 +2562,22 @@
                         continue;
                     } else if (section.type === 'dndstats') {
                         const stats = Object.entries(section.stats).filter(([k, v]) => v);
-                        const colCount = 6;
-                        const cellWidth = (contentWidth - ((colCount - 1) * 2)) / colCount; // 2mm gap
-                        const cellHeight = 8;
+                        if (stats.length === 0) continue;
+
+                        const colCount = Math.min(stats.length, 6);
+                        const gap = 2; // mm
+                        const cellHeight = 8; // mm
+                        const cellWidth = (contentWidth - ((colCount - 1) * gap)) / colCount;
 
                         if (y + cellHeight > pageHeight - margin) { doc.addPage(); y = margin; }
 
                         doc.setFillColor(243, 244, 246); // bg-gray-100
                         doc.roundedRect(margin, y, contentWidth, cellHeight, 1, 1, 'F');
 
-                        let currentX = margin + 1; // 1mm padding
-                        for (let i = 0; i < stats.length; i++) {
+                        const totalStatWidth = colCount * cellWidth + Math.max(0, colCount - 1) * gap;
+                        let currentX = margin + (contentWidth - totalStatWidth) / 2; // Center the block of stats
+
+                        for (let i = 0; i < colCount; i++) {
                             const [key, value] = stats[i];
 
                             doc.setFontSize(7).setFont(undefined, 'bold').setTextColor(0);
@@ -2579,7 +2586,7 @@
                             doc.setFontSize(8).setFont(undefined, 'normal');
                             doc.text(value, currentX + cellWidth / 2, y + 6.5, { align: 'center' });
 
-                            currentX += cellWidth + 2; // 2mm gap
+                            currentX += cellWidth + gap;
                         }
                         y += cellHeight + 2; // Padding after the block
                         continue;

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
     // Global application state
     let iconManifest = {}; // To be populated from icon-lookup.json
     let appState = {

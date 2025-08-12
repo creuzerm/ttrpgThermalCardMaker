@@ -658,7 +658,7 @@
                             contentHtml += `
                                 <div>
                                     <label class="${labelBaseClasses}">${key}</label>
-                                    <input type="text" data-index="${index}" data-field="stats" data-subfield="${key}" value="${section.stats[key] || ''}" class="${inputBaseClasses}">
+                                    <input type="text" data-index="${index}" data-field="stats" data-subfield="${key}" value="${(section.stats && section.stats[key]) || ''}" class="${inputBaseClasses}">
                                 </div>`;
                         });
                         contentHtml += `</div>`;

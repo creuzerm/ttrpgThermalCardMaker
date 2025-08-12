@@ -46,6 +46,15 @@ All visual style rules are defined in [BagsOfFolding.com/AGENTS.md](https://bags
 
 All generated code must integrate seamlessly with the current HTML structure, respecting existing IDs, classes, and DOM flow.
 
+**Header and Menu**
+- `header`: The main container for the top bar, including the logo, title, and menu button.
+- `menu-button`: The hamburger icon button that toggles the dropdown menu.
+- `menu-dropdown`: The hidden dropdown menu containing "About" and other links.
+- `about-link`: The link within the dropdown that opens the "About" modal.
+- `about-modal`: The container for the "About" modal.
+- `close-about-modal-btn`: The '×' button to close the "About" modal.
+- `about-modal-content`: The specific `div` within the modal where the `README.md` content is rendered.
+
 **Card Navigation & Management**
 - Buttons: `prev-card-btn`, `next-card-btn`, `add-new-card-btn`
 - Dropdown: `card-select`

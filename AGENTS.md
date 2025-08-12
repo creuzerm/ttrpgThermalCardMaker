@@ -132,6 +132,14 @@ Key functions:
 
 This process is specifically designed for continuous-feed thermal printers and requires a precise sequence to correctly scale a card's content to a narrow, physically constrained printable area.
 
+### Rendering Method: Text vs. Image
+
+The application supports two primary methods for generating PDF content:
+
+1.  **Text-Based (Preferred):** Whenever possible, the generator **must** use a text-based rendering method via `jsPDF`. This approach creates high-quality, resolution-independent PDFs with selectable text and vector shapes. This method provides a superior user experience due to smaller file sizes and the ability to copy text from the generated document.
+
+2.  **Image-Based (Fallback):** An image-based method using `html2canvas` is acceptable as a fallback or for specific features like the "Scrolling Card" where a single, continuous image is required. This method should follow the sequence described below.
+
 ### Key Concepts
 
 * **Logical Size**: The ideal, intended dimensions of the card (e.g., a "Bridge" card is 2.25" wide by 3.5" long). The logical width is critical for determining the layout, text wrapping, and element flow of the card's content.

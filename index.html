@@ -14,27 +14,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* AGENTS.md: Using Tailwind CDN, so we can't use @apply. Defining colors and animations here. */
+        :root {
+            /* Using common hex codes as proxies for the specified Tailwind palette */
+            --slate-950: #020617;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --mauve-500: #a855f7; /* Tailwind's purple-500 is a good mauve proxy */
+            --pink-500: #ec4899;
+            --rose-500: #f43f5e;
+        }
+
+        @keyframes aurora {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* bg-gray-900 equivalent */
-            color: #e2e8f0; /* text-gray-100 equivalent */
+            background-color: var(--slate-950);
+            color: var(--slate-200);
+            position: relative; /* Needed for the pseudo-element */
+            z-index: 0; /* Needed for the pseudo-element */
         }
+
+        .aurora-background::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(120deg,
+                rgba(168, 85, 247, 0.1), /* Mauve */
+                rgba(236, 72, 153, 0.1), /* Pink */
+                rgba(244, 63, 94, 0.1),  /* Rose */
+                rgba(15, 23, 42, 1)      /* Slate-900 */
+            );
+            background-size: 400% 400%;
+            animation: aurora 15s ease infinite;
+            z-index: -1;
+            filter: blur(50px);
+            opacity: 0.5;
+            transition: opacity 0.5s;
+        }
+
         /* Basic markdown-like styling for preview */
         .card-content strong { font-weight: 700; }
         .card-content em { font-style: italic; }
         .card-content a { color: #63b3ed; text-decoration: underline; }
-        /* Style for Font Awesome icons in preview */
-        .card-icon-fa {
-            font-size: 48px; /* Larger size for visibility */
-            color: #4a6898; /* Example color, adjust as needed */
-            margin-bottom: 8px;
-        }
     </style>
 </head>
-<body class="min-h-screen p-4 flex flex-col items-center">
+<body class="min-h-screen p-4 flex flex-col items-center aurora-background">
 
     <div id="main-generator-view">
         <!-- Service Worker Registration -->
@@ -57,102 +103,102 @@
             }
         </script>
 
-        <h1 class="text-3xl font-bold mb-6 text-center text-purple-400">Thermal Printer TTRPG Card Generator</h1>
+        <h1 class="text-3xl font-bold mb-6 text-center text-pink-400">Thermal Printer TTRPG Card Generator</h1>
 
         <!-- Card Navigation Section -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Navigate Cards</h2>
+        <div class="bg-slate-900/[.6] backdrop-blur-sm border border-slate-800 p-6 rounded-xl shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-pink-300">Navigate Cards</h2>
             <div class="flex items-center space-x-4 mb-4">
-                <button id="prev-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
-                <select id="card-select" class="flex-grow p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <button id="prev-card-btn" class="font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 active:scale-95 transition-all duration-300">Previous</button>
+                <select id="card-select" class="flex-grow p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                     <!-- Options will be populated by JS -->
                 </select>
-                <button id="next-card-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                <button id="next-card-btn" class="font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 active:scale-95 transition-all duration-300">Next</button>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <button id="add-new-card-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Add New Empty Card</button>
-                <button id="open-import-modal-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg">Import Cards</button>
+                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Add New Empty Card</button>
+                <button id="open-import-modal-btn" class="font-bold py-2 px-4 rounded-lg bg-gradient-to-br from-rose-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Import Cards</button>
             </div>
         </div>
 
         <!-- Card Input Section -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Card Details</h2>
+        <div class="bg-slate-900/[.6] backdrop-blur-sm border border-slate-800 p-6 rounded-xl shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-pink-300">Card Details</h2>
 
             <div class="mb-4">
-                <label for="title" class="block text-sm font-medium text-gray-300 mb-1">Card Title</label>
-                <input type="text" id="title" name="title" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="title" class="block text-sm font-medium text-slate-300 mb-1">Card Title</label>
+                <input type="text" id="title" name="title" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
             </div>
 
             <div class="mb-4">
-                <label for="type" class="block text-sm font-medium text-gray-300 mb-1">Card Type</label>
-                <input type="text" id="type" name="type" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="type" class="block text-sm font-medium text-slate-300 mb-1">Card Type</label>
+                <input type="text" id="type" name="type" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
             </div>
 
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-1">
-                    <label for="icon" class="block text-sm font-medium text-gray-300">Icon Name or Image URL</label>
-                    <a href="https://game-icons.net/" target="_blank" class="text-xs text-purple-400 hover:underline">Full list of icons...</a>
+                    <label for="icon" class="block text-sm font-medium text-slate-300">Icon Name or Image URL</label>
+                    <a href="https://game-icons.net/" target="_blank" class="text-xs text-pink-400 hover:underline">Full list of icons...</a>
                 </div>
-                <input type="text" id="icon" name="icon" list="icon-suggestions" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <input type="text" id="icon" name="icon" list="icon-suggestions" placeholder="e.g., magic-swirl or https://example.com/icon.png" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                 <datalist id="icon-suggestions">
                     <!-- Options will be populated by JS -->
                 </datalist>
             </div>
 
             <div class="mb-4">
-                <label for="color" class="block text-sm font-medium text-gray-300 mb-1">Card Color (Hex, Optional)</label>
-                <input type="color" id="color" name="color" value="#ffffff" class="w-full h-10 rounded-md bg-gray-700 border border-gray-600">
+                <label for="color" class="block text-sm font-medium text-slate-300 mb-1">Card Color (Hex, Optional)</label>
+                <input type="color" id="color" name="color" value="#ffffff" class="w-full h-10 rounded-lg bg-slate-800 border border-slate-700 transition-all duration-300">
             </div>
 
             <!-- Dynamic Sections -->
-            <div class="mb-4 border-t border-gray-700 pt-4">
-                <h3 class="text-xl font-semibold mb-3 text-purple-300">Content Sections</h3>
+            <div class="mb-4 border-t border-slate-800 pt-4">
+                <h3 class="text-xl font-semibold mb-3 text-pink-300">Content Sections</h3>
                 <div id="sections-container">
                     <!-- Sections will be dynamically added here -->
                 </div>
-                <button id="add-section-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Section</button>
+                <button id="add-section-btn" class="font-bold py-2 px-4 rounded-lg w-full bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 active:scale-95 transition-all duration-300">Add Section</button>
             </div>
 
             <!-- Stats -->
-            <div class="mb-4 border-t border-gray-700 pt-4">
-                <h3 class="text-xl font-semibold mb-3 text-purple-300">Stats (Key-Value Pairs)</h3>
+            <div class="mb-4 border-t border-slate-800 pt-4">
+                <h3 class="text-xl font-semibold mb-3 text-pink-300">Stats (Key-Value Pairs)</h3>
                 <div id="stats-container">
                     <!-- Stats will be dynamically added here -->
                 </div>
-                <button id="add-stat-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md w-full">Add Stat</button>
+                <button id="add-stat-btn" class="font-bold py-2 px-4 rounded-lg w-full bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 active:scale-95 transition-all duration-300">Add Stat</button>
             </div>
 
             <!-- Tags and Footer -->
-            <div class="mb-4 border-t border-gray-700 pt-4">
-                <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags (Comma-separated)</label>
-                <input type="text" id="tags" name="tags" placeholder="e.g., Fire, Spell, Evocation" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+            <div class="mb-4 border-t border-slate-800 pt-4">
+                <label for="tags" class="block text-sm font-medium text-slate-300 mb-1">Tags (Comma-separated)</label>
+                <input type="text" id="tags" name="tags" placeholder="e.g., Fire, Spell, Evocation" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
             </div>
 
             <div class="mb-4">
-                <label for="footer" class="block text-sm font-medium text-gray-300 mb-1">Footer Text (Optional)</label>
-                <input type="text" id="footer" name="footer" placeholder="e.g., Source: PHB" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="footer" class="block text-sm font-medium text-slate-300 mb-1">Footer Text (Optional)</label>
+                <input type="text" id="footer" name="footer" placeholder="e.g., Source: PHB" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
             </div>
 
             <!-- Card Format Options -->
-            <div class="mb-4 border-t border-gray-700 pt-4">
-                <h3 class="text-xl font-semibold mb-3 text-purple-300">Card Format Options</h3>
+            <div class="mb-4 border-t border-slate-800 pt-4">
+                <h3 class="text-xl font-semibold mb-3 text-pink-300">Card Format Options</h3>
                 <div class="flex space-x-6">
                     <label class="inline-flex items-center">
-                        <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-purple-600 rounded">
-                        <span class="ml-2 text-gray-300">Folded Card</span>
+                        <input type="checkbox" id="is-folded" name="isFolded" class="form-checkbox h-5 w-5 text-mauve-500 rounded transition-all duration-300">
+                        <span class="ml-2 text-slate-300">Folded Card</span>
                     </label>
                     <label class="inline-flex items-center">
-                        <input type="checkbox" id="is-scrolling" name="isScrolling" class="form-checkbox h-5 w-5 text-green-600 rounded">
-                        <span class="ml-2 text-gray-300">Scrolling Card (Single Page PDF)</span>
+                        <input type="checkbox" id="is-scrolling" name="isScrolling" class="form-checkbox h-5 w-5 text-rose-500 rounded transition-all duration-300">
+                        <span class="ml-2 text-slate-300">Scrolling Card (Single Page PDF)</span>
                     </label>
                 </div>
 
-                <div id="fold-content-options" class="mt-4 bg-gray-700 p-4 rounded-md hidden">
-                    <h4 class="text-lg font-semibold mb-2 text-purple-200">Back/Bottom Fold Content</h4>
+                <div id="fold-content-options" class="mt-4 bg-slate-800 p-4 rounded-lg hidden">
+                    <h4 class="text-lg font-semibold mb-2 text-pink-200">Back/Bottom Fold Content</h4>
                     <div class="mb-3">
-                        <label for="fold-content-type" class="block text-sm font-medium text-gray-300 mb-1">Content Type</label>
-                        <select id="fold-content-type" name="foldContentType" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500 focus:ring-purple-500 focus:border-purple-500">
+                        <label for="fold-content-type" class="block text-sm font-medium text-slate-300 mb-1">Content Type</label>
+                        <select id="fold-content-type" name="foldContentType" class="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                             <option value="text">Text</option>
                             <option value="imageUrl">Image URL</option>
                             <option value="qrCode">QR Code</option>
@@ -160,36 +206,36 @@
                     </div>
 
                     <div id="fold-text-input" class="mb-3">
-                        <label for="fold-content-text" class="block text-sm font-medium text-gray-300 mb-1">Text for Fold</label>
-                        <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Content for the back of the folded card."></textarea>
+                        <label for="fold-content-text" class="block text-sm font-medium text-slate-300 mb-1">Text for Fold</label>
+                        <textarea id="fold-content-text" name="foldContentText" rows="3" class="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 transition-all duration-300" placeholder="Content for the back of the folded card."></textarea>
                     </div>
                     <div id="fold-image-input" class="mb-3 hidden">
-                        <label for="fold-content-image-url" class="block text-sm font-medium text-gray-300 mb-1">Image URL or Icon Name for Fold</label>
-                        <input type="text" id="fold-content-image-url" name="foldContentImageUrl" list="icon-suggestions" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="e.g., swords or https://example.com/back_design.png">
+                        <label for="fold-content-image-url" class="block text-sm font-medium text-slate-300 mb-1">Image URL or Icon Name for Fold</label>
+                        <input type="text" id="fold-content-image-url" name="foldContentImageUrl" list="icon-suggestions" class="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 transition-all duration-300" placeholder="e.g., swords or https://example.com/back_design.png">
                     </div>
                     <div id="fold-qr-input" class="mb-3 hidden">
-                        <label for="fold-content-qr-data" class="block text-sm font-medium text-gray-300 mb-1">QR Code Data</label>
-                        <input type="text" id="fold-content-qr-data" name="foldContentQrCodeData" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="https://your-game-link.com">
+                        <label for="fold-content-qr-data" class="block text-sm font-medium text-slate-300 mb-1">QR Code Data</label>
+                        <input type="text" id="fold-content-qr-data" name="foldContentQrCodeData" class="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 transition-all duration-300" placeholder="https://your-game-link.com">
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Printer Settings & Preview -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6 w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold mb-4 text-purple-300">Printer Settings & Preview</h2>
+        <div class="bg-slate-900/[.6] backdrop-blur-sm border border-slate-800 p-6 rounded-xl shadow-xl mb-6 w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-pink-300">Printer Settings & Preview</h2>
 
             <div class="mb-4">
-                <label for="printer-type" class="block text-sm font-medium text-gray-300 mb-1">Select Printer Type</label>
-                <select type="text" id="printer-type" name="printerType" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="printer-type" class="block text-sm font-medium text-slate-300 mb-1">Select Printer Type</label>
+                <select type="text" id="printer-type" name="printerType" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                     <option value="thermal">Thermal Receipt Printer (Monochrome)</option>
                     <option value="color">Color Photo Printer (Kodak Zink / Fujifilm Instax)</option>
                 </select>
             </div>
 
             <div id="thermal-paper-size-container" class="mb-4">
-                <label for="thermal-paper-width" class="block text-sm font-medium text-gray-300 mb-1">Thermal Paper Width</label>
-                <select id="thermal-paper-width" name="thermalPaperWidth" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="thermal-paper-width" class="block text-sm font-medium text-slate-300 mb-1">Thermal Paper Width</label>
+                <select id="thermal-paper-width" name="thermalPaperWidth" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                     <option value="2in">2 inch (50.8mm)</option>
                     <option value="3in">3 inch (76.2mm)</option>
                     <option value="4in">4 inch (101.6mm)</option>
@@ -200,30 +246,30 @@
             </div>
 
             <div id="standard-size-container" class="mb-4">
-                <label for="standard-size" class="block text-sm font-medium text-gray-300 mb-1">Standard Size</label>
-                <select id="standard-size" name="standardSize" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="standard-size" class="block text-sm font-medium text-slate-300 mb-1">Standard Size</label>
+                <select id="standard-size" name="standardSize" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                     <!-- Options will be populated by JS based on paper width -->
                 </select>
             </div>
 
-            <div id="custom-size-container" class="hidden mb-4 p-4 bg-gray-700 rounded-md">
-                <h4 class="text-lg font-semibold mb-2 text-purple-200">Custom Card Dimensions</h4>
+            <div id="custom-size-container" class="hidden mb-4 p-4 bg-slate-800 rounded-lg">
+                <h4 class="text-lg font-semibold mb-2 text-pink-200">Custom Card Dimensions</h4>
                 <div class="flex space-x-4">
                     <div>
-                        <label for="custom-width" class="block text-sm font-medium text-gray-300 mb-1">Width (inches)</label>
-                        <input type="number" id="custom-width" name="customWidth" step="0.1" placeholder="e.g., 2.5" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                        <label for="custom-width" class="block text-sm font-medium text-slate-300 mb-1">Width (inches)</label>
+                        <input type="number" id="custom-width" name="customWidth" step="0.1" placeholder="e.g., 2.5" class="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 transition-all duration-300">
                     </div>
                     <div>
-                        <label for="custom-length" class="block text-sm font-medium text-gray-300 mb-1">Length (inches)</label>
-                        <input type="number" id="custom-length" name="customLength" step="0.1" placeholder="e.g., 4.0" class="w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                        <label for="custom-length" class="block text-sm font-medium text-slate-300 mb-1">Length (inches)</label>
+                        <input type="number" id="custom-length" name="customLength" step="0.1" placeholder="e.g., 4.0" class="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 transition-all duration-300">
                     </div>
                 </div>
-                <p class="text-xs text-gray-400 mt-2">Note: The card's printable area may be slightly smaller than the paper width.</p>
+                <p class="text-xs text-slate-400 mt-2">Note: The card's printable area may be slightly smaller than the paper width.</p>
             </div>
 
             <div id="thermal-dpi-container" class="mb-4">
-                <label for="thermal-dpi" class="block text-sm font-medium text-gray-300 mb-1">Thermal Printer DPI</label>
-                <select id="thermal-dpi" name="thermalDpi" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="thermal-dpi" class="block text-sm font-medium text-slate-300 mb-1">Thermal Printer DPI</label>
+                <select id="thermal-dpi" name="thermalDpi" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                     <option value="203">203 DPI (Standard)</option>
                     <option value="180">180 DPI</option>
                     <option value="200">200 DPI</option>
@@ -232,26 +278,26 @@
             </div>
 
             <div class="mb-4">
-                <label for="num-copies" class="block text-sm font-medium text-gray-300 mb-1">Number of Copies (1-10)</label>
-                <input type="number" id="num-copies" name="numCopies" min="1" max="10" value="1" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                <label for="num-copies" class="block text-sm font-medium text-slate-300 mb-1">Number of Copies (1-10)</label>
+                <input type="number" id="num-copies" name="numCopies" min="1" max="10" value="1" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
             </div>
 
             <div class="mb-4">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" id="include-corner-dots" name="includeCornerDots" class="form-checkbox h-5 w-5 text-purple-600 rounded" checked>
-                    <span class="ml-2 text-gray-300">Include Corner Dots (for PDF)</span>
+                    <input type="checkbox" id="include-corner-dots" name="includeCornerDots" class="form-checkbox h-5 w-5 text-mauve-500 rounded" checked>
+                    <span class="ml-2 text-slate-300">Include Corner Dots (for PDF)</span>
                 </label>
             </div>
 
             <!-- Card Preview Area -->
-            <div id="card-preview-container" class="p-4 rounded-lg shadow-lg border-2 overflow-hidden">
+            <div id="card-preview-container" class="p-4 rounded-xl shadow-lg border-2 overflow-hidden">
                 <h3 class="text-xl font-bold mb-2 text-center" id="preview-title">Card Preview (Monochrome)</h3>
-                <div id="card-front-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[150px] flex flex-col justify-between">
+                <div id="card-front-preview" class="relative mx-auto p-2 border border-dashed border-slate-400 rounded-lg min-h-[150px] flex flex-col justify-between">
                     <!-- Card front content will be rendered here -->
                 </div>
                 <div id="card-back-preview-container" class="mt-4 hidden">
                     <h3 class="text-xl font-bold mb-2 text-center">Folded Back Preview (Rotated 180°)</h3>
-                    <div id="card-back-preview" class="relative mx-auto p-2 border border-dashed border-gray-400 rounded-md min-h-[100px] flex flex-col justify-center items-center transform rotate-180">
+                    <div id="card-back-preview" class="relative mx-auto p-2 border border-dashed border-slate-400 rounded-lg min-h-[100px] flex flex-col justify-center items-center transform rotate-180">
                         <!-- Card back content will be rendered here -->
                     </div>
                 </div>
@@ -260,22 +306,22 @@
             <div class="mt-6 flex flex-col space-y-3">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="output-format" class="block text-sm font-medium text-gray-300 mb-1">Output Format</label>
-                        <select id="output-format" class="w-full p-2 rounded-md bg-gray-700 border border-gray-600 focus:ring-purple-500 focus:border-purple-500">
+                        <label for="output-format" class="block text-sm font-medium text-slate-300 mb-1">Output Format</label>
+                        <select id="output-format" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300">
                             <option value="pdf">PDF</option>
                             <option value="png">PNG</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Print/Export Scope</label>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Print/Export Scope</label>
                         <div class="flex items-center space-x-4 h-full">
                             <label class="inline-flex items-center">
-                                <input type="radio" name="printScope" value="current" checked class="form-radio h-4 w-4 text-purple-600">
-                                <span class="ml-2 text-gray-300">Current</span>
+                                <input type="radio" name="printScope" value="current" checked class="form-radio h-4 w-4 text-mauve-500">
+                                <span class="ml-2 text-slate-300">Current</span>
                             </label>
                             <label class="inline-flex items-center">
-                                <input type="radio" name="printScope" value="all" class="form-radio h-4 w-4 text-purple-600">
-                                <span class="ml-2 text-gray-300">All</span>
+                                <input type="radio" name="printScope" value="all" class="form-radio h-4 w-4 text-mauve-500">
+                                <span class="ml-2 text-slate-300">All</span>
                             </label>
                         </div>
                     </div>
@@ -285,69 +331,69 @@
                 <div id="output-actions-container" class="mt-4">
                     <!-- PDF Actions -->
                     <div id="pdf-actions" class="space-y-3">
-                        <button id="download-pdf-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download PDF</button>
-                        <button id="share-pdf-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share PDF</button>
+                        <button id="download-pdf-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Download PDF</button>
+                        <button id="share-pdf-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Share PDF</button>
                     </div>
                     <!-- PNG Actions -->
                     <div id="png-actions" class="hidden space-y-3">
-                        <button id="download-image-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Download Image</button>
-                        <button id="share-card-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Share Card</button>
+                        <button id="download-image-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Download Image</button>
+                        <button id="share-card-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Share Card</button>
                     </div>
                 </div>
 
-                <div class="border-t border-gray-700 pt-4 space-y-3">
-                    <button id="print-thermal-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-center">Print to Thermal Printer</button>
-                    <button id="print-color-photo-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 hidden">Print Color Photo Card</button>
-                    <button id="copy-bookmark-link-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Copy Bookmarkable Link</button>
-                    <button id="view-card-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Open Card in New Tab</button>
+                <div class="border-t border-slate-800 pt-4 space-y-3">
+                    <button id="print-thermal-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform text-center bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Print to Thermal Printer</button>
+                    <button id="print-color-photo-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform hidden bg-gradient-to-br from-mauve-500 to-pink-500 hover:brightness-110 active:scale-95 transition-all duration-300">Print Color Photo Card</button>
+                    <button id="copy-bookmark-link-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 active:scale-95 transition-all duration-300">Copy Bookmarkable Link</button>
+                    <button id="view-card-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 active:scale-95 transition-all duration-300">Open Card in New Tab</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Import Modal -->
-    <div id="import-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
-        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative">
-            <button id="close-import-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
-            <h2 id="import-modal-title" class="text-3xl font-bold mb-6 text-center text-purple-400">Import Card Data</h2>
+    <div id="import-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+        <div class="bg-slate-900/[.8] backdrop-blur-md border border-slate-700 p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative">
+            <button id="close-import-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl font-bold transition-all duration-300">&times;</button>
+            <h2 id="import-modal-title" class="text-3xl font-bold mb-6 text-center text-pink-400">Import Card Data</h2>
             <div class="space-y-6">
-                <!-- 5e.tools File Accordion -->
-                <div class="border-b border-gray-700">
-                    <button id="accordion-file-import-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200" aria-expanded="true" aria-controls="accordion-file-import-content">
-                        <span>Import from 5e.tools (.json file)</span>
-                        <i class="fas fa-chevron-down transition-transform duration-300 rotate-180" aria-hidden="true"></i>
+                <!-- RPG-Cards JSON File Import -->
+                <div class="border-b border-slate-800">
+                    <button id="accordion-file-import-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-pink-300 hover:text-pink-200 transition-all duration-300" aria-expanded="true" aria-controls="accordion-file-import-content">
+                        <span>Import from rpg-cards (.json file)</span>
+                        <i data-lucide="chevron-down" class="transition-transform duration-300 rotate-180" aria-hidden="true"></i>
                     </button>
                     <div id="accordion-file-import-content" class="pt-2 pb-4">
-                        <input type="file" id="rpg-cards-json-file" accept=".json,application/json,application/octet-stream,text/plain" class="w-full text-gray-300 bg-gray-900 rounded-lg p-3 border border-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 transition-colors">
+                        <input type="file" id="rpg-cards-json-file" accept=".json,application/json,application/octet-stream,text/plain" class="w-full text-slate-300 bg-slate-900 rounded-lg p-3 border border-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-br file:from-mauve-500 file:to-pink-500 file:text-white hover:file:brightness-110 file:transition-all file:duration-300 cursor-pointer">
                     </div>
                 </div>
 
                 <!-- 5e.tools Accordion -->
-                <div class="border-b border-gray-700">
-                    <button id="accordion-5e-tools-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200" aria-expanded="false" aria-controls="accordion-5e-tools-content">
+                <div class="border-b border-slate-800">
+                    <button id="accordion-5e-tools-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-pink-300 hover:text-pink-200 transition-all duration-300" aria-expanded="false" aria-controls="accordion-5e-tools-content">
                         <span>Paste JSON from 5e.tools</span>
-                        <i class="fas fa-chevron-down transition-transform duration-300" aria-hidden="true"></i>
+                        <i data-lucide="chevron-down" class="transition-transform duration-300" aria-hidden="true"></i>
                     </button>
                     <div id="accordion-5e-tools-content" class="hidden pt-2 pb-4">
-                        <textarea id="5e-tools-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste your 5e.tools JSON here..."></textarea>
-                        <p class="mt-2 text-xs text-gray-400">
+                        <textarea id="5e-tools-json-paste" rows="6" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300" placeholder="Paste your 5e.tools JSON here..."></textarea>
+                        <p class="mt-2 text-xs text-slate-400">
                             <strong>Expected format:</strong> A single JSON object for a creature or an array of creature objects. Typically includes keys like `name`, `hp`, `ac`, `trait`, `action`, etc.
-                            <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"name": "Goblin", "hp": {"average": 7, "formula": "2d6"}, ...}</code>
+                            <br>Example: <code class="text-xs bg-slate-700 p-1 rounded-lg">{"name": "Goblin", "hp": {"average": 7, "formula": "2d6"}, ...}</code>
                         </p>
                     </div>
                 </div>
 
                 <!-- Generic JSON Accordion -->
-                <div class="border-b border-gray-700">
-                    <button id="accordion-generic-json-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-purple-300 hover:text-purple-200" aria-expanded="false" aria-controls="accordion-generic-json-content">
+                <div class="border-b border-slate-800">
+                    <button id="accordion-generic-json-heading" type="button" class="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-pink-300 hover:text-pink-200 transition-all duration-300" aria-expanded="false" aria-controls="accordion-generic-json-content">
                         <span>Paste Generic Card JSON</span>
-                        <i class="fas fa-chevron-down transition-transform duration-300" aria-hidden="true"></i>
+                        <i data-lucide="chevron-down" class="transition-transform duration-300" aria-hidden="true"></i>
                     </button>
                     <div id="accordion-generic-json-content" class="hidden pt-2 pb-4">
-                        <textarea id="generic-json-paste" rows="6" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow" placeholder="Paste any other TTRPG card JSON here..."></textarea>
-                        <p class="mt-2 text-xs text-gray-400">
+                        <textarea id="generic-json-paste" rows="6" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300" placeholder="Paste any other TTRPG card JSON here..."></textarea>
+                        <p class="mt-2 text-xs text-slate-400">
                             <strong>Expected format:</strong> A JSON object (or array of objects) that matches the internal card structure. Key fields include `title`, `type`, `icon`, `color`, `tags`, `footer`, `stats` (as an object), and `sections` (as an array of objects with `heading`, `body`, `flavorText`).
-                            <br>Example: <code class="text-xs bg-gray-700 p-1 rounded">{"title": "Fireball", "type": "Spell", "sections": [{"heading": "Description", "body": "A fiery explosion..."}]}</code>
+                            <br>Example: <code class="text-xs bg-slate-700 p-1 rounded-lg">{"title": "Fireball", "type": "Spell", "sections": [{"heading": "Description", "body": "A fiery explosion..."}]}</code>
                         </p>
                     </div>
                 </div>
@@ -528,17 +574,18 @@
             }
         }
 
+
         function getP2eActionIcon(actions) {
             const actionMap = { '0': 'F', '1': '1A', '2': '2A', '3': '3A', 'R': 'R' };
             const actionText = actionMap[actions] || actions;
-            let bgColor = 'bg-gray-500';
-            if (actions === '1') bgColor = 'bg-blue-600';
-            if (actions === '2') bgColor = 'bg-yellow-600';
-            if (actions === '3') bgColor = 'bg-purple-600';
-            if (actions === 'R') bgColor = 'bg-red-600';
-            if (actions === '0') bgColor = 'bg-green-600';
+            let bgColor = 'bg-slate-500';
+            if (actions === '1') bgColor = 'bg-slate-600';
+            if (actions === '2') bgColor = 'bg-amber-600';
+            if (actions === '3') bgColor = 'bg-mauve-500';
+            if (actions === 'R') bgColor = 'bg-rose-500';
+            if (actions === '0') bgColor = 'bg-emerald-600';
 
-            return `<div class="flex items-center justify-center w-8 h-5 rounded text-white text-xs font-bold ${bgColor}">${actionText}</div>`;
+            return `<div class="flex items-center justify-center w-8 h-5 rounded-lg text-white text-xs font-bold ${bgColor}">${actionText}</div>`;
         }
 
         function renderStatBlock(stats, columns) {
@@ -766,16 +813,15 @@
 
             let iconHtml = '';
             if (card.icon) {
-                // New logic: First check the manifest for a local icon path
                 if (iconManifest[card.icon]) {
                     const iconPath = iconManifest[card.icon];
                     iconHtml = `<img src="${iconPath}" alt="${sanitizeHTML(card.icon)}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    // Fallback to URL if it's a valid URL
                     iconHtml = `<img src="${sanitizeHTML(card.icon)}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
                 } else {
-                    // Finally, assume it's a Font Awesome class name
-                    iconHtml = `<i class="fa-solid fa-${sanitizeHTML(card.icon)} card-icon-fa" style="position: absolute; top: 0.125in; right: 0.125in; font-size: 0.25in; width: 0.25in; height: 0.25in;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
+                    // Fallback to lucide icon
+                    const iconName = sanitizeHTML(card.icon);
+                    iconHtml = `<i data-lucide="${iconName}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; stroke-width: 1.5;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
                 }
             }
 
@@ -907,6 +953,7 @@
             } else {
                 cardBackPreviewContainer.classList.add('hidden');
             }
+            lucide.createIcons();
         }
 
         // Functions for toggling UI elements based on state
@@ -2584,15 +2631,10 @@
         }
 
         async function generatePdfDocument(cards, foldOverride = null) {
-            // This function generates a PDF document from a list of cards.
-            // It has two main logic paths:
-            // 1. TEXT-BASED (if !isScrolling): Creates a PDF with selectable text and vector shapes. This is higher quality and preferred.
-            // 2. IMAGE-BASED (if isScrolling or for legacy thermal): Renders card HTML to a canvas, then places the resulting image into a PDF. This is used for scrolling cards or as a fallback.
             const { jsPDF } = window.jspdf;
             let doc;
 
-            // --- TEXT-BASED PDF LOGIC ---
-            // This path is used for standard, high-quality PDF generation.
+            // --- TEXT-BASED PDF LOGIC (High Quality) ---
             if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
                 const { cardWidth, cardHeight } = getCardDimensionsInInches();
                 const pdfWidthMm = cardWidth * 25.4;
@@ -2602,38 +2644,32 @@
 
                 for (let i = 0; i < cards.length; i++) {
                     const card = cards[i];
-
-                    if (i > 0) {
-                        doc.addPage();
-                    }
+                    if (i > 0) doc.addPage();
 
                     const pageNumBefore = doc.internal.getNumberOfPages();
                     await generatePdfWithText(doc, card);
                     const pageNumAfter = doc.internal.getNumberOfPages();
-                    const contentPagesForThisCard = pageNumAfter - pageNumBefore;
+                    const pagesAdded = pageNumAfter - pageNumBefore;
 
                     if (appState.includeCornerDots) {
-                        for(let p=pageNumBefore + 1; p<=pageNumAfter; p++) {
-                            doc.setPage(p);
+                        for (let p = pageNumBefore; p < pageNumAfter; p++) {
+                            doc.setPage(p + 1);
                             addCornerDots(doc, pdfWidthMm, pdfHeightMm);
                         }
                     }
 
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
-                        // This logic ensures the total page count for a duplex-printed card is even.
-                        // If the content pages are an odd number, a blank page is inserted before the back page.
-                        // The logic `(contentPagesForThisCard + 1) % 2 === 0` is functionally equivalent to
-                        // `contentPagesForThisCard % 2 !== 0` (is the number of content pages odd?).
-                        const numContentPages = contentPagesForThisCard + 1;
-                        if (numContentPages % 2 === 0) {
-                            doc.addPage(); // Add a blank page to ensure the back prints correctly.
+                        // If the number of pages added for the front content is odd,
+                        // we add a blank page to ensure the back prints on the correct side.
+                        if (pagesAdded % 2 !== 0) {
+                            doc.addPage(); // Add blank page for duplex alignment
                         }
-
-                        doc.addPage(); // Add the final page for the back content.
+                        doc.addPage();
                         const backPageNum = doc.internal.getNumberOfPages();
                         doc.setPage(backPageNum);
 
+                        // ... (rest of the back page generation logic is the same)
                         if (card.foldContent.type === 'backgroundImageUrl' && card.foldContent.imageUrl) {
                             try {
                                 const img = await loadImage(card.foldContent.imageUrl);
@@ -2642,19 +2678,18 @@
                                 canvas.width = img.naturalWidth;
                                 canvas.height = img.naturalHeight;
                                 ctx.translate(canvas.width / 2, canvas.height / 2);
-                                ctx.rotate(Math.PI); // 180 degrees
+                                ctx.rotate(Math.PI);
                                 ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
                                 const dataUrl = canvas.toDataURL('image/png');
                                 doc.addImage(dataUrl, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
                             } catch (e) {
-                                console.error("Could not load background image for PDF:", e);
                                 doc.text('BG Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                             }
                         } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                             doc.setFontSize(10).setFont(undefined, 'normal');
                             doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
-                            let finalImageUrl = null;
+                             let finalImageUrl = null;
                             if (card.foldContent.type === 'qrCode') {
                                 const qrSize = toPx(QR_CODE_SIZE_IN, appState.thermalDpi);
                                 finalImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
@@ -2674,18 +2709,14 @@
                                     canvas.width = img.naturalWidth;
                                     canvas.height = img.naturalHeight;
                                     ctx.translate(canvas.width / 2, canvas.height / 2);
-                                    ctx.rotate(Math.PI); // 180 degrees
+                                    ctx.rotate(Math.PI);
                                     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
                                     const dataUrl = canvas.toDataURL('image/png');
                                     const imgProps = doc.getImageProperties(dataUrl);
-
-                                    // Scale image to fit width, maintaining aspect ratio, and center it
                                     const imgHeightMm = (imgProps.height * pdfWidthMm) / imgProps.width;
                                     const y = (pdfHeightMm - imgHeightMm) / 2;
                                     doc.addImage(dataUrl, 'PNG', 0, y, pdfWidthMm, imgHeightMm);
-
                                 } catch (e) {
-                                    console.error("Could not load image for card back:", e);
                                     doc.text('Image could not be loaded.', pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                                 }
                             }
@@ -2696,10 +2727,8 @@
                 return doc;
             }
 
-            // --- IMAGE-BASED PDF LOGIC (Scrolling and Fallback) ---
+            // --- IMAGE-BASED PDF LOGIC (Scrolling or PNG Output) ---
             if (appState.isScrolling) {
-                // This path handles the "Scrolling Card" option. It renders all cards into a single
-                // long HTML block, converts it to one canvas, and puts that canvas onto a single PDF page.
                 let fullHtml = '<div>';
                 for (const card of cards) {
                     if (!card) continue;
@@ -2727,60 +2756,61 @@
 
                 doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
                 doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-            } else {
+
+            } else { // Refactored logic for non-scrolling image-based PDF
                 let isFirstPage = true;
-                const pageArrays = await Promise.all(cards.filter(card => card).map(card => splitCardIntoPages(card)));
-                const allFrontPages = pageArrays.flat();
 
-                for (const page of allFrontPages) {
-                    const canvases = await generateCardCanvas(page, false);
-                    let firstCanvas = canvases[0];
-                    if (!firstCanvas) continue;
+                for (const card of cards) {
+                    if (!card) continue;
 
-                    const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
-                    const physicalWidthInches = pdfWidthMm / 25.4;
-                    firstCanvas = await downsampleCanvas(firstCanvas, appState.thermalDpi, physicalWidthInches);
-                    const cardWidth = firstCanvas.width;
-                    const cardHeight = firstCanvas.height;
-                    const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
+                    const frontPages = await splitCardIntoPages(card);
 
-                    if (isFirstPage) {
-                        doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
-                        isFirstPage = false;
-                    } else {
-                        doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
+                    for (const page of frontPages) {
+                        const [frontCanvas] = await generateCardCanvas(page, false);
+                        if (!frontCanvas) continue;
+
+                        const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
+                        const physicalWidthInches = pdfWidthMm / 25.4;
+                        const downsampled = await downsampleCanvas(frontCanvas, appState.thermalDpi, physicalWidthInches);
+                        const cardWidth = downsampled.width;
+                        const cardHeight = downsampled.height;
+                        const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
+
+                        if (isFirstPage) {
+                            doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
+                            isFirstPage = false;
+                        } else {
+                            doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
+                        }
+                        doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
+                        if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeight);
                     }
-                    doc.addImage(firstCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-                    if (appState.includeCornerDots) {
-                        addCornerDots(doc, pdfWidthMm, pdfHeight);
-                    }
-                }
 
-                const foldedCardsWithBacks = cards.filter(card => {
-                    if (!card) return false;
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
-                    return shouldPrintBack && hasBackContent;
-                });
 
-                for (const card of foldedCardsWithBacks) {
-                    let backCanvas = await generateBackCanvas(card);
-                    if (!backCanvas) continue;
-                    const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
-                    const physicalWidthInches = pdfWidthMm / 25.4;
-                    backCanvas = await downsampleCanvas(backCanvas, appState.thermalDpi, physicalWidthInches);
-                    const cardWidth = backCanvas.width;
-                    const cardHeight = backCanvas.height;
-                    const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
+                    if (shouldPrintBack && hasBackContent) {
+                        if (frontPages.length % 2 !== 0) {
+                            const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
+                            const physicalWidthInches = pdfWidthMm / 25.4;
+                            const { cardHeight } = getCardDimensionsInInches();
+                            const pdfHeight = cardHeight * 25.4;
+                            doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
+                        }
 
-                    if (!doc) {
-                        doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
-                    } else {
+                        const backCanvas = await generateBackCanvas(card);
+                        if (!backCanvas) continue;
+
+                        const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
+                        const physicalWidthInches = pdfWidthMm / 25.4;
+                        const downsampled = await downsampleCanvas(backCanvas, appState.thermalDpi, physicalWidthInches);
+                        const cardWidth = downsampled.width;
+                        const cardHeight = downsampled.height;
+                        const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
+
                         doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
-                    }
-                    doc.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-                    if (appState.includeCornerDots) {
-                        addCornerDots(doc, pdfWidthMm, pdfHeight);
+                        doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
+                        if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeight);
                     }
                 }
             }
@@ -3090,6 +3120,9 @@
                 await initGeneratorView();
             }
         });
+    </script>
+    <script>
+        lucide.createIcons();
     </script>
 </body>
 </html>

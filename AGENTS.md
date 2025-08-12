@@ -145,7 +145,7 @@ The application supports two primary methods for generating PDF content:
 * **Logical Size**: The ideal, intended dimensions of the card (e.g., a "Bridge" card is 2.25" wide by 3.5" long). The logical width is critical for determining the layout, text wrapping, and element flow of the card's content.
 * **Printable Area Width**: A user-configurable setting based on the specific printer and paper combination. This is the maximum physical width that the printer can mark (e.g., 47mm on 58mm paper). This value dictates the final width of the PDF page itself.
 * **Content Length**: Because the printer may use a continuous roll, the "page" length is variable. It is determined dynamically by the amount of content rendered within the logical width. Alternativly it may use pre-cut labels which we need to fit into.
-  * If content is too wide for the alloted size, we can reduce font size up to 25% to fit onto a single line or we will need to break the line into multiple lines.
+  * If content is too wide for the alloted size, we can reduce font size up to 25% to fit onto a single line or we will need to break the line into multiple lines. Alternatively, for components with multiple internal elements (e.g., the `dndstats` block), reducing the horizontal margins or padding between these elements is an effective strategy to decrease the component's overall width.
 * 'Cards' can be either paginated, or continous roll.
   * Paginated strictly honor the card size selection
    * Paginated cards may have an optional back which is an image, text or QR code. When this is in use, it shall always be on an even page with a blank page added just prior if needed to ensure even page placement.

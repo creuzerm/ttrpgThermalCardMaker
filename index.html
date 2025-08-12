@@ -538,6 +538,18 @@
             return sanitizer.innerHTML;
         }
 
+        function convertHtmlFormattingToMarkdown(text) {
+            if (!text) return '';
+            let convertedText = text;
+            // Convert bold tags to markdown
+            convertedText = convertedText.replace(/<b>(.*?)<\/b>/gi, '**$1**');
+            convertedText = convertedText.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+            // Convert italic tags to markdown
+            convertedText = convertedText.replace(/<i>(.*?)<\/i>/gi, '*$1*');
+            convertedText = convertedText.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+            return convertedText;
+        }
+
         function formatText(text) {
             if (!text) return '';
             let formattedText = text;
@@ -832,11 +844,11 @@
                     <h1 class="text-2xl font-extrabold text-center mb-1 leading-tight">${sanitizeHTML(card.title || '')}</h1>
                     ${card.type ?
                         (typeof card.type === 'object' ?
-                            `<div class="flex justify-between items-baseline text-lg">
-                                <span>${sanitizeHTML(card.type.text || '')}</span>
-                                <span class="text-sm font-light">${sanitizeHTML(card.type.aside || '')}</span>
+                            `<div class="flex justify-between items-baseline text-lg card-content">
+                                <span>${formatText(card.type.text || '')}</span>
+                                <span class="text-sm font-light">${formatText(card.type.aside || '')}</span>
                             </div>` :
-                            `<p class="text-lg text-center">${sanitizeHTML(card.type)}</p>`
+                            `<p class="text-lg text-center card-content">${formatText(card.type)}</p>`
                         )
                     : ''}
                 </div>
@@ -859,7 +871,7 @@
                             case 'fill':
                                 return `<div style="flex-grow: ${section.weight || 1};"></div>`;
                             case 'property':
-                                return `<div class="text-sm"><strong class="font-semibold">${sanitizeHTML(section.key)}:</strong> ${sanitizeHTML(section.value)}</div>`;
+                                return `<div class="text-sm card-content"><strong class="font-semibold">${sanitizeHTML(section.key)}:</strong> ${formatText(section.value)}</div>`;
                             case 'dndstats':
                                 const statsHtml = Object.entries(section.stats)
                                     .map(([k, v]) => `<div class="flex flex-col items-center mx-2">
@@ -1272,12 +1284,18 @@
                     color: '#ffffff',
                     tags: [],
                     sections: [{ heading: 'Description', body: '', flavorText: '' }],
-                    cost: '', rarity: '', abilities: [], image: '', stats: {}, footer: 'TCG.BagsOfFolding.com',
-                    isFolded: false, foldContent: { type: 'text', text: '', imageUrl: '', qrCodeData: '' }
+                    cost: '',
+                    rarity: '',
+                    abilities: [],
+                    image: '',
+                    stats: {},
+                    footer: 'TCG.BagsOfFolding.com',
+                    isFolded: false,
+                    foldContent: { type: 'text', text: '', imageUrl: '', qrCodeData: '' }
                 };
 
                 if (type === 'rpg-cards') {
-                    newCard.title = data.title || newCard.title;
+                    newCard.title = data.title ? convertHtmlFormattingToMarkdown(data.title) : newCard.title;
                     newCard.color = data.color || newCard.color;
                     newCard.icon = data.icon || '';
                     newCard.tags = (data.tags && Array.isArray(data.tags)) ? data.tags : [];
@@ -1305,8 +1323,8 @@
                                 pushCurrentSection();
                                 const parts = line.substring('subtitle | '.length).split(' | ');
                                 newCard.type = {
-                                    text: parts[0] ? parts[0].trim() : '',
-                                    aside: parts[1] ? parts[1].trim() : ''
+                                    text: parts[0] ? convertHtmlFormattingToMarkdown(parts[0].trim()) : '',
+                                    aside: parts[1] ? convertHtmlFormattingToMarkdown(parts[1].trim()) : ''
                                 };
                             } else if (line.startsWith('rule')) {
                                 pushCurrentSection();
@@ -1316,10 +1334,10 @@
                                 const parts = line.substring('fill | '.length).split(' | ');
                                 newCard.sections.push({ type: 'fill', weight: parseInt(parts[0], 10) || 1 });
                             } else if (line.startsWith('text | ')) {
-                                const textGroup = [line.substring('text | '.length).trim()];
+                                const textGroup = [convertHtmlFormattingToMarkdown(line.substring('text | '.length).trim())];
                                 while (i + 1 < data.contents.length && data.contents[i + 1].startsWith('text | ')) {
                                     i++;
-                                    textGroup.push(data.contents[i].substring('text | '.length).trim());
+                                    textGroup.push(convertHtmlFormattingToMarkdown(data.contents[i].substring('text | '.length).trim()));
                                 }
 
                                 const processedText = processTextGroup(textGroup);
@@ -1332,7 +1350,7 @@
                                 pushCurrentSection();
                                 const parts = line.substring('property | '.length).split(' | ');
                                 if (parts.length >= 2) {
-                                    newCard.sections.push({ type: 'property', key: parts[0].trim(), value: parts[1].trim() });
+                                    newCard.sections.push({ type: 'property', key: parts[0].trim(), value: convertHtmlFormattingToMarkdown(parts[1].trim()) });
                                 }
                             } else if (line.startsWith('dndstats | ')) {
                                 pushCurrentSection();
@@ -1350,12 +1368,12 @@
                                 const parts = line.substring('description | '.length).split(' | ').map(p => p.trim());
                                 currentSection = {
                                     type: 'content',
-                                    heading: parts.length >= 2 ? parts[0] : '',
-                                    body: parts.length >= 2 ? parts[1] : parts[0],
+                                    heading: parts.length >= 2 ? convertHtmlFormattingToMarkdown(parts[0]) : '',
+                                    body: parts.length >= 2 ? convertHtmlFormattingToMarkdown(parts[1]) : convertHtmlFormattingToMarkdown(parts[0]),
                                     flavorText: ''
                                 };
                             } else if (line.startsWith('bullet | ')) {
-                                const bulletText = '• ' + line.substring('bullet | '.length).trim();
+                                const bulletText = '• ' + convertHtmlFormattingToMarkdown(line.substring('bullet | '.length).trim());
                                 if (currentSection.body) {
                                     currentSection.body += '\n' + bulletText;
                                 } else {
@@ -1397,9 +1415,9 @@
                                 const p = line.substring('p2e_activity | '.length).split(' | ').map(s => s.trim());
                                 newCard.sections.push({
                                     type: 'p2e_activity',
-                                    name: p[0] || '',
+                                    name: p[0] ? convertHtmlFormattingToMarkdown(p[0]) : '',
                                     actions: p[1] || '',
-                                    description: p[2] || ''
+                                    description: p[2] ? convertHtmlFormattingToMarkdown(p[2]) : ''
                                 });
                             } else if (line.startsWith('p2e_start_trait_section')) {
                                 pushCurrentSection();
@@ -1416,14 +1434,14 @@
                                     const parts = line.substring('p2e_trait | '.length).split(' | ');
                                     currentTraitSection.traits.push({
                                         rarity: parts[0] ? parts[0].trim().toLowerCase() : 'common',
-                                        text: parts[1] ? parts[1].trim() : ''
+                                        text: parts[1] ? convertHtmlFormattingToMarkdown(parts[1].trim()) : ''
                                     });
                                 }
                             } else if (line.startsWith('section | ')) {
                                 pushCurrentSection();
                                 const parts = line.substring('section | '.length).split(' | ');
-                                currentSection.heading = parts[0] ? parts[0].trim() : '';
-                                currentSection.headingAside = parts[1] ? parts[1].trim() : '';
+                                currentSection.heading = parts[0] ? convertHtmlFormattingToMarkdown(parts[0].trim()) : '';
+                                currentSection.headingAside = parts[1] ? convertHtmlFormattingToMarkdown(parts[1].trim()) : '';
                             } else if (line.startsWith('boxes | ')) {
                                 pushCurrentSection();
                                 const parts = line.substring('boxes | '.length).split(' | ');
@@ -1431,7 +1449,7 @@
                                     type: 'boxes',
                                     count: parts[0] ? parseInt(parts[0].trim(), 10) : 1,
                                     size: parts[1] ? parseFloat(parts[1].trim()) : 1.0,
-                                    text: parts[2] ? parts[2].trim() : ''
+                                    text: parts[2] ? convertHtmlFormattingToMarkdown(parts[2].trim()) : ''
                                 });
                             }
                         }
@@ -1442,10 +1460,14 @@
                         newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });
                     }
 
-                    newCard.footer = data.footer || newCard.footer;
+                    newCard.footer = data.footer ? convertHtmlFormattingToMarkdown(data.footer) : newCard.footer;
 
                     newCard.isFolded = typeof data.isFolded === 'boolean' ? data.isFolded : false;
                     newCard.foldContent = (data.foldContent && typeof data.foldContent === 'object') ? data.foldContent : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
+                    if (newCard.foldContent.type === 'text') {
+                        newCard.foldContent.text = convertHtmlFormattingToMarkdown(newCard.foldContent.text);
+                    }
+
 
                     if (data.background_image) {
                         newCard.isFolded = true;
@@ -1462,8 +1484,8 @@
                     }
 
                 } else if (type === '5e-tools') {
-                    newCard.title = data.name || newCard.title;
-                    newCard.type = data.type || newCard.type;
+                    newCard.title = data.name ? convertHtmlFormattingToMarkdown(data.name) : newCard.title;
+                    newCard.type = data.type ? convertHtmlFormattingToMarkdown(data.type) : newCard.type;
                     newCard.rarity = data.rarity || newCard.rarity;
                     newCard.cost = data.cost || newCard.cost;
 
@@ -1481,26 +1503,37 @@
                     const newSections = [];
                     if (data.trait) {
                         data.trait.forEach(t => {
-                            newSections.push({ heading: t.name, body: t.entries.join('\n'), flavorText: '' });
+                            newSections.push({ heading: convertHtmlFormattingToMarkdown(t.name), body: t.entries.map(e => convertHtmlFormattingToMarkdown(e)).join('\n'), flavorText: '' });
                         });
                     }
                     if (data.action) {
                         data.action.forEach(a => {
-                            newSections.push({ heading: a.name, body: a.entries.join('\n'), flavorText: '' });
+                            newSections.push({ heading: convertHtmlFormattingToMarkdown(a.name), body: a.entries.map(e => convertHtmlFormattingToMarkdown(e)).join('\n'), flavorText: '' });
                         });
                     }
                     if (data.description) {
-                        newSections.push({ heading: 'Description', body: data.description.entries.join('\n'), flavorText: '' });
+                        newSections.push({ heading: 'Description', body: data.description.entries.map(e => convertHtmlFormattingToMarkdown(e)).join('\n'), flavorText: '' });
                     }
                     newCard.sections = newSections;
                     newCard.numCopies = 1;
                 } else { // Generic JSON
                     Object.assign(newCard, data); // Merge data into newCard
+                    newCard.title = convertHtmlFormattingToMarkdown(newCard.title);
+                    newCard.type = convertHtmlFormattingToMarkdown(newCard.type);
+                    newCard.footer = convertHtmlFormattingToMarkdown(newCard.footer);
                     newCard.tags = (newCard.tags && Array.isArray(newCard.tags)) ? newCard.tags : [];
-                    newCard.sections = (newCard.sections && Array.isArray(newCard.sections)) ? newCard.sections : [];
+                    newCard.sections = (newCard.sections && Array.isArray(newCard.sections)) ? newCard.sections.map(s => ({
+                        ...s,
+                        heading: convertHtmlFormattingToMarkdown(s.heading),
+                        body: convertHtmlFormattingToMarkdown(s.body),
+                        flavorText: convertHtmlFormattingToMarkdown(s.flavorText),
+                    })) : [];
                     newCard.stats = (newCard.stats && typeof newCard.stats === 'object') ? newCard.stats : {};
                     newCard.isFolded = typeof newCard.isFolded === 'boolean' ? newCard.isFolded : false;
                     newCard.foldContent = (newCard.foldContent && typeof newCard.foldContent === 'object') ? newCard.foldContent : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
+                    if (newCard.foldContent.type === 'text') {
+                        newCard.foldContent.text = convertHtmlFormattingToMarkdown(newCard.foldContent.text);
+                    }
 
                     newCard.numCopies = data.numCopies ? parseInt(data.numCopies, 10) : 1;
                     if (isNaN(newCard.numCopies) || newCard.numCopies < 1 || newCard.numCopies > 10) {

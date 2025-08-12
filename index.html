@@ -790,7 +790,7 @@
             const field = event.target.dataset.field;
             const subfield = event.target.dataset.subfield;
             const subIndex = event.target.dataset.subIndex ? parseInt(event.target.dataset.subIndex, 10) : -1;
-            const value = event.target.type === 'number' ? parseFloat(event.target.value) : event.target.value;
+            const value = event.target.type === 'number' ? (event.target.value === '' ? null : parseFloat(event.target.value)) : event.target.value;
 
             const section = appState.cards[appState.currentCardIndex].sections[index];
 

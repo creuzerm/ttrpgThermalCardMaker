@@ -619,105 +619,163 @@
             sectionsContainer.innerHTML = '';
             const sectionsToRender = Array.isArray(currentCard.sections) ? currentCard.sections : [];
 
+            const inputBaseClasses = "w-full p-2 rounded-md bg-gray-600 border border-gray-500 section-input";
+            const labelBaseClasses = "block text-sm font-medium text-gray-300 mb-1";
+
             sectionsToRender.forEach((section, index) => {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'bg-gray-700 p-4 rounded-md mb-3 relative';
+                let contentHtml = `<button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>`;
 
-                if (section.type === 'rule') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">--- Horizontal Rule ---</div>
-                    `;
-                } else if (section.type === 'fill') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">Fill Element (weight: ${section.weight || 1})</div>
-                    `;
-                } else if (section.type === 'property') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-sm text-gray-300"><strong class="font-semibold">${section.key}:</strong> ${section.value}</div>
-                    `;
-                } else if (section.type === 'dndstats') {
-                    const statsHtml = Object.entries(section.stats).map(([k, v]) => `<strong>${k}</strong> ${v}`).join(' | ');
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">D&D Stats: ${statsHtml}</div>
-                    `;
-                } else if (section.type === 'picture') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">
-                            <img src="${sanitizeHTML(section.url)}" style="max-height: ${section.height}px; margin: auto; border-radius: 4px;" alt="Card Picture" onerror="this.src='https://placehold.co/100x50/000/FFF?text=Image'; this.style.border='1px dashed #555';">
-                            <p class="text-xs mt-1">Picture Element</p>
-                        </div>
-                    `;
-                } else if (section.type === 'boxes') {
-                    let boxesHtml = '';
-                    const boxCount = section.count || 1;
-                    const boxSize = section.size || 1.0;
-                    for (let i = 0; i < boxCount; i++) {
-                        boxesHtml += `<input type="checkbox" style="width: ${boxSize}em; height: ${boxSize}em;" class="mx-1" disabled>`;
-                    }
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">
-                            ${section.text ? `<p class="text-sm mb-1">${sanitizeHTML(section.text)}</p>` : ''}
-                            <div>${boxesHtml}</div>
-                            <p class="text-xs mt-1">Boxes Element</p>
-                        </div>
-                    `;
-                } else if (section.type === 'ruler') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">--- Thin Rule ---</div>
-                    `;
-                } else if (section.type === 'swstats') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">Savage Worlds Stat Block</div>
-                    `;
-                } else if (section.type === 'p2e_stats') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-center text-gray-400">Pathfinder 2e Stat Block</div>
-                    `;
-                } else if (section.type === 'p2e_activity') {
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-gray-400">
-                            <p><strong>Activity:</strong> ${sanitizeHTML(section.name)} (${sanitizeHTML(section.actions)})</p>
-                            <p class="text-xs">${sanitizeHTML(section.description)}</p>
-                        </div>
-                    `;
-                } else if (section.type === 'p2e_traits') {
-                    const traitsPreview = section.traits.map(t => t.text).join(', ');
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="text-gray-400 text-sm"><strong>Traits:</strong> ${sanitizeHTML(traitsPreview)}</div>
-                    `;
-                }
-                else { // Default to content section
-                    sectionDiv.innerHTML = `
-                        <button data-index="${index}" class="remove-section-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-full">X</button>
-                        <div class="grid grid-cols-2 gap-x-2 mb-2">
+                switch (section.type) {
+                    case 'rule':
+                        contentHtml += `<div class="text-center text-gray-400">--- Horizontal Rule ---</div>`;
+                        break;
+                    case 'ruler':
+                        contentHtml += `<div class="text-center text-gray-400">--- Thin Rule ---</div>`;
+                        break;
+                    case 'fill':
+                        contentHtml += `<div class="text-center text-gray-400">Fill Element (weight: ${section.weight || 1})</div>`;
+                        break;
+                    case 'property':
+                        contentHtml += `
+                            <p class="text-base font-semibold text-gray-300 mb-2">Property</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="prop-key-${index}" class="${labelBaseClasses}">Key</label>
+                                    <input type="text" id="prop-key-${index}" data-index="${index}" data-field="key" value="${section.key || ''}" class="${inputBaseClasses}">
+                                </div>
+                                <div>
+                                    <label for="prop-value-${index}" class="${labelBaseClasses}">Value</label>
+                                    <input type="text" id="prop-value-${index}" data-index="${index}" data-field="value" value="${section.value || ''}" class="${inputBaseClasses}">
+                                </div>
+                            </div>
+                        break;
+                    case 'dndstats':
+                        const dndStatKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+                        contentHtml += `<p class="text-base font-semibold text-gray-300 mb-2">D&D Stats</p><div class="grid grid-cols-3 gap-2">`;
+                        dndStatKeys.forEach(key => {
+                            contentHtml += `
+                                <div>
+                                    <label class="${labelBaseClasses}">${key}</label>
+                                    <input type="text" data-index="${index}" data-field="stats" data-subfield="${key}" value="${(section.stats && section.stats[key]) || ''}" class="${inputBaseClasses}">
+                                </div>`;
+                        });
+                        contentHtml += `</div>`;
+                        break;
+                    case 'picture':
+                        contentHtml += `
+                            <p class="text-base font-semibold text-gray-300 mb-2">Picture</p>
+                            <div class="grid grid-cols-1 gap-2">
+                                <div>
+                                    <label class="${labelBaseClasses}">Image URL</label>
+                                    <input type="text" data-index="${index}" data-field="url" value="${section.url || ''}" class="${inputBaseClasses}">
+                                </div>
+                                <div>
+                                    <label class="${labelBaseClasses}">Height (px)</label>
+                                    <input type="number" data-index="${index}" data-field="height" value="${section.height ?? 50}" class="${inputBaseClasses}">
+                                </div>
+                            </div>`;
+                        break;
+                    case 'boxes':
+                         contentHtml += `
+                            <p class="text-base font-semibold text-gray-300 mb-2">Boxes</p>
                             <div>
-                                <label for="section-heading-${index}" class="block text-sm font-medium text-gray-300 mb-1">Heading</label>
-                                <input type="text" id="section-heading-${index}" data-field="heading" data-index="${index}" value="${section.heading || ''}" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                                <label class="${labelBaseClasses}">Label Text</label>
+                                <input type="text" data-index="${index}" data-field="text" value="${section.text || ''}" class="${inputBaseClasses} mb-2">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="${labelBaseClasses}">Count</label>
+                                    <input type="number" data-index="${index}" data-field="count" value="${section.count || 1}" class="${inputBaseClasses}">
+                                </div>
+                                <div>
+                                    <label class="${labelBaseClasses}">Size (em)</label>
+                                    <input type="number" step="0.1" data-index="${index}" data-field="size" value="${section.size || 1.0}" class="${inputBaseClasses}">
+                                </div>
+                            </div>`;
+                        break;
+                     case 'swstats':
+                        const swStatKeys = ['agility', 'smarts', 'spirit', 'strength', 'vigor', 'pace', 'parry', 'toughness', 'loot'];
+                        contentHtml += `<p class="text-base font-semibold text-gray-300 mb-2">Savage Worlds Stats</p><div class="grid grid-cols-3 gap-2">`;
+                        swStatKeys.forEach(key => {
+                            contentHtml += `
+                                <div>
+                                    <label class="${labelBaseClasses}">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                                    <input type="text" data-index="${index}" data-field="stats" data-subfield="${key}" value="${section.stats[key] || ''}" class="${inputBaseClasses}">
+                                </div>`;
+                        });
+                        contentHtml += `</div>`;
+                        break;
+                    case 'p2e_stats':
+                        const p2eStatKeys = ['str', 'dex', 'con', 'int', 'wis', 'cha', 'ac', 'fort', 'ref', 'will', 'hp'];
+                        contentHtml += `<p class="text-base font-semibold text-gray-300 mb-2">Pathfinder 2e Stats</p><div class="grid grid-cols-3 gap-2">`;
+                        p2eStatKeys.forEach(key => {
+                             contentHtml += `
+                                <div>
+                                    <label class="${labelBaseClasses}">${key.toUpperCase()}</label>
+                                    <input type="text" data-index="${index}" data-field="stats" data-subfield="${key}" value="${section.stats[key] || ''}" class="${inputBaseClasses}">
+                                </div>`;
+                        });
+                        contentHtml += `</div>`;
+                        break;
+                    case 'p2e_activity':
+                        contentHtml += `
+                            <p class="text-base font-semibold text-gray-300 mb-2">Pathfinder 2e Activity</p>
+                            <div>
+                                <label class="${labelBaseClasses}">Name</label>
+                                <input type="text" data-index="${index}" data-field="name" value="${section.name || ''}" class="${inputBaseClasses} mb-2">
                             </div>
                             <div>
-                                <label for="section-heading-aside-${index}" class="block text-sm font-medium text-gray-300 mb-1">Heading Aside</label>
-                                <input type="text" id="section-heading-aside-${index}" data-field="headingAside" data-index="${index}" value="${section.headingAside || ''}" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500">
+                                <label class="${labelBaseClasses}">Actions</label>
+                                <input type="text" data-index="${index}" data-field="actions" value="${section.actions || ''}" class="${inputBaseClasses} mb-2">
                             </div>
-                        </div>
-                        <label for="section-body-${index}" class="block text-sm font-medium text-gray-300 mb-1">Body Text (Markdown-like)</label>
-                        <textarea id="section-body-${index}" data-field="body" data-index="${index}" rows="4" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500 mb-2" placeholder="Use **bold**, *italic*, and newlines.">${section.body || ''}</textarea>
-                        <label for="section-flavorText-${index}" class="block text-sm font-medium text-gray-300 mb-1">Flavor Text (Optional)</label>
-                        <textarea id="section-flavorText-${index}" data-field="flavorText" data-index="${index}" rows="2" class="section-input w-full p-2 rounded-md bg-gray-600 border border-gray-500" placeholder="Optional italicized text.">${section.flavorText || ''}</textarea>
-                    `;
+                             <div>
+                                <label class="${labelBaseClasses}">Description</label>
+                                <textarea data-index="${index}" data-field="description" rows="3" class="${inputBaseClasses}">${section.description || ''}</textarea>
+                            </div>`;
+                        break;
+                    case 'p2e_traits':
+                        contentHtml += `<p class="text-base font-semibold text-gray-300 mb-2">Pathfinder 2e Traits</p>`;
+                        // This is a complex one. For now, we'll just allow editing existing traits.
+                        section.traits.forEach((trait, traitIndex) => {
+                             contentHtml += `
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <div>
+                                        <label class="${labelBaseClasses}">Rarity</label>
+                                        <input type="text" data-index="${index}" data-field="traits" data-sub-index="${traitIndex}" data-sub-field="rarity" value="${trait.rarity || ''}" class="${inputBaseClasses}">
+                                    </div>
+                                    <div>
+                                        <label class="${labelBaseClasses}">Text</label>
+                                        <input type="text" data-index="${index}" data-field="traits" data-sub-index="${traitIndex}" data-sub-field="text" value="${trait.text || ''}" class="${inputBaseClasses}">
+                                    </div>
+                                </div>`;
+                        });
+                        break;
+                    default: // 'content' section
+                        contentHtml += `
+                            <div class="grid grid-cols-2 gap-x-2 mb-2">
+                                <div>
+                                    <label class="${labelBaseClasses}">Heading</label>
+                                    <input type="text" data-index="${index}" data-field="heading" value="${section.heading || ''}" class="${inputBaseClasses}">
+                                </div>
+                                <div>
+                                    <label class="${labelBaseClasses}">Heading Aside</label>
+                                    <input type="text" data-index="${index}" data-field="headingAside" value="${section.headingAside || ''}" class="${inputBaseClasses}">
+                                </div>
+                            </div>
+                            <label class="${labelBaseClasses}">Body Text (Markdown-like)</label>
+                            <textarea data-index="${index}" data-field="body" rows="4" class="${inputBaseClasses} mb-2" placeholder="Use **bold**, *italic*, and newlines.">${section.body || ''}</textarea>
+                            <label class="${labelBaseClasses}">Flavor Text (Optional)</label>
+                            <textarea data-index="${index}" data-field="flavorText" rows="2" class="${inputBaseClasses}" placeholder="Optional italicized text.">${section.flavorText || ''}</textarea>
+                        `;
+                        break;
                 }
+
+                sectionDiv.innerHTML = contentHtml;
                 sectionsContainer.appendChild(sectionDiv);
             });
+
             document.querySelectorAll('.section-input').forEach(input => {
                 input.addEventListener('input', handleSectionChange);
             });
@@ -728,9 +786,31 @@
         }
 
         function handleSectionChange(event) {
-            const index = parseInt(event.target.dataset.index);
+            const index = parseInt(event.target.dataset.index, 10);
             const field = event.target.dataset.field;
-            appState.cards[appState.currentCardIndex].sections[index][field] = event.target.value;
+            const subfield = event.target.dataset.subfield;
+            const subIndex = event.target.dataset.subIndex ? parseInt(event.target.dataset.subIndex, 10) : -1;
+            const value = event.target.type === 'number' ? (event.target.value === '' ? null : parseFloat(event.target.value)) : event.target.value;
+
+            const section = appState.cards[appState.currentCardIndex].sections[index];
+
+            if (subfield) {
+                if (Array.isArray(section[field]) && subIndex !== -1) {
+                    // Handle array of objects, e.g., p2e_traits
+                     if (!section[field][subIndex]) section[field][subIndex] = {};
+                    section[field][subIndex][subfield] = value;
+                } else if (typeof section[field] === 'object' && section[field] !== null) {
+                     // Handle simple object, e.g., dndstats
+                    section[field][subfield] = value;
+                } else {
+                    // Initialize if it doesn't exist
+                    section[field] = {};
+                    section[field][subfield] = value;
+                }
+            } else {
+                section[field] = value;
+            }
+
             saveState();
             updateCardPreview();
         }

@@ -2663,12 +2663,50 @@
             }
         }
 
+        function cardHasMarkdown(card) {
+            const markdownRegex = /[\*\_]{1,2}[^\*\_]+[\*\_]{1,2}/;
+
+            const fieldsToCheck = [
+                card.title,
+                card.footer
+            ];
+
+            if (card.type) {
+                if (typeof card.type === 'object') {
+                    fieldsToCheck.push(card.type.text);
+                    fieldsToCheck.push(card.type.aside);
+                } else {
+                    fieldsToCheck.push(card.type);
+                }
+            }
+
+            if (card.sections && Array.isArray(card.sections)) {
+                card.sections.forEach(section => {
+                    fieldsToCheck.push(section.heading);
+                    fieldsToCheck.push(section.headingAside);
+                    fieldsToCheck.push(section.body);
+                    fieldsToCheck.push(section.flavorText);
+                    fieldsToCheck.push(section.value); // For 'property' type
+                    fieldsToCheck.push(section.description); // For 'p2e_activity'
+                    fieldsToCheck.push(section.name); // For 'p2e_activity'
+                });
+            }
+
+            if (card.foldContent && card.foldContent.type === 'text') {
+                fieldsToCheck.push(card.foldContent.text);
+            }
+
+            return fieldsToCheck.some(field => field && markdownRegex.test(field));
+        }
+
         async function generatePdfDocument(cards, foldOverride = null) {
             const { jsPDF } = window.jspdf;
             let doc;
 
+            const forceImageBased = cards.some(card => cardHasMarkdown(card));
+
             // --- TEXT-BASED PDF LOGIC (High Quality) ---
-            if (appState.outputFormat === 'pdf' && !appState.isScrolling) {
+            if (appState.outputFormat === 'pdf' && !appState.isScrolling && !forceImageBased) {
                 const { cardWidth, cardHeight } = getCardDimensionsInInches();
                 const pdfWidthMm = cardWidth * 25.4;
                 const pdfHeightMm = cardHeight * 25.4;
@@ -2693,16 +2731,13 @@
 
                     const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
                     if (shouldPrintBack && card.foldContent) {
-                        // If the number of pages added for the front content is odd,
-                        // we add a blank page to ensure the back prints on the correct side.
                         if (pagesAdded % 2 !== 0) {
-                            doc.addPage(); // Add blank page for duplex alignment
+                            doc.addPage();
                         }
                         doc.addPage();
                         const backPageNum = doc.internal.getNumberOfPages();
                         doc.setPage(backPageNum);
 
-                        // ... (rest of the back page generation logic is the same)
                         if (card.foldContent.type === 'backgroundImageUrl' && card.foldContent.imageUrl) {
                             try {
                                 const img = await loadImage(card.foldContent.imageUrl);
@@ -2722,7 +2757,7 @@
                             doc.setFontSize(10).setFont(undefined, 'normal');
                             doc.text(card.foldContent.text, pdfWidthMm / 2, pdfHeightMm / 2, { angle: 180, align: 'center', baseline: 'middle' });
                         } else if ((card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) || (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData)) {
-                             let finalImageUrl = null;
+                            let finalImageUrl = null;
                             if (card.foldContent.type === 'qrCode') {
                                 const qrSize = toPx(QR_CODE_SIZE_IN, appState.thermalDpi);
                                 finalImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
@@ -2757,93 +2792,86 @@
                         if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeightMm);
                     }
                 }
-                return doc;
-            }
-
-            // --- IMAGE-BASED PDF LOGIC (Scrolling or PNG Output) ---
-            if (appState.isScrolling) {
-                let fullHtml = '<div>';
-                for (const card of cards) {
-                    if (!card) continue;
-                    fullHtml += await generateScrollingHtmlForCard(card);
-                }
-                fullHtml += '</div>';
-
-                const tempContainer = document.createElement('div');
-                tempContainer.style.position = 'absolute';
-                tempContainer.style.left = '-9999px';
-                tempContainer.innerHTML = fullHtml;
-                document.body.appendChild(tempContainer);
-                await new Promise(resolve => setTimeout(resolve, 50));
-
-                const canvas = await html2canvas(tempContainer.firstElementChild, { useCORS: true, logging: false, backgroundColor: null, removeContainer: true });
-                document.body.removeChild(tempContainer);
-
-                const widthPx = getPixelWidth(appState.thermalPaperWidth, appState.thermalDpi);
-                const physicalWidthInches = widthPx / appState.thermalDpi;
-                const pdfWidthMm = physicalWidthInches * 25.4;
-                const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
-                const cardWidth = downsampled.width;
-                const cardHeight = downsampled.height;
-                const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
-
-                doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
-                doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-
-            } else { // Refactored logic for non-scrolling image-based PDF
-                let isFirstPage = true;
-
-                for (const card of cards) {
-                    if (!card) continue;
-
-                    const frontPages = await splitCardIntoPages(card);
-
-                    for (const page of frontPages) {
-                        const [frontCanvas] = await generateCardCanvas(page, false);
-                        if (!frontCanvas) continue;
-
-                        const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
-                        const physicalWidthInches = pdfWidthMm / 25.4;
-                        const downsampled = await downsampleCanvas(frontCanvas, appState.thermalDpi, physicalWidthInches);
-                        const cardWidth = downsampled.width;
-                        const cardHeight = downsampled.height;
-                        const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
-
-                        if (isFirstPage) {
-                            doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
-                            isFirstPage = false;
-                        } else {
-                            doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
-                        }
-                        doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-                        if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeight);
+            } else {
+                // --- IMAGE-BASED PDF LOGIC (Fallback) ---
+                if (appState.isScrolling) {
+                    let fullHtml = '<div>';
+                    for (const card of cards) {
+                        if (!card) continue;
+                        fullHtml += await generateScrollingHtmlForCard(card);
                     }
+                    fullHtml += '</div>';
 
-                    const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
-                    const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
+                    const tempContainer = document.createElement('div');
+                    tempContainer.style.position = 'absolute';
+                    tempContainer.style.left = '-9999px';
+                    tempContainer.innerHTML = fullHtml;
+                    document.body.appendChild(tempContainer);
+                    await new Promise(resolve => setTimeout(resolve, 50));
 
-                    if (shouldPrintBack && hasBackContent) {
-                        if (frontPages.length % 2 !== 0) {
-                            const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
-                            const physicalWidthInches = pdfWidthMm / 25.4;
-                            const { cardHeight } = getCardDimensionsInInches();
-                            const pdfHeight = cardHeight * 25.4;
-                            doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
+                    const canvas = await html2canvas(tempContainer.firstElementChild, { useCORS: true, logging: false, backgroundColor: null, removeContainer: true });
+                    document.body.removeChild(tempContainer);
+
+                    const widthPx = getPixelWidth(appState.thermalPaperWidth, appState.thermalDpi);
+                    const physicalWidthInches = widthPx / appState.thermalDpi;
+                    const pdfWidthMm = physicalWidthInches * 25.4;
+                    const downsampled = await downsampleCanvas(canvas, appState.thermalDpi, physicalWidthInches);
+                    const cardWidth = downsampled.width;
+                    const cardHeight = downsampled.height;
+                    const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
+
+                    doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeight] });
+                    doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
+                } else {
+                    let isFirstPage = true;
+                    for (const card of cards) {
+                        if (!card) continue;
+
+                        const frontPages = await splitCardIntoPages(card);
+
+                        for (const page of frontPages) {
+                            const [frontCanvas] = await generateCardCanvas(page, false);
+                            if (!frontCanvas) continue;
+
+                            const { cardWidth: inchesWidth, cardHeight: inchesHeight } = getCardDimensionsInInches();
+                            const pdfWidthMm = inchesWidth * 25.4;
+                            const pdfHeightMm = inchesHeight * 25.4;
+
+                            const downsampled = await downsampleCanvas(frontCanvas, appState.thermalDpi, inchesWidth);
+
+                            if (isFirstPage) {
+                                doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidthMm, pdfHeightMm] });
+                                isFirstPage = false;
+                            } else {
+                                doc.addPage([pdfWidthMm, pdfHeightMm], 'portrait');
+                            }
+                            doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
+                            if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeightMm);
                         }
 
-                        const backCanvas = await generateBackCanvas(card);
-                        if (!backCanvas) continue;
+                        const shouldPrintBack = (foldOverride !== null) ? foldOverride : card.isFolded;
+                        const hasBackContent = card.foldContent && (card.foldContent.text || card.foldContent.imageUrl || card.foldContent.qrCodeData);
 
-                        const pdfWidthMm = (appState.thermalPaperWidth === '58mm' ? 48 : (appState.thermalPaperWidth === '80mm' ? 72 : 48));
-                        const physicalWidthInches = pdfWidthMm / 25.4;
-                        const downsampled = await downsampleCanvas(backCanvas, appState.thermalDpi, physicalWidthInches);
-                        const cardWidth = downsampled.width;
-                        const cardHeight = downsampled.height;
-                        const pdfHeight = (cardHeight / cardWidth) * pdfWidthMm;
+                        if (shouldPrintBack && hasBackContent) {
+                            if (frontPages.length % 2 !== 0) {
+                                const { cardWidth: inchesWidth, cardHeight: inchesHeight } = getCardDimensionsInInches();
+                                const pdfWidthMm = inchesWidth * 25.4;
+                                const pdfHeightMm = inchesHeight * 25.4;
+                                doc.addPage([pdfWidthMm, pdfHeightMm], 'portrait');
+                            }
 
-                        doc.addPage([pdfWidthMm, pdfHeight], 'portrait');
-                        doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeight);
-                        if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeight);
+                            const backCanvas = await generateBackCanvas(card);
+                            if (!backCanvas) continue;
+
+                            const { cardWidth: inchesWidth, cardHeight: inchesHeight } = getCardDimensionsInInches();
+                            const pdfWidthMm = inchesWidth * 25.4;
+                            const pdfHeightMm = inchesHeight * 25.4;
+                            const downsampled = await downsampleCanvas(backCanvas, appState.thermalDpi, inchesWidth);
+
+                            doc.addPage([pdfWidthMm, pdfHeightMm], 'portrait');
+                            doc.addImage(downsampled.toDataURL('image/png'), 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
+                            if (appState.includeCornerDots) addCornerDots(doc, pdfWidthMm, pdfHeightMm);
+                        }
                     }
                 }
             }

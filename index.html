@@ -550,6 +550,16 @@
             return formattedText;
         }
 
+        function htmlToMarkdown(text) {
+            if (!text) return '';
+            let markdownText = text;
+            // Replace bold tags
+            markdownText = markdownText.replace(/<b>(.*?)<\/b>/gi, '**$1**');
+            // Replace italic tags
+            markdownText = markdownText.replace(/<i>(.*?)<\/i>/gi, '*$1*');
+            return markdownText;
+        }
+
         function showMessage(msg, isError = false) {
             const messageDisplay = document.getElementById('message-display');
             if (!messageDisplay) return;
@@ -1277,7 +1287,7 @@
                 };
 
                 if (type === 'rpg-cards') {
-                    newCard.title = data.title || newCard.title;
+                    newCard.title = htmlToMarkdown(data.title || newCard.title);
                     newCard.color = data.color || newCard.color;
                     newCard.icon = data.icon || '';
                     newCard.tags = (data.tags && Array.isArray(data.tags)) ? data.tags : [];
@@ -1305,8 +1315,8 @@
                                 pushCurrentSection();
                                 const parts = line.substring('subtitle | '.length).split(' | ');
                                 newCard.type = {
-                                    text: parts[0] ? parts[0].trim() : '',
-                                    aside: parts[1] ? parts[1].trim() : ''
+                                    text: parts[0] ? htmlToMarkdown(parts[0].trim()) : '',
+                                    aside: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
                                 };
                             } else if (line.startsWith('rule')) {
                                 pushCurrentSection();
@@ -1322,7 +1332,9 @@
                                     textGroup.push(data.contents[i].substring('text | '.length).trim());
                                 }
 
-                                const processedText = processTextGroup(textGroup);
+                                const convertedTextGroup = textGroup.map(line => htmlToMarkdown(line));
+                                const processedText = processTextGroup(convertedTextGroup);
+
                                 if (currentSection.body) {
                                     currentSection.body += '\n' + processedText;
                                 } else {
@@ -1332,7 +1344,7 @@
                                 pushCurrentSection();
                                 const parts = line.substring('property | '.length).split(' | ');
                                 if (parts.length >= 2) {
-                                    newCard.sections.push({ type: 'property', key: parts[0].trim(), value: parts[1].trim() });
+                                    newCard.sections.push({ type: 'property', key: parts[0].trim(), value: htmlToMarkdown(parts[1].trim()) });
                                 }
                             } else if (line.startsWith('dndstats | ')) {
                                 pushCurrentSection();
@@ -1350,12 +1362,12 @@
                                 const parts = line.substring('description | '.length).split(' | ').map(p => p.trim());
                                 currentSection = {
                                     type: 'content',
-                                    heading: parts.length >= 2 ? parts[0] : '',
-                                    body: parts.length >= 2 ? parts[1] : parts[0],
+                                    heading: parts.length >= 2 ? htmlToMarkdown(parts[0]) : '',
+                                    body: parts.length >= 2 ? htmlToMarkdown(parts[1]) : htmlToMarkdown(parts[0]),
                                     flavorText: ''
                                 };
                             } else if (line.startsWith('bullet | ')) {
-                                const bulletText = '• ' + line.substring('bullet | '.length).trim();
+                                const bulletText = '• ' + htmlToMarkdown(line.substring('bullet | '.length).trim());
                                 if (currentSection.body) {
                                     currentSection.body += '\n' + bulletText;
                                 } else {
@@ -1397,9 +1409,9 @@
                                 const p = line.substring('p2e_activity | '.length).split(' | ').map(s => s.trim());
                                 newCard.sections.push({
                                     type: 'p2e_activity',
-                                    name: p[0] || '',
+                                    name: htmlToMarkdown(p[0] || ''),
                                     actions: p[1] || '',
-                                    description: p[2] || ''
+                                    description: htmlToMarkdown(p[2] || '')
                                 });
                             } else if (line.startsWith('p2e_start_trait_section')) {
                                 pushCurrentSection();
@@ -1416,14 +1428,14 @@
                                     const parts = line.substring('p2e_trait | '.length).split(' | ');
                                     currentTraitSection.traits.push({
                                         rarity: parts[0] ? parts[0].trim().toLowerCase() : 'common',
-                                        text: parts[1] ? parts[1].trim() : ''
+                                        text: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
                                     });
                                 }
                             } else if (line.startsWith('section | ')) {
                                 pushCurrentSection();
                                 const parts = line.substring('section | '.length).split(' | ');
-                                currentSection.heading = parts[0] ? parts[0].trim() : '';
-                                currentSection.headingAside = parts[1] ? parts[1].trim() : '';
+                                currentSection.heading = parts[0] ? htmlToMarkdown(parts[0].trim()) : '';
+                                currentSection.headingAside = parts[1] ? htmlToMarkdown(parts[1].trim()) : '';
                             } else if (line.startsWith('boxes | ')) {
                                 pushCurrentSection();
                                 const parts = line.substring('boxes | '.length).split(' | ');
@@ -1431,7 +1443,7 @@
                                     type: 'boxes',
                                     count: parts[0] ? parseInt(parts[0].trim(), 10) : 1,
                                     size: parts[1] ? parseFloat(parts[1].trim()) : 1.0,
-                                    text: parts[2] ? parts[2].trim() : ''
+                                    text: parts[2] ? htmlToMarkdown(parts[2].trim()) : ''
                                 });
                             }
                         }
@@ -1442,7 +1454,7 @@
                         newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });
                     }
 
-                    newCard.footer = data.footer || newCard.footer;
+                    newCard.footer = htmlToMarkdown(data.footer || newCard.footer);
 
                     newCard.isFolded = typeof data.isFolded === 'boolean' ? data.isFolded : false;
                     newCard.foldContent = (data.foldContent && typeof data.foldContent === 'object') ? data.foldContent : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
@@ -1462,10 +1474,10 @@
                     }
 
                 } else if (type === '5e-tools') {
-                    newCard.title = data.name || newCard.title;
-                    newCard.type = data.type || newCard.type;
-                    newCard.rarity = data.rarity || newCard.rarity;
-                    newCard.cost = data.cost || newCard.cost;
+                    newCard.title = htmlToMarkdown(data.name || newCard.title);
+                    newCard.type = htmlToMarkdown(data.type || newCard.type);
+                    newCard.rarity = htmlToMarkdown(data.rarity || newCard.rarity);
+                    newCard.cost = htmlToMarkdown(data.cost || newCard.cost);
 
                     const newStats = {};
                     if (data.hp) newStats.HP = data.hp.average || data.hp;
@@ -1481,26 +1493,48 @@
                     const newSections = [];
                     if (data.trait) {
                         data.trait.forEach(t => {
-                            newSections.push({ heading: t.name, body: t.entries.join('\n'), flavorText: '' });
+                            newSections.push({ heading: htmlToMarkdown(t.name), body: htmlToMarkdown(t.entries.join('\n')), flavorText: '' });
                         });
                     }
                     if (data.action) {
                         data.action.forEach(a => {
-                            newSections.push({ heading: a.name, body: a.entries.join('\n'), flavorText: '' });
+                            newSections.push({ heading: htmlToMarkdown(a.name), body: htmlToMarkdown(a.entries.join('\n')), flavorText: '' });
                         });
                     }
                     if (data.description) {
-                        newSections.push({ heading: 'Description', body: data.description.entries.join('\n'), flavorText: '' });
+                        newSections.push({ heading: 'Description', body: htmlToMarkdown(data.description.entries.join('\n')), flavorText: '' });
                     }
                     newCard.sections = newSections;
                     newCard.numCopies = 1;
                 } else { // Generic JSON
                     Object.assign(newCard, data); // Merge data into newCard
+
+                    // Apply markdown conversion to known text fields
+                    newCard.title = htmlToMarkdown(newCard.title);
+                    if (typeof newCard.type === 'string') {
+                         newCard.type = htmlToMarkdown(newCard.type);
+                    } else if (typeof newCard.type === 'object' && newCard.type !== null) {
+                        newCard.type.text = htmlToMarkdown(newCard.type.text);
+                        newCard.type.aside = htmlToMarkdown(newCard.type.aside);
+                    }
+                    newCard.footer = htmlToMarkdown(newCard.footer);
+
                     newCard.tags = (newCard.tags && Array.isArray(newCard.tags)) ? newCard.tags : [];
-                    newCard.sections = (newCard.sections && Array.isArray(newCard.sections)) ? newCard.sections : [];
+                    newCard.sections = (newCard.sections && Array.isArray(newCard.sections)) ? newCard.sections.map(section => ({
+                        ...section,
+                        heading: htmlToMarkdown(section.heading),
+                        headingAside: htmlToMarkdown(section.headingAside),
+                        body: htmlToMarkdown(section.body),
+                        flavorText: htmlToMarkdown(section.flavorText)
+                    })) : [];
+
                     newCard.stats = (newCard.stats && typeof newCard.stats === 'object') ? newCard.stats : {};
                     newCard.isFolded = typeof newCard.isFolded === 'boolean' ? newCard.isFolded : false;
+
                     newCard.foldContent = (newCard.foldContent && typeof newCard.foldContent === 'object') ? newCard.foldContent : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
+                    if (newCard.foldContent.type === 'text') {
+                        newCard.foldContent.text = htmlToMarkdown(newCard.foldContent.text);
+                    }
 
                     newCard.numCopies = data.numCopies ? parseInt(data.numCopies, 10) : 1;
                     if (isNaN(newCard.numCopies) || newCard.numCopies < 1 || newCard.numCopies > 10) {
@@ -2352,6 +2386,88 @@
             return downsampledCanvas;
         }
 
+        function parseMarkdown(text) {
+            const segments = [];
+            if (!text) return segments;
+            // This regex captures content within ***...***, **...**, or *...* and the plain text around it.
+            // It prioritizes the longest match first.
+            const regex = /(\*\*\*(.*?)\*\*\*)|(\*\*(.*?)\*\*)|(\*(.*?)\*)/g;
+            let lastIndex = 0;
+            let match;
+
+            while ((match = regex.exec(text)) !== null) {
+                // Capture plain text before the match
+                if (match.index > lastIndex) {
+                    segments.push({ text: text.substring(lastIndex, match.index), style: 'normal' });
+                }
+
+                // Capture the formatted text
+                if (match[2] !== undefined) { // Bold and Italic
+                    segments.push({ text: match[2], style: 'bolditalic' });
+                } else if (match[4] !== undefined) { // Bold
+                    segments.push({ text: match[4], style: 'bold' });
+                } else if (match[6] !== undefined) { // Italic
+                    segments.push({ text: match[6], style: 'italic' });
+                }
+                lastIndex = regex.lastIndex;
+            }
+
+            // Capture any plain text after the last match
+            if (lastIndex < text.length) {
+                segments.push({ text: text.substring(lastIndex), style: 'normal' });
+            }
+            return segments;
+        }
+
+        function renderMarkdownText(doc, text, x, y, options) {
+            const { maxWidth, pageHeight, margin } = options;
+            // Use jsPDF's recommended way to get line height
+            const lineHeight = doc.getLineHeight(text) / doc.internal.scaleFactor * 1.15;
+            let currentY = y;
+            const lines = text.split('\n');
+
+            lines.forEach((line, lineIndex) => {
+                // For each line from the input text, we process it word by word
+                const segments = parseMarkdown(line);
+                let currentX = x;
+
+                segments.forEach(segment => {
+                    doc.setFont(undefined, segment.style);
+                    const words = segment.text.split(/(\s+)/); // Split by spaces but keep them
+
+                    words.forEach(word => {
+                        if (!word) return;
+                        const wordWidth = doc.getTextWidth(word);
+
+                        // Check if the word overflows the maxWidth.
+                        // The `currentX > x` check prevents wrapping if a single word is too long for a line.
+                        if (currentX > x && currentX + wordWidth > x + maxWidth) {
+                            currentY += lineHeight;
+                            currentX = x;
+                            // Check for page overflow after moving to a new line
+                            if (currentY > pageHeight - margin) {
+                                doc.addPage();
+                                currentY = margin;
+                            }
+                        }
+                        doc.text(word, currentX, currentY);
+                        currentX += wordWidth;
+                    });
+                });
+
+                // After processing all segments of a line, move Y to the next line.
+                currentY += lineHeight;
+                if (currentY > pageHeight - margin && lineIndex < lines.length - 1) {
+                    doc.addPage();
+                    currentY = margin;
+                }
+            });
+
+            doc.setFont(undefined, 'normal'); // Reset font style
+            // Return the Y position for the *start* of the next element, not the baseline of the last.
+            return currentY - lineHeight;
+        }
+
         async function generatePdfWithText(doc, card) {
             const pageHeight = doc.internal.pageSize.getHeight();
             const pageWidth = doc.internal.pageSize.getWidth();
@@ -2554,11 +2670,9 @@
                         y += 5;
 
                         doc.setFontSize(9).setFont(undefined, 'normal');
-                        const descLines = doc.splitTextToSize(section.description, contentWidth - 8);
-                        const descHeight = doc.getTextDimensions(descLines).h;
-                        if (y + descHeight > pageHeight - margin) { doc.addPage(); y = margin; }
-                        doc.text(descLines, margin + 8, y);
-                        y += descHeight + 2;
+                        // Use the new markdown renderer
+                        const newY = renderMarkdownText(doc, section.description || '', margin + 8, y, { maxWidth: contentWidth - 8, pageHeight, margin });
+                        y = newY + doc.getLineHeight(section.description || '') / doc.internal.scaleFactor * 1.15 + 2;
                         continue;
                     } else if (section.type === 'dndstats') {
                         const stats = Object.entries(section.stats).filter(([k, v]) => v);
@@ -2621,31 +2735,13 @@
                     }
                     if (section.body) {
                         doc.setFontSize(9).setFont(undefined, 'normal');
-                        const bodyLines = doc.splitTextToSize(section.body, contentWidth);
-                        const lineHeight = doc.getTextDimensions('T').h;
-                        for (const line of bodyLines) {
-                            if (y + lineHeight > pageHeight - margin) {
-                                doc.addPage();
-                                y = margin;
-                            }
-                            doc.text(line, margin, y);
-                            y += lineHeight;
-                        }
-                        y += 2; // Padding after the block
+                        const newY = renderMarkdownText(doc, section.body || '', margin, y, { maxWidth: contentWidth, pageHeight, margin });
+                        y = newY + (doc.getLineHeight(section.body || '') / doc.internal.scaleFactor * 1.15) + 2; // Padding after the block
                     }
                     if (section.flavorText) {
                         doc.setFontSize(8).setFont(undefined, 'italic').setTextColor(100);
-                        const flavorLines = doc.splitTextToSize(section.flavorText, contentWidth);
-                        const lineHeight = doc.getTextDimensions('T').h;
-                        for (const line of flavorLines) {
-                            if (y + lineHeight > pageHeight - margin) {
-                                doc.addPage();
-                                y = margin;
-                            }
-                            doc.text(line, margin, y);
-                            y += lineHeight;
-                        }
-                        y += 2; // Padding after the block
+                        const newY = renderMarkdownText(doc, section.flavorText || '', margin, y, { maxWidth: contentWidth, pageHeight, margin });
+                        y = newY + (doc.getLineHeight(section.flavorText || '') / doc.internal.scaleFactor * 1.15) + 2; // Padding after the block
                         doc.setTextColor(0);
                     }
                 }

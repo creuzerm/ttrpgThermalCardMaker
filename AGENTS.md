@@ -139,13 +139,14 @@ The application supports two primary methods for generating PDF content:
 1.  **Text-Based (Preferred):** Whenever possible, the generator **must** use a text-based rendering method via `jsPDF`. This approach creates high-quality, resolution-independent PDFs with selectable text and vector shapes. This method provides a superior user experience due to smaller file sizes and the ability to copy text from the generated document.
 
 2.  **Image-Based (Fallback):** An image-based method using `html2canvas` is acceptable as a fallback or for specific features like the "Scrolling Card" where a single, continuous image is required. This method should follow the sequence described below.
+* **Ensure Full Render Parity**: When modifying or adding card elements, ensure that rendering logic is implemented for **both** the image-based path (`generateCardHtml`) and the text-based path (`generatePdfWithText`). A failure to do so will cause elements to appear in the live preview and image-based exports, but be completely missing from the high-quality paginated PDF exports, as was the case with the `dndstats` block initially.
 
 ### Key Concepts
 
 * **Logical Size**: The ideal, intended dimensions of the card (e.g., a "Bridge" card is 2.25" wide by 3.5" long). The logical width is critical for determining the layout, text wrapping, and element flow of the card's content.
 * **Printable Area Width**: A user-configurable setting based on the specific printer and paper combination. This is the maximum physical width that the printer can mark (e.g., 47mm on 58mm paper). This value dictates the final width of the PDF page itself.
 * **Content Length**: Because the printer may use a continuous roll, the "page" length is variable. It is determined dynamically by the amount of content rendered within the logical width. Alternativly it may use pre-cut labels which we need to fit into.
-  * If content is too wide for the alloted size, we can reduce font size up to 25% to fit onto a single line or we will need to break the line into multiple lines.
+  * If content is too wide for the allotted size—even by a few characters—it must be addressed. For continuous roll cards where horizontal space is paramount, combine strategies: first, reduce inter-element spacing (e.g., in `dndstats`), and if necessary, also reduce font sizes incrementally.
 * 'Cards' can be either paginated, or continous roll.
   * Paginated strictly honor the card size selection
    * Paginated cards may have an optional back which is an image, text or QR code. When this is in use, it shall always be on an even page with a blank page added just prior if needed to ensure even page placement.

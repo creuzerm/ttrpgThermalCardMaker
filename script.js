@@ -2946,41 +2946,12 @@ window.addEventListener('load', () => {
                     throw new Error('README.md not found.');
                 }
                 const readmeText = await response.text();
-                const md = window.markdownit({
-                    html: true,
-                    linkify: true,
-                    typographer: true
-                });
-                // Add Tailwind classes to elements
-                md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
-                    const token = tokens[idx];
-                    if (token.tag === 'h1') {
-                        token.attrPush(['class', 'text-3xl font-bold mb-4 text-pink-400']);
-                    } else if (token.tag === 'h2') {
-                        token.attrPush(['class', 'text-2xl font-semibold mb-3 text-pink-300 border-b border-slate-700 pb-2']);
-                    } else if (token.tag === 'h3') {
-                        token.attrPush(['class', 'text-xl font-semibold mb-2 text-pink-200']);
-                    }
-                    return self.renderToken(tokens, idx, options);
-                };
-                md.renderer.rules.table_open = () => '<div class="overflow-x-auto my-4"><table class="w-full text-sm text-left text-slate-300">';
-                md.renderer.rules.table_close = () => '</table></div>';
-                md.renderer.rules.thead_open = () => '<thead class="text-xs text-slate-200 uppercase bg-slate-800">';
-                md.renderer.rules.th_open = () => '<th scope="col" class="px-6 py-3">';
-                md.renderer.rules.tbody_open = () => '<tbody>';
-                md.renderer.rules.tr_open = () => '<tr class="border-b border-slate-800 hover:bg-slate-700">';
-                md.renderer.rules.td_open = () => '<td class="px-6 py-4">';
-                md.renderer.rules.blockquote_open = () => '<blockquote class="p-4 my-4 border-l-4 border-slate-600 bg-slate-800">';
-                md.renderer.rules.hr = () => '<hr class="my-6 border-slate-700"/>';
-                md.renderer.rules.ul_open = () => '<ul class="list-disc list-inside space-y-2">';
-                md.renderer.rules.ol_open = () => '<ol class="list-decimal list-inside space-y-2">';
-                md.renderer.rules.code_inline = (tokens, idx, options, env, self) => {
-                    const token = tokens[idx];
-                    return `<code class="bg-slate-700 text-pink-300 rounded-md px-1.5 py-1 text-xs">${token.content}</code>`;
-                };
-
-
-                aboutModalContent.innerHTML = md.render(readmeText);
+                // Use marked to parse markdown and DOMPurify to sanitize the output.
+                if (window.marked && window.DOMPurify) {
+                    aboutModalContent.innerHTML = window.DOMPurify.sanitize(window.marked.parse(readmeText));
+                } else {
+                    throw new Error('Markdown parsing libraries not loaded.');
+                }
             } catch (error) {
                 aboutModalContent.innerHTML = `<p class="text-red-400">Error loading content: ${error.message}</p>`;
                 console.error("Error fetching or rendering README.md:", error);

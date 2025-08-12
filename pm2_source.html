@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portable Printer Minifig Maker – Print RPG Minis at the Table in Minutes</title>
+    <meta name="description" content="Design and print custom tabletop RPG miniatures right at the table in minutes using a portable thermal printer and your phone. Free, fast, and game-night ready.">
+    <script src="https://cdn.tailwindcss.com" type="55950ca5c589774a8ec9e707-text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js" type="55950ca5c589774a8ec9e707-text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" type="55950ca5c589774a8ec9e707-text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.8/dist/purify.min.js" type="55950ca5c589774a8ec9e707-text/javascript"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DZVJME5GW8" type="55950ca5c589774a8ec9e707-text/javascript"></script>
+    <script type="55950ca5c589774a8ec9e707-text/javascript">
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-DZVJME5GW8');
+    </script>
+    <!-- The MediaPipe script is now loaded via the module import below, so this script tag is now no longer needed here. -->
+    <style type="text/css">@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .draggable {
+            cursor: move;
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 1px dashed #000;
+        }
+        .handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #000;
+            border: 1px solid #fff;
+        }
+        .handle-top { top: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .handle-bottom { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .handle-left { left: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+        .handle-right { right: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 relative">
+        <!-- Refactored Header -->
+        <div class="flex justify-between items-center mb-8">
+            <!-- Left: Logo -->
+            <div class="flex-shrink-0">
+                <a href="https://bagsoffolding.com/" target="_blank" rel="noopener noreferrer">
+                    <img src="https://bagsoffolding.com/cdn-cgi/image/height=48,format=auto,quality=75/images/BagOfFolding.png" alt="Bags of Folding Logo" class="h-12">
+                </a>
+            </div>
+
+            <!-- Center: Title -->
+            <div class="flex-grow text-center px-4">
+                <h1 class="text-4xl font-bold">Portable Printer Minifig Maker</h1>
+                <p class="text-lg text-gray-600">Create foldable paper miniatures for your games.</p>
+            </div>
+
+            <!-- Right: Icons -->
+            <div class="flex-shrink-0 flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2">
+                <!-- Settings Icon (conditionally displayed via JS) -->
+                <div id="settings-icon" class="hidden cursor-pointer p-2 rounded-md hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                <!-- Hamburger Menu -->
+                <div class="relative">
+                    <button id="menu-button" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" aria-haspopup="true" aria-expanded="false">
+                        <svg class="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 ring-1 ring-black ring-opacity-5" role="menu" aria-orientation="vertical" aria-labelledby="menu-button">
+                        <a href="#" id="about-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">About</a>
+                        <a href="https://tcg.bagsoffolding.com/" target="_blank" rel="noopener noreferrer" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">TTRPG Card Generator</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Left Column: Controls and Input -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4">1. Load Your Image</h2>
+                <div class="mb-4">
+                    <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-2">Upload from device:</label>
+                    <input type="file" id="imageUpload" accept="image/*,.heic,.heif" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+                </div>
+                <div class="mb-4">
+                    <label for="imageUrl" class="block text-sm font-medium text-gray-700 mb-2">Or enter image URL:</label>
+                    <div class="flex">
+                        <input type="text" id="imageUrl" class="w-full p-2 border border-gray-300 rounded-l-md" placeholder="https://example.com/image.png">
+                        <button id="loadImageFromUrl" class="bg-violet-600 text-white px-4 py-2 rounded-r-md hover:bg-violet-700">Load</button>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-semibold mb-4 mt-8">2. Set the Size</h2>
+                <div class="mb-4">
+                    <label for="figureSize" class="block text-sm font-medium text-gray-700 mb-2">D&D Figure Size (Feet-to-Eyes):</label>
+                    <select id="figureSize" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="14">Small (~14mm)</option>
+                        <option value="28" selected>Medium (~28mm)</option>
+                        <option value="56">Large (~56mm)</option>
+                        <option value="84">Huge (~84mm)</option>
+                        <option value="112">Gargantuan (~112mm)</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="paperWidth" class="block text-sm font-medium text-gray-700 mb-2">Thermal Paper Width:</label>
+                    <select id="paperWidth" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="58">2.25 inch (58mm)</option>
+                        <option value="80">3.15 inch (80mm)</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="printerDpi" class="block text-sm font-medium text-gray-700 mb-2">Printer DPI:</label>
+                    <select id="printerDpi" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="180">180 DPI</option>
+                        <option value="200">200 DPI</option>
+                        <option value="203" selected>203 DPI (Standard)</option>
+                        <option value="300">300 DPI</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="actualWidth" class="block text-sm font-medium text-gray-700 mb-2">Actual Pixel Width (Dots):</label>
+                    <input type="number" id="actualWidth" class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="imageEffect" class="block text-sm font-medium text-gray-700 mb-2">Image Effect:</label>
+                    <select id="imageEffect" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="none" selected>None (Default)</option>
+                        <option value="trace">Trace</option>
+                        <option value="contrast">High Contrast</option>
+                    </select>
+                </div>
+
+                <h2 class="text-2xl font-semibold mb-4 mt-8">3. Adjust and Create</h2>
+                <div class="mb-4">
+                    <input type="checkbox" id="addBase" class="mr-2">
+                    <label for="addBase" class="text-sm font-medium text-gray-700">Add half-circle base</label>
+                </div>
+                <button id="processImage" class="w-full bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 font-bold text-lg">Generate Minifig</button>
+            </div>
+
+            <!-- Right Column: Image Editor and Preview -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4">Image Editor</h2>
+                <div id="editor-container" class="relative w-full h-96 bg-gray-200 rounded-md overflow-hidden">
+                    <canvas id="canvas" class="absolute top-0 left-0"></canvas>
+                </div>
+                 <div class="text-center mt-2 text-sm text-gray-500">
+                    <p>Drag red lines to set height. Drag blue box corners to crop.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section: Final Preview and Actions -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-center">Final Preview</h2>
+            <div id="preview-container" class="w-full flex justify-center items-center bg-gray-200 rounded-md p-4 min-h-[200px]">
+                <img id="previewImage" class="max-w-full max-h-full" src="" alt="Final Preview">
+            </div>
+            <div class="flex justify-center mt-6 space-x-4">
+                <button id="saveImage" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 font-semibold">Save Image</button>
+                <button id="shareImage" class="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold">Share</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <button id="modal-close-btn" class="modal-close">&times;</button>
+            <h2 class="text-2xl font-bold mb-4">Settings</h2>
+            <div class="space-y-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="escpos-toggle" class="h-4 w-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500">
+                    <label for="escpos-toggle" class="ml-2 block text-sm text-gray-900">
+                        Enable ESC/POS Printing
+                    </label>
+                </div>
+                <div id="escpos-options-container" class="hidden space-y-4">
+                    <div id="test-print-container">
+                        <!-- The Test Print button will be added here via JS -->
+                    </div>
+                    <div>
+                        <a href="https://play.google.com/store/apps/details?id=com.loopedlabs.escposprintservice" target="_blank" rel="noopener noreferrer">
+                            <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" style="height: 60px;"/>
+                        </a>
+                        <p class="text-xs text-gray-500 mt-1">
+                            We are not affiliated with Looped Labs or the ESC/POS Print Service app.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal-overlay hidden">
+        <div class="modal-box max-w-3xl">
+            <button id="about-modal-close-btn" class="modal-close">&times;</button>
+            <div id="about-content" class="prose max-w-none p-4 overflow-y-auto" style="max-height: 80vh;">
+                <!-- README content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="55950ca5c589774a8ec9e707-module">
+        // --- Hamburger Menu & About Modal ---
+        const menuButton = document.getElementById('menu-button');
+        const menuDropdown = document.getElementById('menu-dropdown');
+        const aboutLink = document.getElementById('about-link');
+        const aboutModal = document.getElementById('about-modal');
+        const aboutModalCloseBtn = document.getElementById('about-modal-close-btn');
+        const aboutContent = document.getElementById('about-content');
+
+        menuButton.addEventListener('click', () => {
+            const isExpanded = menuButton.getAttribute('aria-expanded') === 'true';
+            menuButton.setAttribute('aria-expanded', !isExpanded);
+            menuDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
+                menuDropdown.classList.add('hidden');
+            }
+        });
+
+        // --- Reusable Modal Logic ---
+        function setupModal(trigger, modal, closeBtn, openCallback = null) {
+            if (!modal || !closeBtn) return; // Don't setup if essential elements are missing
+
+            const modalClose = () => modal.classList.add('hidden');
+
+            if (trigger) {
+                trigger.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (openCallback) {
+                        await openCallback();
+                    }
+                    modal.classList.remove('hidden');
+                });
+            }
+
+            closeBtn.addEventListener('click', modalClose);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modalClose();
+                }
+            });
+        }
+
+        // --- Modal Initializations ---
+
+        // About Modal
+        const aboutOpenFn = async () => {
+            menuDropdown.classList.add('hidden');
+            try {
+                const response = await fetch('README.md');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const markdownText = await response.text();
+                aboutContent.innerHTML = DOMPurify.sanitize(marked.parse(markdownText));
+            } catch (error) {
+                console.error("Failed to load README.md:", error);
+                aboutContent.innerHTML = `<p class="text-red-500">Error: Could not load the About content.</p>`;
+            }
+        };
+        setupModal(
+            document.getElementById('about-link'),
+            aboutModal,
+            document.getElementById('about-modal-close-btn'),
+            aboutOpenFn
+        );
+
+        // Settings Modal
+        setupModal(
+            document.getElementById('settings-icon'),
+            document.getElementById('settings-modal'),
+            document.getElementById('modal-close-btn')
+        );
+
+        // Using a module script fixes the errors by ensuring dependencies are loaded correctly.
+        const imageUpload = document.getElementById('imageUpload');
+        const imageUrl = document.getElementById('imageUrl');
+        const loadImageFromUrl = document.getElementById('loadImageFromUrl');
+        const figureSize = document.getElementById('figureSize');
+        const paperWidth = document.getElementById('paperWidth');
+        const printerDpi = document.getElementById('printerDpi');
+        const imageEffect = document.getElementById('imageEffect');
+        const addBase = document.getElementById('addBase');
+        const processImageBtn = document.getElementById('processImage');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const actualWidth = document.getElementById('actualWidth');
+        const editorContainer = document.getElementById('editor-container');
+        const previewImage = document.getElementById('previewImage');
+        const saveImageBtn = document.getElementById('saveImage');
+        const shareImageBtn = document.getElementById('shareImage');
+
+        // --- Constants ---
+        const HANDLE_FILL_STYLE = '#ffffff';
+        const HANDLE_STROKE_STYLE = '#000000';
+        const HANDLE_LINE_WIDTH = 2;
+        const HANDLE_RADIUS = 8;
+        const MIN_HANDLE_SEPARATION = 10;
+        const SOBEL_X = [
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+        ];
+        const SOBEL_Y = [
+            [-1, -2, -1],
+            [0, 0, 0],
+            [1, 2, 1]
+        ];
+        const PRINTABLE_WIDTHS = {
+            58: 48, // 58mm total width -> 48mm printable
+            80: 72  // 80mm total width -> 72mm printable
+        };
+
+        // --- State Variables ---
+        let img = new Image();
+        let cropRect = { x: 0, y: 0, width: 0, height: 0 };
+        let scaleHandles = { top: 0, bottom: 0 };
+        let isDragging = false;
+        let dragHandle = null;
+        let drawnImageDetails = { x: 0, y: 0, width: 0, height: 0 };
+        let activeCorsErrorModal = null;
+
+        // --- Calculation Functions ---
+        function updateActualWidth() {
+            const totalPaperWidthMm = parseFloat(paperWidth.value);
+            const dpi = parseFloat(printerDpi.value);
+            const printablePaperWidthMm = PRINTABLE_WIDTHS[totalPaperWidthMm] || totalPaperWidthMm;
+            const calculatedWidth = Math.round((printablePaperWidthMm / 25.4) * dpi);
+            actualWidth.value = calculatedWidth;
+        }
+
+        // --- Event Listeners for Auto-calculation and Settings Persistence ---
+        function saveSettings() {
+            localStorage.setItem('figureSize', figureSize.value);
+            localStorage.setItem('paperWidth', paperWidth.value);
+            localStorage.setItem('printerDpi', printerDpi.value);
+            localStorage.setItem('actualWidth', actualWidth.value);
+        }
+
+        paperWidth.addEventListener('change', () => {
+            updateActualWidth();
+            saveSettings();
+        });
+        printerDpi.addEventListener('change', () => {
+            updateActualWidth();
+            saveSettings();
+        });
+        figureSize.addEventListener('change', saveSettings);
+        actualWidth.addEventListener('input', saveSettings); // Use 'input' for immediate saving as user types
+
+        // --- Initial Calls ---
+        function loadSettings() {
+            const savedFigureSize = localStorage.getItem('figureSize');
+            const savedPaperWidth = localStorage.getItem('paperWidth');
+            const savedPrinterDpi = localStorage.getItem('printerDpi');
+            const savedActualWidth = localStorage.getItem('actualWidth');
+
+            if (savedFigureSize) figureSize.value = savedFigureSize;
+            if (savedPaperWidth) paperWidth.value = savedPaperWidth;
+            if (savedPrinterDpi) printerDpi.value = savedPrinterDpi;
+
+            // After loading dropdowns, we can calculate the width
+            updateActualWidth();
+
+            // If there was a manually entered width, override the calculation
+            if (savedActualWidth) {
+                actualWidth.value = savedActualWidth;
+            }
+        }
+
+        loadSettings(); // Load settings on page load
+
+        // Load default manticore image on startup
+        const DEFAULT_IMAGE_SRC = 'images/manticore.jpg';
+        img.onload = drawImageOnCanvas;
+        img.onerror = () => {
+            console.error(`Failed to load default image: ${DEFAULT_IMAGE_SRC}`);
+        };
+        img.src = DEFAULT_IMAGE_SRC;
+
+
+        // --- Image Effect Functions ---
+
+        function applyGrayscale(imageData) {
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                // Using luminance formula for better results:
+                const avg = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                data[i] = avg;     // red
+                data[i + 1] = avg; // green
+                data[i + 2] = avg; // blue
+            }
+        }
+
+        function applyThreshold(imageData, threshold = 128) {
+            applyGrayscale(imageData);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const color = data[i] > threshold ? 255 : 0;
+                data[i] = color;
+                data[i + 1] = color;
+                data[i + 2] = color;
+            }
+        }
+
+        function applyTrace(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const grayData = new Uint8ClampedArray(width * height);
+            const outputData = new Uint8ClampedArray(width * height).fill(255);
+
+            // Create a single-channel grayscale array directly from the color image data.
+            for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+                const luminance = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                grayData[j] = luminance;
+            }
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let pixelX = 0;
+                    let pixelY = 0;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            const px = grayData[(y + i - 1) * width + (x + j - 1)];
+                            pixelX += px * SOBEL_X[i][j];
+                            pixelY += px * SOBEL_Y[i][j];
+                        }
+                    }
+                    const magnitude = Math.sqrt((pixelX * pixelX) + (pixelY * pixelY));
+                    // Invert the image (black lines on white background) and threshold
+                    outputData[y * width + x] = magnitude > 128 ? 0 : 255;
+                }
+            }
+
+            for (let i = 0; i < outputData.length; i++) {
+                const val = outputData[i];
+                data[i * 4] = val;
+                data[i * 4 + 1] = val;
+                data[i * 4 + 2] = val;
+            }
+        }
+
+        function applyImageEffect(effect, canvas) {
+            if (effect === 'none') return;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            switch (effect) {
+                case 'trace':
+                    applyTrace(imageData);
+                    break;
+                case 'contrast':
+                    applyThreshold(imageData);
+                    break;
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // --- Helper functions ---
+        function drawHandle(x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, HANDLE_RADIUS, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function showCorsErrorPopup() {
+            // If an overlay from this function already exists, remove it first.
+            if (activeCorsErrorModal) {
+                activeCorsErrorModal.remove();
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-box';
+
+            const closeButton = document.createElement('button');
+            closeButton.className = 'modal-close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = () => {
+                overlay.remove();
+                activeCorsErrorModal = null; // Clear the reference when closed
+            };
+
+            const title = document.createElement('h2');
+            title.className = 'text-2xl font-bold mb-4';
+            title.textContent = 'Image Load Error';
+
+            const message = document.createElement('p');
+            message.className = 'text-gray-700';
+            message.innerHTML = `
+                Could not load the image from the specified URL. This is likely due to a security feature in your browser called CORS (Cross-Origin Resource Sharing).
+                <br><br>
+                <strong>What to do:</strong> Please download the image to your computer and then use the "Upload from device" option.
+            `;
+
+            modal.appendChild(closeButton);
+            modal.appendChild(title);
+            modal.appendChild(message);
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // Store a reference to the new overlay
+            activeCorsErrorModal = overlay;
+        }
+
+        // This function draws the loaded image onto the canvas and sets initial crop/scale values.
+        function drawImageOnCanvas() {
+            const containerWidth = editorContainer.clientWidth;
+            const containerHeight = editorContainer.clientHeight;
+            const imgAspectRatio = img.width / img.height;
+            const containerAspectRatio = containerWidth / containerHeight;
+
+            let drawWidth, drawHeight, offsetX, offsetY;
+
+            if (imgAspectRatio > containerAspectRatio) {
+                drawWidth = containerWidth;
+                drawHeight = drawWidth / imgAspectRatio;
+            } else {
+                drawHeight = containerHeight;
+                drawWidth = drawHeight * imgAspectRatio;
+            }
+
+            offsetX = (containerWidth - drawWidth) / 2;
+            offsetY = (containerHeight - drawHeight) / 2;
+
+            canvas.width = containerWidth;
+            canvas.height = containerHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+
+            // Store the drawn image dimensions for reference
+            drawnImageDetails = { x: offsetX, y: offsetY, width: drawWidth, height: drawHeight };
+
+            // Initialize crop and scale handles to match the image dimensions
+            cropRect = { x: offsetX, y: offsetY, width: drawWidth, height: drawHeight };
+
+            // Set scale handles to 10% from the top and 5% from the bottom of the image
+            const tenPercentOfHeight = drawHeight * 0.10;
+            const fivePercentOfHeight = drawHeight * 0.05;
+            scaleHandles = {
+                top: offsetY + tenPercentOfHeight,
+                bottom: offsetY + drawHeight - fivePercentOfHeight
+            };
+
+            drawHandles();
+        }
+
+        // This function redraws the canvas, including the image and the editing handles.
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, drawnImageDetails.x, drawnImageDetails.y, drawnImageDetails.width, drawnImageDetails.height);
+            drawHandles();
+        }
+
+        // This function draws the visual guides for cropping and scaling.
+        function drawHandles() {
+            // Draw transparent overlay outside the crop area
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, cropRect.y); // Top
+            ctx.fillRect(0, cropRect.y + cropRect.height, canvas.width, canvas.height - (cropRect.y + cropRect.height)); // Bottom
+            ctx.fillRect(0, cropRect.y, cropRect.x, cropRect.height); // Left
+            ctx.fillRect(cropRect.x + cropRect.width, cropRect.y, canvas.width - (cropRect.x + cropRect.width), cropRect.height); // Right
+
+            // --- Draw Lines ---
+            // Red scale lines - thicker for better visibility
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 4; // Made thicker for accessibility
+            ctx.beginPath();
+            ctx.moveTo(0, scaleHandles.top); // Extend to full canvas width
+            ctx.lineTo(canvas.width, scaleHandles.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, scaleHandles.bottom); // Extend to full canvas width
+            ctx.lineTo(canvas.width, scaleHandles.bottom);
+            ctx.stroke();
+
+            // Blue crop box
+            ctx.strokeStyle = '#0000ff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
+
+            // --- Draw Handles (Circles) ---
+            ctx.fillStyle = HANDLE_FILL_STYLE;
+            ctx.strokeStyle = HANDLE_STROKE_STYLE;
+            ctx.lineWidth = HANDLE_LINE_WIDTH;
+
+            // Red line handles (draggable vertically)
+            drawHandle(canvas.width / 2, scaleHandles.top);
+            drawHandle(canvas.width / 2, scaleHandles.bottom);
+
+            // Blue box corner handles
+            drawHandle(cropRect.x, cropRect.y); // Top-left
+            drawHandle(cropRect.x + cropRect.width, cropRect.y); // Top-right
+            drawHandle(cropRect.x, cropRect.y + cropRect.height); // Bottom-left
+            drawHandle(cropRect.x + cropRect.width, cropRect.y + cropRect.height); // Bottom-right
+        }
+
+        // Event listener for file uploads
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+
+            if (isHeic) {
+                heic2any({
+                    blob: file,
+                    toType: "image/png",
+                })
+                .then(conversionResult => {
+                    img.onload = () => {
+                        drawImageOnCanvas();
+                        URL.revokeObjectURL(img.src); // Clean up the object URL
+                    };
+                    img.src = URL.createObjectURL(conversionResult);
+                })
+                .catch(error => {
+                    console.error("HEIC to PNG conversion failed:", error);
+                    alert("Failed to convert HEIC image. Please try a different file.");
+                });
+            } else {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    img.onload = drawImageOnCanvas;
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Event listener for loading image from URL
+        loadImageFromUrl.addEventListener('click', () => {
+            if (imageUrl.value) {
+                img.crossOrigin = "Anonymous";
+                img.onload = drawImageOnCanvas;
+                img.onerror = () => showCorsErrorPopup();
+                img.src = imageUrl.value;
+            }
+        });
+
+        // --- Refactored Dragging Logic for Mouse and Touch ---
+
+        function getEventCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function handleDragStart(e) {
+            if (e.touches) e.preventDefault();
+            const { x, y } = getEventCoordinates(e);
+            const touchThreshold = 20; // Larger hit area for touch
+            const mouseThreshold = 10; // Smaller hit area for mouse
+            const threshold = e.touches ? touchThreshold : mouseThreshold;
+
+            // Check for scale handles first (top and bottom red lines)
+            if (Math.abs(y - scaleHandles.top) < threshold) {
+                isDragging = true;
+                dragHandle = 'scaleTop';
+            } else if (Math.abs(y - scaleHandles.bottom) < threshold) {
+                isDragging = true;
+                dragHandle = 'scaleBottom';
+            }
+            // Check for crop corner handles
+            else if (Math.hypot(x - cropRect.x, y - cropRect.y) < threshold) {
+                isDragging = true;
+                dragHandle = 'topLeft';
+            } else if (Math.hypot(x - (cropRect.x + cropRect.width), y - cropRect.y) < threshold) {
+                isDragging = true;
+                dragHandle = 'topRight';
+            } else if (Math.hypot(x - cropRect.x, y - (cropRect.y + cropRect.height)) < threshold) {
+                isDragging = true;
+                dragHandle = 'bottomLeft';
+            } else if (Math.hypot(x - (cropRect.x + cropRect.width), y - (cropRect.y + cropRect.height)) < threshold) {
+                isDragging = true;
+                dragHandle = 'bottomRight';
+            }
+        }
+
+        function handleDragMove(e) {
+            if (!isDragging) return;
+            if (e.touches) e.preventDefault();
+            const { x, y } = getEventCoordinates(e);
+
+            // Keep track of original positions for calculations
+            const originalX = cropRect.x;
+            const originalY = cropRect.y;
+            const originalWidth = cropRect.width;
+            const originalHeight = cropRect.height;
+            const rightEdge = originalX + originalWidth;
+            const bottomEdge = originalY + originalHeight;
+
+            switch (dragHandle) {
+                case 'scaleTop':
+                    // Clamp scale handle within the image boundaries and not past the other handle
+                    scaleHandles.top = Math.max(drawnImageDetails.y, Math.min(y, scaleHandles.bottom - MIN_HANDLE_SEPARATION));
+                    break;
+                case 'scaleBottom':
+                    // Clamp scale handle within the image boundaries and not past the other handle
+                    scaleHandles.bottom = Math.min(drawnImageDetails.y + drawnImageDetails.height, Math.max(y, scaleHandles.top + MIN_HANDLE_SEPARATION));
+                    break;
+                case 'topLeft':
+                    cropRect.x = Math.max(drawnImageDetails.x, Math.min(x, rightEdge - MIN_HANDLE_SEPARATION));
+                    cropRect.y = Math.max(drawnImageDetails.y, Math.min(y, bottomEdge - MIN_HANDLE_SEPARATION));
+                    cropRect.width = rightEdge - cropRect.x;
+                    cropRect.height = bottomEdge - cropRect.y;
+                    break;
+                case 'topRight':
+                    cropRect.y = Math.max(drawnImageDetails.y, Math.min(y, bottomEdge - MIN_HANDLE_SEPARATION));
+                    cropRect.width = Math.min(drawnImageDetails.x + drawnImageDetails.width - originalX, Math.max(MIN_HANDLE_SEPARATION, x - originalX));
+                    cropRect.height = bottomEdge - cropRect.y;
+                    break;
+                case 'bottomLeft':
+                    cropRect.x = Math.max(drawnImageDetails.x, Math.min(x, rightEdge - MIN_HANDLE_SEPARATION));
+                    cropRect.height = Math.min(drawnImageDetails.y + drawnImageDetails.height - originalY, Math.max(MIN_HANDLE_SEPARATION, y - originalY));
+                    cropRect.width = rightEdge - cropRect.x;
+                    break;
+                case 'bottomRight':
+                    cropRect.width = Math.min(drawnImageDetails.x + drawnImageDetails.width - originalX, Math.max(MIN_HANDLE_SEPARATION, x - originalX));
+                    cropRect.height = Math.min(drawnImageDetails.y + drawnImageDetails.height - originalY, Math.max(MIN_HANDLE_SEPARATION, y - originalY));
+                    break;
+            }
+            redrawCanvas();
+        }
+
+        function handleDragEnd() {
+            isDragging = false;
+            dragHandle = null;
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', handleDragStart);
+        canvas.addEventListener('mousemove', handleDragMove);
+        canvas.addEventListener('mouseup', handleDragEnd);
+        canvas.addEventListener('mouseleave', handleDragEnd);
+
+        // Touch events
+        canvas.addEventListener('touchstart', handleDragStart);
+        canvas.addEventListener('touchmove', handleDragMove);
+        canvas.addEventListener('touchend', handleDragEnd);
+        canvas.addEventListener('touchcancel', handleDragEnd);
+
+        // Main function to process the image and generate the minifig
+processImageBtn.addEventListener('click', () => {
+            try {
+                if (!img.src) {
+                    alert("Please load an image first.");
+                    return;
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Calculate the source area from the original image based on the handles
+                const scaleToOriginal = img.width / drawnImageDetails.width;
+                const sourceX = (cropRect.x - drawnImageDetails.x) * scaleToOriginal;
+                const sourceY = (cropRect.y - drawnImageDetails.y) * scaleToOriginal;
+                const sourceWidth = cropRect.width * scaleToOriginal;
+                const sourceHeight = cropRect.height * scaleToOriginal;
+
+                // Create a temporary canvas with the cropped portion of the image
+                let imageToDraw = document.createElement('canvas');
+                imageToDraw.width = sourceWidth;
+                imageToDraw.height = sourceHeight;
+                const imageToDrawCtx = imageToDraw.getContext('2d');
+                imageToDrawCtx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+
+                // Apply the selected image effect
+                const selectedEffect = imageEffect.value;
+                applyImageEffect(selectedEffect, imageToDraw);
+
+                // The background removal logic has been removed.
+                // The imageToDraw canvas now directly contains the cropped image.
+
+                // --- Final Scaling and Drawing ---
+
+                // 1. Get all sizing inputs
+                const finalHeightMm = parseFloat(figureSize.value);
+                const dpi = parseFloat(printerDpi.value);
+                const finalPaperWidthPx = parseFloat(actualWidth.value);
+
+                // 2. Convert mm dimensions to pixels for height
+                const mmToPx = (mm) => (mm / 25.4) * dpi;
+                const finalFigureHeightPx = mmToPx(finalHeightMm);
+
+                // 3. Get the reference height in pixels from the red lines.
+                const scaleHeightPx = (scaleHandles.bottom - scaleHandles.top) * scaleToOriginal;
+
+                // 4. Calculate the scaling factor based on the red lines.
+                const scaleFactor = finalFigureHeightPx / scaleHeightPx;
+
+                // 5. Calculate the final dimensions of the cropped image.
+                const finalScaledWidth = sourceWidth * scaleFactor;
+                const finalScaledHeight = sourceHeight * scaleFactor;
+
+                // 6. Calculate the horizontal padding needed to center the image on the paper.
+                const xPadding = (finalPaperWidthPx - finalScaledWidth) / 2;
+
+                // 7. Set the size of the final output canvas, accounting for bases.
+                const oneInchInMm = 25.4;
+                const baseRadius = addBase.checked ? mmToPx(oneInchInMm) / 2 : 0;
+                const yOffset = baseRadius;
+                tempCanvas.width = finalPaperWidthPx;
+                tempCanvas.height = finalScaledHeight * 2 + yOffset * 2;
+
+                // 8. Draw the NORMAL image on the BOTTOM, centered horizontally.
+                tempCtx.drawImage(imageToDraw, xPadding, finalScaledHeight + yOffset, finalScaledWidth, finalScaledHeight);
+
+                // 9. Draw the FLIPPED version on the TOP, centered horizontally.
+                tempCtx.save();
+                tempCtx.translate(finalPaperWidthPx / 2, (finalScaledHeight / 2) + yOffset);
+                tempCtx.scale(1, -1);
+                tempCtx.drawImage(imageToDraw, -finalScaledWidth / 2, -finalScaledHeight / 2, finalScaledWidth, finalScaledHeight);
+                tempCtx.restore();
+
+                // 9.5. Draw the fold line (black and white dashed)
+                const foldY = finalScaledHeight + yOffset;
+                tempCtx.save();
+                tempCtx.strokeStyle = '#000000';
+                tempCtx.lineWidth = 1;
+                tempCtx.setLineDash([5, 5]); // 5px black, 5px transparent
+                tempCtx.beginPath();
+                tempCtx.moveTo(0, foldY);
+                tempCtx.lineTo(tempCanvas.width, foldY);
+                tempCtx.stroke();
+                tempCtx.restore();
+
+                // 10. Draw the base if checked, centered on the paper width.
+                if (addBase.checked) {
+                    tempCtx.fillStyle = '#cccccc';
+                    const arcCenterX = finalPaperWidthPx / 2;
+
+                    // Top arc
+                    tempCtx.beginPath();
+                    tempCtx.arc(arcCenterX, yOffset, baseRadius, Math.PI, 2 * Math.PI, false);
+                    tempCtx.closePath();
+                    tempCtx.fill();
+
+                    // Bottom arc
+                    tempCtx.beginPath();
+                    tempCtx.arc(arcCenterX, finalScaledHeight * 2 + yOffset, baseRadius, 0, Math.PI, false);
+                    tempCtx.closePath();
+                    tempCtx.fill();
+                }
+
+                previewImage.src = tempCanvas.toDataURL('image/png');
+            } catch (error) {
+                console.error("Error processing image:", error);
+                alert("An error occurred while generating the minifig. Please check the console for details.");
+            }
+        });
+
+        function trackImageInteraction(action) {
+            if (typeof gtag !== 'function') {
+                console.log("gtag not available. Skipping analytics event.");
+                return;
+            }
+
+            const features = [];
+            if (imageEffect.value !== 'none') {
+                features.push('effects');
+            }
+            if (addBase.checked) {
+                features.push('bases');
+            }
+
+            const isEscPosEnabled = localStorage.getItem('isEscPosEnabled') === 'true';
+            const eventParams = {
+                action: action, // 'save' or 'share'
+                features_used: features.join(','), // e.g., "effects,bases"
+                printer_size: `${paperWidth.value}mm`,
+                resolution: `${printerDpi.value}dpi`,
+                thermal_printer_enabled: isEscPosEnabled,
+                printer_used: isEscPosEnabled ? 'direct-escpos' : 'standard'
+            };
+
+            gtag('event', 'image_interaction', eventParams);
+        }
+
+        // Event listener for saving the final image
+        saveImageBtn.addEventListener('click', () => {
+            if (previewImage.src) {
+                trackImageInteraction('save'); // GA Event
+                const a = document.createElement('a');
+                a.href = previewImage.src;
+                a.download = 'paper_minifig.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                alert("Generate a minifig preview first!");
+            }
+        });
+
+        // Event listener for sharing the image
+        shareImageBtn.addEventListener('click', async () => {
+            if (navigator.share && previewImage.src) {
+                try {
+                    trackImageInteraction('share'); // GA Event
+                    const response = await fetch(previewImage.src);
+                    const blob = await response.blob();
+                    const file = new File([blob], 'paper_minifig.png', { type: 'image/png' });
+                    await navigator.share({
+                        title: 'Paper Minifig',
+                        text: 'Check out this paper minifig I made with the Thermal Paper Minifig Maker!',
+                        files: [file],
+                    });
+                } catch (error) {
+                    console.error('Error sharing:', error);
+                    alert("Sharing failed. Your browser might have cancelled the action.");
+                }
+            } else {
+                alert('Web Share API is not supported in your browser, or there is no image to share.');
+            }
+        });
+
+        // --- ESC/POS Printing for Android ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Use userAgentData for modern browsers, with a fallback to the user agent string.
+            const isAndroid = (navigator.userAgentData?.platform?.toLowerCase() === 'android') || /android/i.test(navigator.userAgent);
+            const settingsIcon = document.getElementById('settings-icon');
+            const escposToggle = document.getElementById('escpos-toggle');
+            const printButtonContainer = document.getElementById('shareImage').parentElement;
+            const testPrintContainer = document.getElementById('test-print-container');
+            const escposOptionsContainer = document.getElementById('escpos-options-container');
+
+            function setupEscPosFeature(enabled) {
+                if (enabled) {
+                    escposOptionsContainer.classList.remove('hidden');
+                    // --- Create and add Print to ESC/POS button ---
+                    if (!document.getElementById('printImage')) {
+                        const printButton = document.createElement('button');
+                        printButton.id = 'printImage';
+                        printButton.textContent = 'Print to ESC/POS';
+                        printButton.className = 'bg-violet-600 text-white px-6 py-3 rounded-md hover:bg-violet-700 font-semibold';
+                        printButtonContainer.appendChild(printButton);
+                        printButton.addEventListener('click', handleImagePrint);
+                    }
+
+                    // --- Create and add Test Print button to modal ---
+                    if (!document.getElementById('testPrint')) {
+                        const testPrintButton = document.createElement('button');
+                        testPrintButton.id = 'testPrint';
+                        testPrintButton.textContent = 'Test Print';
+                        testPrintButton.className = 'bg-gray-500 text-white px-6 py-3 rounded-md hover:bg-gray-600 font-semibold';
+                        testPrintContainer.appendChild(testPrintButton);
+                        testPrintButton.addEventListener('click', handleTestPrint);
+                    }
+                } else {
+                    escposOptionsContainer.classList.add('hidden');
+                    // --- Remove buttons if they exist ---
+                    const existingPrintBtn = document.getElementById('printImage');
+                    if (existingPrintBtn) existingPrintBtn.remove();
+
+                    const existingTestBtn = document.getElementById('testPrint');
+                    if (existingTestBtn) existingTestBtn.remove();
+                }
+            }
+
+            if (isAndroid) {
+                // Show settings icon only on Android
+                settingsIcon.classList.remove('hidden');
+
+                // Check localStorage for the saved setting
+                const isEscPosEnabled = localStorage.getItem('isEscPosEnabled') === 'true';
+                escposToggle.checked = isEscPosEnabled;
+
+                // Initial setup based on saved setting
+                setupEscPosFeature(isEscPosEnabled);
+
+                // Add listener to the toggle
+                escposToggle.addEventListener('change', (e) => {
+                    const enabled = e.target.checked;
+                    localStorage.setItem('isEscPosEnabled', enabled);
+                    setupEscPosFeature(enabled);
+                });
+            } else {
+                // Hide settings icon if not on Android
+                settingsIcon.classList.add('hidden');
+            }
+
+            function handleImagePrint() {
+                const previewImg = document.getElementById('previewImage');
+                    const imageDataUrl = previewImg ? previewImg.src : null;
+
+                    if (!imageDataUrl || !imageDataUrl.startsWith('data:image/png')) {
+                        alert("Please generate a minifig preview first!");
+                        return;
+                    }
+
+                    const imageSrcData = imageDataUrl;
+                    const printHtml = `<html><body><img src="${imageSrcData}" style="width:100%;"></body></html>`;
+                    const intentUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=1&src='data:text/html,${encodeURIComponent(printHtml)}'`;
+
+                    const a = document.createElement('a');
+                    a.href = intentUrl;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+            }
+
+            function handleTestPrint() {
+                const testHtml = "<html><body><h1 style='font-size:2em;'>Hello Printer</h1></body></html>";
+                const intentUrl = `print://escpos.org/escpos/bt/print?srcTp=uri&srcObj=html&numCopies=1&src='data:text/html,${encodeURIComponent(testHtml)}'`;
+                const a = document.createElement('a');
+                a.href = intentUrl;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+    </script>
+<!-- Cloudflare Pages Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abf511f87d21449084e2721b5e84b47e"}' type="55950ca5c589774a8ec9e707-text/javascript"></script><!-- Cloudflare Pages Analytics --><script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="55950ca5c589774a8ec9e707-|49" defer></script></body>
+</html>

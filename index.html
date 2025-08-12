@@ -2389,8 +2389,9 @@
         function parseMarkdown(text) {
             const segments = [];
             if (!text) return segments;
-            // This regex captures content within **...** or *...* and the plain text around it.
-            const regex = /(\*\*(.*?)\*\*)|(\*(.*?)\*)/g;
+            // This regex captures content within ***...***, **...**, or *...* and the plain text around it.
+            // It prioritizes the longest match first.
+            const regex = /(\*\*\*(.*?)\*\*\*)|(\*\*(.*?)\*\*)|(\*(.*?)\*)/g;
             let lastIndex = 0;
             let match;
 
@@ -2401,10 +2402,12 @@
                 }
 
                 // Capture the formatted text
-                if (match[2] !== undefined) { // Bold
-                    segments.push({ text: match[2], style: 'bold' });
-                } else if (match[4] !== undefined) { // Italic
-                    segments.push({ text: match[4], style: 'italic' });
+                if (match[2] !== undefined) { // Bold and Italic
+                    segments.push({ text: match[2], style: 'bolditalic' });
+                } else if (match[4] !== undefined) { // Bold
+                    segments.push({ text: match[4], style: 'bold' });
+                } else if (match[6] !== undefined) { // Italic
+                    segments.push({ text: match[6], style: 'italic' });
                 }
                 lastIndex = regex.lastIndex;
             }

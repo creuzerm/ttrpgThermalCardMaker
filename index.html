@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thermal Printer TTRPG Card Generator</title>
     <!-- Tailwind CSS CDN -->
-    <script data-cfasync="false" src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- html2canvas CDN -->
-    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- jsPDF CDN -->
-    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- jsPDF-AutoTable CDN -->
-    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
-    <script data-cfasync="false" src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* AGENTS.md: Using Tailwind CDN, so we can't use @apply. Defining colors and animations here. */
         :root {
@@ -84,7 +84,7 @@
 
     <div id="main-generator-view">
         <!-- Service Worker Registration -->
-        <script data-cfasync="false">
+        <script>
             // Standard Service Worker Registration
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
@@ -408,7 +408,7 @@
     <!-- Global Message Toast -->
     <div id="message-display" class="hidden fixed top-5 right-5 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-[60]"></div>
 
-    <script data-cfasync="false">
+    <script>
         // Global application state
         let iconManifest = {}; // To be populated from icon-lookup.json
         let appState = {
@@ -650,6 +650,7 @@
                                     <input type="text" id="prop-value-${index}" data-index="${index}" data-field="value" value="${section.value || ''}" class="${inputBaseClasses}">
                                 </div>
                             </div>
+                        `;
                         break;
                     case 'dndstats':
                         const dndStatKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
@@ -3329,7 +3330,7 @@
             }
         });
     </script>
-    <script data-cfasync="false">
+    <script>
         lucide.createIcons();
     </script>
 </body>

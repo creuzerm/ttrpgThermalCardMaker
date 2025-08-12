@@ -642,14 +642,14 @@
                             <p class="text-base font-semibold text-gray-300 mb-2">Property</p>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="${labelBaseClasses}">Key</label>
-                                    <input type="text" data-index="${index}" data-field="key" value="${section.key || ''}" class="${inputBaseClasses}">
+                                    <label for="prop-key-${index}" class="${labelBaseClasses}">Key</label>
+                                    <input type="text" id="prop-key-${index}" data-index="${index}" data-field="key" value="${section.key || ''}" class="${inputBaseClasses}">
                                 </div>
                                 <div>
-                                    <label class="${labelBaseClasses}">Value</label>
-                                    <input type="text" data-index="${index}" data-field="value" value="${section.value || ''}" class="${inputBaseClasses}">
+                                    <label for="prop-value-${index}" class="${labelBaseClasses}">Value</label>
+                                    <input type="text" id="prop-value-${index}" data-index="${index}" data-field="value" value="${section.value || ''}" class="${inputBaseClasses}">
                                 </div>
-                            </div>`;
+                            </div>
                         break;
                     case 'dndstats':
                         const dndStatKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];

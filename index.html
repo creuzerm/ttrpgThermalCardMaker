@@ -2672,7 +2672,7 @@
                         doc.setFontSize(9).setFont(undefined, 'normal');
                         // Use the new markdown renderer
                         const newY = renderMarkdownText(doc, section.description || '', margin + 8, y, { maxWidth: contentWidth - 8, pageHeight, margin });
-                        y = newY + doc.getLineHeight(section.description) / doc.internal.scaleFactor * 1.15 + 2;
+                        y = newY + doc.getLineHeight(section.description || '') / doc.internal.scaleFactor * 1.15 + 2;
                         continue;
                     } else if (section.type === 'dndstats') {
                         const stats = Object.entries(section.stats).filter(([k, v]) => v);
@@ -2735,13 +2735,13 @@
                     }
                     if (section.body) {
                         doc.setFontSize(9).setFont(undefined, 'normal');
-                        const newY = renderMarkdownText(doc, section.body, margin, y, { maxWidth: contentWidth, pageHeight, margin });
-                        y = newY + (doc.getLineHeight(section.body) / doc.internal.scaleFactor * 1.15) + 2; // Padding after the block
+                        const newY = renderMarkdownText(doc, section.body || '', margin, y, { maxWidth: contentWidth, pageHeight, margin });
+                        y = newY + (doc.getLineHeight(section.body || '') / doc.internal.scaleFactor * 1.15) + 2; // Padding after the block
                     }
                     if (section.flavorText) {
                         doc.setFontSize(8).setFont(undefined, 'italic').setTextColor(100);
-                        const newY = renderMarkdownText(doc, section.flavorText, margin, y, { maxWidth: contentWidth, pageHeight, margin });
-                        y = newY + (doc.getLineHeight(section.flavorText) / doc.internal.scaleFactor * 1.15) + 2; // Padding after the block
+                        const newY = renderMarkdownText(doc, section.flavorText || '', margin, y, { maxWidth: contentWidth, pageHeight, margin });
+                        y = newY + (doc.getLineHeight(section.flavorText || '') / doc.internal.scaleFactor * 1.15) + 2; // Padding after the block
                         doc.setTextColor(0);
                     }
                 }

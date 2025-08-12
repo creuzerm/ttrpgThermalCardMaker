@@ -499,11 +499,9 @@ window.addEventListener('load', () => {
                 iconHtml = `<img src="${iconPath}" alt="${sanitizeHTML(card.icon)}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
             } else if (isURL(card.icon)) {
                 iconHtml = `<img src="${sanitizeHTML(card.icon)}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
-            } else {
-                // Fallback to lucide icon
-                const iconName = sanitizeHTML(card.icon);
-                iconHtml = `<i data-lucide="${iconName}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; stroke-width: 1.5;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}"></i>`;
             }
+            // Do not render a lucide icon as a fallback if the name is not in the manifest.
+            // This prevents console warnings for invalid lucide icon names.
         }
 
         cardFrontPreview.className = `relative mx-auto p-2 border border-dashed border-gray-400 rounded-md ${widthClass} min-h-[150px] flex flex-col justify-between`;
@@ -2450,7 +2448,7 @@ window.addEventListener('load', () => {
                 const pageNumAfter = doc.internal.getNumberOfPages();
                 const pagesAdded = pageNumAfter - pageNumBefore;
 
-                if (appState.includeCornerDots) {
+                if (appState.includeCornerDots && pdfHeightMm) {
                     for (let p = pageNumBefore; p < pageNumAfter; p++) {
                         doc.setPage(p + 1);
                         addCornerDots(doc, pdfWidthMm, pdfHeightMm);

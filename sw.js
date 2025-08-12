@@ -19,11 +19,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle http/https requests, ignore others (like chrome-extension://)
-  if (!event.request.url.startsWith('http')) {
+  const url = new URL(event.request.url);
+
+  // If the request is for a different origin (e.g., a CDN),
+  // let the browser handle it normally.
+  if (url.origin !== self.location.origin) {
     return;
   }
 
+  // For same-origin requests, use the cache-first strategy.
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((response) => {

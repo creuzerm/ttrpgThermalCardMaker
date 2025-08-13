@@ -781,7 +781,7 @@
                 await showAboutModal();
 
                 // Now that the modal is open and content is loaded, find the target element
-                const targetElement = aboutModalContent.querySelector(`#${topicId}`);
+                const targetElement = aboutModalContent.querySelector(`[id="${topicId}"]`);
 
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });

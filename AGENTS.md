@@ -188,6 +188,8 @@ To ensure consistency, adding new sections should follow a structured process. W
 
 When adding a section, use the appropriate type to ensure correct rendering.
 
-### Reordering Sections
+### Reordering Card Content Sections
 
-The order of the top-level (`##`) sections in this document can be adjusted to better prioritize information or improve logical flow. To reorder sections, simply state the desired new order of the section titles.
+The order of the content sections within a card can be adjusted. These are the blocks that appear in the main content area of the card, such as text sections, property lines, stat blocks, and pictures.
+
+To reorder these sections, you can specify the desired new order. For example, you can list the current section headings or types and describe the order you want them to be in.

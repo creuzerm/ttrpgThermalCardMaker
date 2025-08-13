@@ -2,24 +2,27 @@
 
 This web application provides a seamless, mobile-first experience for Tabletop Role-Playing Game (TTRPG) players and Game Masters (GMs) to generate and print custom game cards using thermal or color photo printers. It bridges the gap between digital content and physical play, allowing you to create tangible tokens, reminders, or quick references for your games.
 
+## Quickly Create Cards at the Table
+
+The core advantage of this tool is its ability to create play cards or readily disposable paper sheets for your TTRPG sessions quickly and easily, right at the table with minimal disruption to the game. Need to give your players a tangible receipt for the loot they've just found? Want to hand out a physical reminder of a curse or a special item? You can design, print, and hand over custom-made cards on demand, keeping the game flowing and immersive.
+
+Whether you're a Game Master needing to generate monster stats on the fly or a player wanting a physical copy of a new spell, this generator is designed for rapid, in-the-moment creation of all your tabletop gaming needs.
+
 ## Features
 
-*   **Custom Card Creation:** Design your own TTRPG cards with various fields.
-*   **Dynamic Content Sections:** Add multiple sections for descriptions, abilities, or flavor text, supporting Markdown-like formatting.
-*   **Customizable Stats:** Include key-value pair statistics relevant to your card.
-*   **Icon Support:** Use icon names from the included manifest or direct image URLs for card visuals.
-*   **Card Color Selection:** Choose a background color for your cards (for color printers).
+*   **Custom Card Creation:** Design your own TTRPG cards with titles, types, icons, stats, and multiple content sections.
+*   **Card Creation from Templates:** Kickstart your card design using a library of pre-made templates for various game systems like D&D and Pathfinder.
+*   **Bags of Holding for Card Collections:** Save your creations into named "bags" for easy organization. Keep separate bags for different characters, campaigns, or game systems.
+*   **Dynamic Content Sections:** Add various types of content blocks, including text with Markdown support, property lines, stat blocks for popular TTRPGs (D&D 5e, Pathfinder 2e, Savage Worlds), and more.
 *   **Flexible Card Formats:** Supports standard cards, folded cards (with back content), and long scrolling cards for continuous paper.
-*   **Multi-Card Management:** Load, navigate, and manage multiple cards within the application.
-*   **JSON Import:** Easily import card data from `rpg-cards.vercel.app` JSON format, `5e.tools` JSON, or generic JSON structures.
-*   **Live Preview:** See a real-time preview of your card as you design it, adapting to chosen printer type.
-*   **Direct Android Printing:** On Android, a "Print to Thermal Printer" button may appear depending on configuratio, allowing for direct printing via the Looped Labs ESC/POS Print Service.
-*   **Card View:** A clean, clutter-free view of your card, perfect for sharing or manual printing.
-*   **Color Photo Printer Export:** Generate high-resolution images suitable for color photo printers (e.g., Kodak Zink, Fujifilm Instax).
-*   **Image Download:** Download card images (single or all) for offline use or manual printing.
-*   **Web Share API Integration:** Share generated card images directly to compatible apps on your mobile device.
-*   **Bookmarkable Links:** Generate a unique URL for your current card's data, allowing you to save and share specific card designs easily.
-*   **Local Storage Persistence:** Your current card data and settings are automatically saved in your browser's local storage remembering the last card(s) you worked on.
+*   **Multi-Card Management:** Load, navigate, delete, and manage multiple cards within the editor at once.
+*   **Powerful JSON Import:** Easily import card data from `rpg-cards.vercel.app` JSON format, `5e.tools`, or other generic JSON structures.
+*   **Live Preview:** See a real-time preview of your card that adapts to your chosen printer type (Monochrome Thermal or Color Photo).
+*   **Direct Android Printing:** On Android devices, a "Print to Thermal Printer" button allows for direct printing via the Looped Labs ESC/POS Print Service app.
+*   **Versatile Export Options:** Download your creations as PDF or PNG files.
+*   **Easy Sharing:** Share card images directly to other apps using the Web Share API or copy a permanent, bookmarkable link to your card design.
+*   **Local Storage Persistence:** Your cards and bags are automatically saved in your browser, so you can pick up where you left off.
+*   **Offline Access (PWA):** As a Progressive Web App, it can be installed on your device for offline use.
 
 ## How to Use
 
@@ -27,79 +30,97 @@ This web application provides a seamless, mobile-first experience for Tabletop R
 
 ### 1. Editing Card Details
 
-The "Card Details" section allows you to customize the front of your card:
+This is your workshop for forging custom game aids. Create anything from a magic item's description to a full monster stat block.
 
-*   **Card Title:** The main title of your card.
-*   **Card Type:** A subtitle or category for your card (e.g., "Spell," "Item," "Creature").
-*   **Icon Name or Image URL:**
-    *   Enter an icon name (e.g., `magic-swirl`, `crossed-swords`) to display a scalable icon. A list of available icons is provided in a datalist.
-    *   Alternatively, paste a direct URL to an image (e.g., `https://example.com/my-icon.png`).
-*   **Card Color (Hex, Optional):** Select a color for the card's background. This is primarily for color photo printing; B&W thermal printers will convert to grayscale.
-*   **Content Sections:**
-    *   Click "Add Section" to add new content blocks.
-    *   Each section can have an optional **Heading**, **Body Text** (supports `**bold**`, `*italic*`, and `[links](url)`), and optional **Flavor Text** (displayed in italic).
-    *   Use the "X" button to remove a section.
-*   **Stats (Key-Value Pairs):**
-    *   Click "Add Stat" and enter a stat name (e.g., "HP", "STR", "Damage").
-    *   Enter the corresponding value for the stat.
-    *   Use the "X" button to remove a stat.
-*   **Tags (Comma-separated):** Enter keywords related to your card, separated by commas (e.g., `Fire, Spell, Evocation`).
-*   **Footer Text (Optional):** Small text displayed at the bottom of the card (e.g., "Source: PHB").
+*   **Card Title:** The name of the spell, item, or creature (e.g., "Fireball," "Vorpal Sword," "Ancient Red Dragon").
+*   **Card Type:** A subtitle or category for your card (e.g., "Evocation Spell," "Legendary Magic Item," "Gargantuan Dragon").
+*   **Icon Name or Image URL:** Give your card some flair.
+    *   Enter an icon name (e.g., `magic-swirl`, `crossed-swords`) from the `game-icons.net` library to display a scalable icon.
+    *   Alternatively, paste a direct URL to any image on the web.
+*   **Card Color (Hex, Optional):** Select a color for the card's background. This is primarily for color photo printing; B&W thermal printers will convert this to grayscale.
+*   **Content Sections:** This is where you add the meat of your card.
+    *   Click "Add Section" to choose from a variety of content blocks (text, properties, stat blocks, etc.).
+    *   Each section can have an optional **Heading**, **Body Text** (which supports `**bold**`, `*italic*`, and `[links](url)`), and **Flavor Text**.
+*   **Stats (Key-Value Pairs):** Add simple key-value pairs for quick reference, like "HP: 150" or "Range: 120 ft.".
+*   **Tags (Comma-separated):** Add keywords to your card for organization (e.g., `Fire, Spell, Evocation`).
+*   **Footer Text (Optional):** Add a source reference or a small note at the bottom (e.g., "Source: DMG p. 157").
 
-### 2. Card Format Options
+### 2. Start Fast with Card Templates
+
+When you click the "Add New" button, you'll be presented with the template library. This feature helps you get started quickly without having to build everything from scratch.
+
+*   **Create a Blank Card:** If you prefer to start with a clean slate, simply click the "Create Blank Card" button.
+*   **Create from a Template:** Browse the list of available game systems (like "D&D" or "Pathfinder"). Clicking on a system will reveal a set of pre-configured templates for common items like spells, monsters, or character abilities. Click on any template button to create a new card pre-filled with that template's structure and content, ready for you to customize.
+
+### 3. Card Format Options
 
 This section provides options to control the physical layout of your card.
 
 *   **Folded Card:** Check this box to create a card designed to be folded in half. This enables the "Back/Bottom Fold Content" section, where you can add content to the other side of the card. You can choose between text, an image/icon, or a QR code for the back.
 *   **Scrolling Card (Single Page PDF):** Check this box if you have a lot of content that won't fit on a standard-sized card. This format will generate a single, long PDF page that is ideal for continuous roll thermal printers, preventing your content from being split across multiple pages.
 
-### 3. Navigating Multiple Cards
+### 4. Navigating Multiple Cards
 
 The "Navigate Cards" section helps you manage multiple card entries:
 
 *   **Previous / Next Buttons:** Cycle through the loaded cards.
 *   **Card Select Dropdown:** Choose a specific card by its title from the list.
-*   **Add New Card:** Create a blank card to start a new design.
-*   **Delete This Card:** Deletes the currently selected card from the application. A confirmation prompt will appear to prevent accidental deletion.
+*   **Add New:** Opens a dialog to create a new blank card or start from a template.
+*   **Import:** Opens the import dialog to load cards from JSON.
+*   **Bag-o-Cards:** Opens the "Bag of Holding" interface to manage your saved collections.
+*   **Delete Card:** Deletes the currently selected card from the editor.
 
-### 4. Importing Card Data
+### 5. Organize Your Collection with Bags of Holding
 
-You can import existing card data from JSON files or pasted JSON:
+The "Bag of Holding" feature allows you to save and organize your card creations into persistent collections, stored right in your browser.
 
-*   **Import from rpg-cards.vercel.app (.json file):** Upload a JSON file generated by or compatible with the `rpg-cards.vercel.app` tool.
-*   **Paste JSON from 5e.tools/makecards.html or 5e.tools/converter.html:** Paste JSON data copied directly from these 5e.tools utilities.
-*   **Paste Generic JSON:** Paste any other JSON data that roughly matches the internal card structure. The application will attempt to map fields.
+*   **Accessing Your Bags:** Click the "Bag-o-Cards" button in the "Navigate Cards" section to open the management interface.
+*   **Creating a New Bag:** In the Bag of Holding popup, type a name for your new collection (e.g., "My D&D Campaign," "Player Loot") and click "Create."
+*   **Adding a Card to a Bag:** Once you have a bag created, select it from the dropdown menu. Then, click the "Bag Current Card" button to save a copy of the card you are currently editing into that bag.
+*   **Managing Bag Contents:**
+    *   **Load a Card:** Click the name of a card in the "Bag Contents" list to load it into the main editor. This is great for when you need to make quick edits or print a saved item.
+    *   **Move a Card:** Use the "Move to..." dropdown next to a card to transfer it to another bag.
+    *   **Delete a Card from a Bag:** Click the trash can icon to remove a specific card from the collection.
+    *   **Export a Card:** Click the download icon to export a single card as a `.json` file.
+*   **Exporting an Entire Bag:** Select a bag and click the "Export Selected Bag" button to download all cards in that collection as a single JSON file, perfect for backups or sharing with other players.
+*   **Deleting a Bag:** Select a bag from the dropdown and click the trash can icon next to the bag list to permanently delete the entire collection.
 
-**Note:** When importing multiple cards from a JSON file, all cards will be loaded into the application, and you can navigate them using the "Navigate Cards" section.
+### 6. Importing Card Data
 
-### 5. Printer Settings & Preview
+Found a cool monster on 5e.tools or have a collection of items from rpg-cards? You can import them directly.
 
-*   **Select Printer Type:**
-    *   **Thermal Receipt Printer (Monochrome):** Optimizes the preview and output for black-and-white thermal printers.
-    *   **Color Photo Printer (Kodak Zink / Fujifilm Instax):** Optimizes the preview and output for color photo printers.
-*   **Thermal Paper Width:** (For Thermal Printers) Choose from common thermal paper widths (`2in` (`58mm`), `3in` (`80mm`), `4in`（101.6mm) ). You can also select `Other (Custom)` to define your own size dimensions in inches.
-*   **Standard Size:** (For Thermal Printers) Based on the selected paper width, choose a standard card size (e.g., `Bridge`, `3" x 5"`) or `Continuous Roll` for a variable length card.
-*   **Number of Copies (1-10):** Specify how many copies of the card(s) you want to print or download.
-*   **Output Format:** Choose whether you want to generate a `PDF` or a `PNG` file. This selection will change the available "Download" and "Share" buttons.
-*   **Card Preview:** A live representation of your card, updating as you make changes.
-*   **Print/Export Scope:**
-    *   **Current Card:** Only the currently displayed card will be processed for printing or downloading.
-    *   **All Cards:** All cards loaded in the application will be processed.
+*   **Import from rpg-cards (.json file):** Upload a JSON file generated by or compatible with the `rpg-cards.vercel.app` tool.
+*   **Paste JSON from 5e.tools:** Paste JSON data copied directly from 5e.tools utilities.
+*   **Paste Generic JSON:** Paste any other JSON data that roughly matches the internal card structure. The application will attempt to map the fields.
 
-### 6. Printing and Exporting
+**Note:** When you import a file containing multiple cards, they will all be loaded into the editor, ready for you to cycle through, edit, or print.
 
-*   **View Card:** Opens a clean, print-friendly preview of the card in a new tab. This is ideal for sharing a link to a specific card or for manual printing from a desktop browser.
-*   **Print to Thermal Printer:** (Android devices only) This button will appear if you are on an Android device. It uses a special `print://` link to send the card directly to the Looped Labs ESC/POS Print Service app for thermal printing.
-*   **Print Color Photo Card:** (Visible for Color Printer type) Generates a high-resolution image of the card(s) and attempts to share it with compatible photo printer apps via the Web Share API.
-*   **Download Card Image(s):** Downloads the current card (or all cards, based on scope) as a PNG image file(s).
-*   **Share Card (via Web Share API):** Attempts to share the current card's image with other applications on your device (e.g., messaging apps, cloud storage).
-*   **Copy Bookmarkable Link:** Generates a unique URL that encodes the current card's data and settings. You can save this link to easily return to your design in the editor later or share it with others.
+### 7. Printer Settings & Preview
+
+This is where you configure the final output for your physical cards.
+
+*   **Select Printer Type:** Choose between **Thermal Receipt Printer** (for classic black-and-white paper slips) or **Color Photo Printer** (for vibrant, Zink-style cards).
+*   **Thermal Paper Width:** If you're using a thermal printer, select your paper roll width here. Common sizes like `2in` (`58mm`), `3in` (`80mm`), and `4in` (`101.6mm`) are available, or you can specify a custom width.
+*   **Standard Size:** For thermal printers, you can pick a standard label size (like `Bridge` or `4" x 6"`) or choose `Continuous Roll` for cards of any length.
+*   **Number of Copies:** Print multiple copies for the whole party.
+*   **Output Format:** Generate a `PDF` for high-quality printing or a `PNG` for a quick image file.
+*   **Card Preview:** See a live preview of your card that updates with every change you make.
+*   **Print/Export Scope:** Decide whether to process only the **Current Card** or **All Cards** loaded in the editor.
+
+### 8. Printing and Exporting
+
+Once your masterpiece is ready, you have several ways to bring it into the physical world.
+
+*   **Download PDF / Download Image:** The most reliable method. This saves the file directly to your device, which you can then print manually.
+*   **Copy Bookmarkable Link:** Creates a special, shareable URL that contains all the data for your current card. Save it for later or send it to a friend.
+*   **Print to Thermal Printer:** (Android only) If you have the ESC/POS Print Service app, this button sends your card directly to your connected thermal printer.
+*   **Share Card:** Uses your device's native share feature to send the card image or PDF to other apps like Discord, Google Drive, or your photo gallery.
 
 ## Important Notes
 
-*   **Direct Printing:** Direct printing from a web browser to a thermal printer requires a companion mobile app. This web app is currently specifically designed to integrate with the Looped Labs ESC/POS Print Service on Android (more to come in the future).
-*   **Offline Access (PWA):** This application is a Progressive Web App (PWA). If accessed via HTTPS or on localhost, it can be "installed" to your device's home screen for offline use.
-*   **Data Persistence:** Your card data and application settings are saved in your browser's local storage, so they will persist even if you close and reopen the browser tab.
+*   **Direct Printing:** Direct printing from a web browser to a thermal printer is a bit of a dark art and requires a companion mobile app. This tool is designed to integrate with the Looped Labs ESC/POS Print Service on Android.
+*   **Offline Access (PWA):** This tool is a Progressive Web App (PWA). If you're on a secure connection (HTTPS), you can "install" it to your device's home screen for quick access, even when you're offline in a dungeon with no Wi-Fi.
+*   **Your Data Stays With You:** All your cards and bags are stored in your browser's local storage. They are never uploaded to a server. This means your creations are private, but it also means you should use the "Export" features to back them up!
 
 Enjoy generating your TTRPG cards!
 

@@ -764,6 +764,19 @@
             }
         }
 
+        function downloadJson(data, filename) {
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         // --- Data Compression & Decompression for URL Sharing ---
         function compressDataForUrl(data) {
             try {
@@ -2321,16 +2334,7 @@
 
             const cardToExport = appState.bags[bagIndex]?.cards[cardIndex];
             if (cardToExport) {
-                const cardJson = JSON.stringify(cardToExport, null, 2);
-                const blob = new Blob([cardJson], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${cardToExport.title.replace(/\s/g, '_')}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                downloadJson(cardToExport, `${cardToExport.title.replace(/\s/g, '_')}.json`);
                 showMessage(`Card "${cardToExport.title}" exported.`);
             }
         }
@@ -2524,16 +2528,7 @@
             const bagToExport = appState.bags[selectedBagIndex];
 
             if (bagToExport && bagToExport.cards.length > 0) {
-                const bagJson = JSON.stringify(bagToExport.cards, null, 2);
-                const blob = new Blob([bagJson], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${bagToExport.name.replace(/\s/g, '_')}_bag.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                downloadJson(bagToExport.cards, `${bagToExport.name.replace(/\s/g, '_')}_bag.json`);
                 showMessage(`Bag "${bagToExport.name}" exported.`);
             } else {
                 showMessage('The selected bag is empty.', true);

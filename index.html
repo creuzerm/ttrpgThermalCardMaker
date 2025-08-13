@@ -85,6 +85,62 @@
         </div>
     </div>
 
+    <!-- Bag of Holding Modal -->
+    <div id="bag-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="bag-modal-title">
+        <div class="p-8 rounded-2xl shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto relative backdrop-blur-sm" style="background-color: rgba(245, 245, 220, 0.8); border: 1px solid var(--burgundy);">
+            <button id="close-bag-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 hover:text-black text-2xl font-bold transition-all duration-300" style="color: var(--burgundy);">&times;</button>
+            <h2 id="bag-modal-title" class="text-3xl font-bold mb-6 text-center">Bag of Holding</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column: Bag Actions -->
+                <div class="flex flex-col space-y-4">
+                    <!-- Create New Bag Section -->
+                    <div class="p-4 rounded-lg" style="background-color: rgba(192, 192, 192, 0.2);">
+                        <h3 class="text-xl font-semibold mb-2">Create a New Bag</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="new-bag-name" placeholder="New bag name..." class="flex-grow p-2 rounded-lg transition-all duration-300 focus:ring-2 focus:ring-[#800020]" style="background-color: var(--parchment); border: 1px solid var(--burgundy); color: var(--burgundy);">
+                            <button id="create-bag-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Create</button>
+                        </div>
+                    </div>
+
+                    <!-- Bag Selection and Actions -->
+                    <div class="p-4 rounded-lg" style="background-color: rgba(192, 192, 192, 0.2);">
+                        <h3 class="text-xl font-semibold mb-2">Select a Bag</h3>
+                        <div class="flex items-center space-x-2">
+                            <select id="bag-select" class="flex-grow p-2 rounded-lg focus:ring-[#800020] focus:border-[#800020] transition-all duration-300" style="background-color: var(--parchment); border: 1px solid var(--burgundy); color: var(--burgundy);">
+                                <!-- Options populated by JS -->
+                            </select>
+                            <button id="delete-bag-btn" class="p-2 rounded-lg hover:bg-red-700 active:scale-95 transition-all duration-300" style="background-color: #a00028; color: var(--parchment);" aria-label="Delete selected bag">
+                                <i data-lucide="trash-2" class="h-5 w-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bag Current Card -->
+                    <div class="p-4 rounded-lg" style="background-color: rgba(192, 192, 192, 0.2);">
+                         <h3 class="text-xl font-semibold mb-2">Add Card to Bag</h3>
+                        <button id="bag-current-card-btn" class="w-full font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Bag Current Card</button>
+                    </div>
+
+                    <!-- Export Bag -->
+                    <div class="p-4 rounded-lg" style="background-color: rgba(192, 192, 192, 0.2);">
+                        <h3 class="text-xl font-semibold mb-2">Export</h3>
+                        <button id="export-bag-btn" class="w-full font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Export Selected Bag</button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Cards in Bag -->
+                <div class="p-4 rounded-lg min-h-[300px] max-h-[50vh] overflow-y-auto" style="background-color: rgba(192, 192, 192, 0.2);">
+                    <h3 class="text-xl font-semibold mb-2" id="bag-contents-title">Bag Contents</h3>
+                    <div id="bag-cards-container">
+                        <!-- Cards in the selected bag will be listed here -->
+                        <p class="text-center" style="color: var(--burgundy);">Select a bag to see its contents.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="main-generator-view">
         <!-- Service Worker Registration -->
         <script>
@@ -116,10 +172,11 @@
                 </select>
                 <button id="next-card-btn" class="font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Next</button>
             </div>
-            <div class="grid grid-cols-3 gap-4">
-                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New Card</button>
-                <button id="open-import-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Import Cards</button>
-                <button id="delete-card-btn" class="font-bold py-2 px-4 rounded-lg hover:bg-red-700 active:scale-95 transition-all duration-300" style="background-color: #a00028; color: var(--parchment);">Delete This Card</button>
+            <div class="grid grid-cols-4 gap-4">
+                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New</button>
+                <button id="open-import-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Import</button>
+                <button id="open-bag-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Bags</button>
+                <button id="delete-card-btn" class="font-bold py-2 px-4 rounded-lg hover:bg-red-700 active:scale-95 transition-all duration-300" style="background-color: #a00028; color: var(--parchment);">Delete Card</button>
             </div>
         </div>
 
@@ -474,6 +531,7 @@
         let appState = {
             cards: [ createNewCard() ],
             currentCardIndex: 0, // Index of the currently displayed card
+            bags: [], // User's collection of saved cards, organized into bags
             printerType: 'thermal', // 'thermal' or 'color'
             thermalPaperWidth: '2in',
             standardSize: 'bridge',
@@ -561,6 +619,18 @@
         const accordion5eToolsContent = document.getElementById('accordion-5e-tools-content');
         const accordionGenericJsonHeading = document.getElementById('accordion-generic-json-heading');
         const accordionGenericJsonContent = document.getElementById('accordion-generic-json-content');
+
+        // Bag of Holding Modal Elements
+        const bagModal = document.getElementById('bag-modal');
+        const closeBagModalBtn = document.getElementById('close-bag-modal-btn');
+        const openBagModalBtn = document.getElementById('open-bag-modal-btn');
+        const newBagNameInput = document.getElementById('new-bag-name');
+        const createBagBtn = document.getElementById('create-bag-btn');
+        const bagSelect = document.getElementById('bag-select');
+        const deleteBagBtn = document.getElementById('delete-bag-btn');
+        const bagCardsContainer = document.getElementById('bag-cards-container');
+        const bagCurrentCardBtn = document.getElementById('bag-current-card-btn');
+        const exportBagBtn = document.getElementById('export-bag-btn');
 
         // Add Section Modal Elements
         const addSectionModal = document.getElementById('add-section-modal');
@@ -1505,6 +1575,13 @@
                             appState.includeCornerDots = parsedState.includeCornerDots;
                         }
                         if (parsedState.rememberedIcons) appState.rememberedIcons = parsedState.rememberedIcons;
+
+                        // Load bags
+                        if (parsedState.bags && Array.isArray(parsedState.bags)) {
+                            appState.bags = parsedState.bags;
+                        } else {
+                            appState.bags = [];
+                        }
                     }
                 } catch (error) {
                     console.error("Error loading state from localStorage:", error);
@@ -2180,6 +2257,286 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !importModal.classList.contains('hidden')) {
                 closeModal();
+            }
+        });
+
+        // --- Bag of Holding Modal Logic ---
+        function handleLoadCardFromBag(event) {
+            const button = event.target.closest('.load-card-from-bag-btn');
+            const bagIndex = parseInt(button.dataset.bagIndex, 10);
+            const cardIndex = parseInt(button.dataset.cardIndex, 10);
+
+            const cardToLoad = appState.bags[bagIndex]?.cards[cardIndex];
+            if (cardToLoad) {
+                const cardCopy = JSON.parse(JSON.stringify(cardToLoad));
+                appState.cards.splice(appState.currentCardIndex + 1, 0, cardCopy);
+                appState.currentCardIndex++;
+
+                updateUIFromAppState();
+                saveState();
+                closeBagModal();
+                showMessage(`Card "${cardCopy.title}" loaded into the editor.`);
+            }
+        }
+
+        function handleDeleteCardFromBag(event) {
+            const button = event.target.closest('.delete-card-from-bag-btn');
+            const bagIndex = parseInt(button.dataset.bagIndex, 10);
+            const cardIndex = parseInt(button.dataset.cardIndex, 10);
+
+            const cardToDelete = appState.bags[bagIndex]?.cards[cardIndex];
+            if (cardToDelete) {
+                if (confirm(`Are you sure you want to delete the card "${cardToDelete.title}" from this bag?`)) {
+                    appState.bags[bagIndex].cards.splice(cardIndex, 1);
+                    saveState();
+                    renderCardsInBag(bagIndex);
+                    showMessage(`Card "${cardToDelete.title}" deleted from the bag.`);
+                }
+            }
+        }
+
+        function handleMoveCard(event) {
+            const select = event.target;
+            const fromBagIndex = parseInt(select.dataset.bagIndex, 10);
+            const cardIndex = parseInt(select.dataset.cardIndex, 10);
+            const toBagIndex = parseInt(select.value, 10);
+
+            if (isNaN(toBagIndex)) {
+                return;
+            }
+
+            const cardToMove = appState.bags[fromBagIndex].cards.splice(cardIndex, 1)[0];
+            appState.bags[toBagIndex].cards.push(cardToMove);
+
+            saveState();
+            showMessage(`Card moved to "${appState.bags[toBagIndex].name}".`);
+
+            renderCardsInBag(fromBagIndex);
+        }
+
+        function handleExportCardFromBag(event) {
+            const button = event.target.closest('.export-card-from-bag-btn');
+            const bagIndex = parseInt(button.dataset.bagIndex, 10);
+            const cardIndex = parseInt(button.dataset.cardIndex, 10);
+
+            const cardToExport = appState.bags[bagIndex]?.cards[cardIndex];
+            if (cardToExport) {
+                const cardJson = JSON.stringify(cardToExport, null, 2);
+                const blob = new Blob([cardJson], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${cardToExport.title.replace(/\s/g, '_')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage(`Card "${cardToExport.title}" exported.`);
+            }
+        }
+
+        function renderCardsInBag(bagIndex) {
+            const bag = appState.bags[bagIndex];
+            const bagContentsTitle = document.getElementById('bag-contents-title');
+
+            if (!bag) {
+                bagCardsContainer.innerHTML = '<p class="text-center" style="color: var(--burgundy);">Could not find the selected bag.</p>';
+                bagContentsTitle.textContent = 'Bag Contents';
+                return;
+            }
+
+            bagContentsTitle.textContent = `Contents of "${bag.name}" (${bag.cards.length} cards)`;
+
+            if (bag.cards.length === 0) {
+                bagCardsContainer.innerHTML = '<p class="text-center" style="color: var(--burgundy);">This bag is empty.</p>';
+                return;
+            }
+
+            bagCardsContainer.innerHTML = bag.cards.map((card, cardIndex) => {
+                const moveOptions = appState.bags
+                    .map((b, i) => {
+                        if (i === bagIndex) return '';
+                        return `<option value="${i}">${sanitizeHTML(b.name)}</option>`;
+                    })
+                    .join('');
+
+                return `
+                    <div class="flex items-center justify-between p-2 rounded-md mb-2" style="background-color: rgba(245, 245, 220, 0.7);">
+                        <span class="font-semibold truncate pr-2">${sanitizeHTML(card.title || 'Untitled Card')}</span>
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                             <select data-bag-index="${bagIndex}" data-card-index="${cardIndex}" class="move-card-select p-1 rounded-md text-xs" style="background-color: var(--silver); color: var(--burgundy); border: 1px solid var(--burgundy);" ${appState.bags.length <= 1 ? 'disabled' : ''}>
+                                <option value="">Move to...</option>
+                                ${moveOptions}
+                            </select>
+                            <button data-bag-index="${bagIndex}" data-card-index="${cardIndex}" class="load-card-from-bag-btn p-1 rounded-md hover:brightness-125" style="background-color: var(--burgundy); color: var(--parchment);" aria-label="Load card into editor">
+                                <i data-lucide="upload" class="h-4 w-4 pointer-events-none"></i>
+                            </button>
+                            <button data-bag-index="${bagIndex}" data-card-index="${cardIndex}" class="export-card-from-bag-btn p-1 rounded-md hover:brightness-125" style="background-color: var(--burgundy); color: var(--parchment);" aria-label="Export card as JSON">
+                                <i data-lucide="download" class="h-4 w-4 pointer-events-none"></i>
+                            </button>
+                            <button data-bag-index="${bagIndex}" data-card-index="${cardIndex}" class="delete-card-from-bag-btn p-1 rounded-md hover:bg-red-700" style="background-color: #a00028; color: var(--parchment);" aria-label="Delete card from bag">
+                                <i data-lucide="trash-2" class="h-4 w-4 pointer-events-none"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.load-card-from-bag-btn').forEach(btn => {
+                btn.addEventListener('click', handleLoadCardFromBag);
+            });
+            document.querySelectorAll('.delete-card-from-bag-btn').forEach(btn => {
+                btn.addEventListener('click', handleDeleteCardFromBag);
+            });
+            document.querySelectorAll('.move-card-select').forEach(select => {
+                select.addEventListener('change', handleMoveCard);
+            });
+            document.querySelectorAll('.export-card-from-bag-btn').forEach(btn => {
+                btn.addEventListener('click', handleExportCardFromBag);
+            });
+
+            lucide.createIcons();
+        }
+
+        function renderBagUI() {
+            bagSelect.innerHTML = '';
+            if (appState.bags.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = 'No bags yet!';
+                option.disabled = true;
+                bagSelect.appendChild(option);
+                bagCardsContainer.innerHTML = '<p class="text-center" style="color: var(--burgundy);">Create a bag to get started.</p>';
+                document.getElementById('bag-contents-title').textContent = 'Bag Contents';
+                deleteBagBtn.disabled = true;
+                bagCurrentCardBtn.disabled = true;
+                exportBagBtn.disabled = true;
+            } else {
+                appState.bags.forEach((bag, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = bag.name;
+                    bagSelect.appendChild(option);
+                });
+                deleteBagBtn.disabled = false;
+                bagCurrentCardBtn.disabled = false;
+                exportBagBtn.disabled = false;
+
+                const selectedBagIndex = parseInt(bagSelect.value, 10);
+                renderCardsInBag(selectedBagIndex);
+            }
+        }
+
+        openBagModalBtn.addEventListener('click', () => {
+            bagModal.classList.remove('hidden');
+            renderBagUI();
+            newBagNameInput.focus();
+        });
+
+        const closeBagModal = () => {
+            bagModal.classList.add('hidden');
+        };
+
+        closeBagModalBtn.addEventListener('click', closeBagModal);
+
+        bagModal.addEventListener('click', (e) => {
+            if (e.target === bagModal) {
+                closeBagModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !bagModal.classList.contains('hidden')) {
+                closeBagModal();
+            }
+        });
+
+        createBagBtn.addEventListener('click', () => {
+            const newBagName = newBagNameInput.value.trim();
+            if (newBagName) {
+                if (appState.bags.some(bag => bag.name === newBagName)) {
+                    showMessage('A bag with this name already exists.', true);
+                    return;
+                }
+                appState.bags.push({ name: newBagName, cards: [] });
+                saveState();
+                renderBagUI();
+                bagSelect.value = appState.bags.length - 1;
+                newBagNameInput.value = '';
+                showMessage(`Bag "${newBagName}" created!`);
+                bagSelect.dispatchEvent(new Event('change'));
+            } else {
+                showMessage('Please enter a name for the new bag.', true);
+            }
+        });
+
+        bagSelect.addEventListener('change', () => {
+            const selectedBagIndex = parseInt(bagSelect.value, 10);
+            if (!isNaN(selectedBagIndex)) {
+                renderCardsInBag(selectedBagIndex);
+            }
+        });
+
+        bagCurrentCardBtn.addEventListener('click', () => {
+            if (appState.bags.length === 0) {
+                showMessage('You need to create a bag first!', true);
+                return;
+            }
+            const selectedBagIndex = parseInt(bagSelect.value, 10);
+            if (isNaN(selectedBagIndex)) {
+                showMessage('Please select a bag.', true);
+                return;
+            }
+
+            const currentCard = appState.cards[appState.currentCardIndex];
+            const cardCopy = JSON.parse(JSON.stringify(currentCard));
+
+            if (!cardCopy.id) {
+                cardCopy.id = crypto.randomUUID();
+            }
+
+            appState.bags[selectedBagIndex].cards.push(cardCopy);
+            saveState();
+            showMessage(`Card "${cardCopy.title}" added to "${appState.bags[selectedBagIndex].name}".`);
+            renderCardsInBag(selectedBagIndex);
+        });
+
+        deleteBagBtn.addEventListener('click', () => {
+            if (appState.bags.length === 0) {
+                return;
+            }
+            const selectedBagIndex = parseInt(bagSelect.value, 10);
+            const bagName = appState.bags[selectedBagIndex].name;
+
+            if (confirm(`Are you sure you want to delete the bag "${bagName}" and all of its contents? This action cannot be undone.`)) {
+                appState.bags.splice(selectedBagIndex, 1);
+                saveState();
+                renderBagUI();
+                showMessage(`Bag "${bagName}" deleted.`);
+            }
+        });
+
+        exportBagBtn.addEventListener('click', () => {
+            if (appState.bags.length === 0) {
+                showMessage('There are no bags to export.', true);
+                return;
+            }
+            const selectedBagIndex = parseInt(bagSelect.value, 10);
+            const bagToExport = appState.bags[selectedBagIndex];
+
+            if (bagToExport && bagToExport.cards.length > 0) {
+                const bagJson = JSON.stringify(bagToExport.cards, null, 2);
+                const blob = new Blob([bagJson], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${bagToExport.name.replace(/\s/g, '_')}_bag.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage(`Bag "${bagToExport.name}" exported.`);
+            } else {
+                showMessage('The selected bag is empty.', true);
             }
         });
 

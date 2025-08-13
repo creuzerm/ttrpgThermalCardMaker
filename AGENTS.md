@@ -271,7 +271,7 @@ All cards share a common base structure with specific fields for customization:
 
 -----
 
-#### Templates
+#### D&D Templates
 
 ##### **Creature (Monster)**
 
@@ -469,6 +469,227 @@ This is a general-purpose template for a character feature, class option, or oth
   "isScrolling": false
 }
 ```
+
+### Daggerheart Card Templates
+
+Here are the JSON templates for the Daggerheart card types, designed to fit the structure used by your mobile card creation tool. The `contents` array in each template provides the specific data fields for that card type.
+
+-----
+
+#### 1\. Ancestry Card
+
+This template is for a character's ancestry, including descriptive text and a list of traits. It focuses on narrative and core abilities.
+
+```json
+{
+  "count": 1,
+  "color": "#4a6898",
+  "title": "New Ancestry",
+  "icon": "family-tree",
+  "icon_back": "family-tree",
+  "tags": ["Daggerheart", "Ancestry"],
+  "footer": "Source: Daggerheart Core",
+  "contents": [
+    "text | *A description of the ancestry's lore and place in the world.*",
+    "rule",
+    "description | Feature Name | A detailed description of an ancestry trait.",
+    "description | Second Feature | A description of a second ancestry trait."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 2\. Community Card
+
+A template for a character's community, detailing the benefits and features they gain from their background.
+
+```json
+{
+  "count": 1,
+  "color": "#30432f",
+  "title": "New Community",
+  "icon": "village",
+  "icon_back": "village",
+  "tags": ["Daggerheart", "Community"],
+  "footer": "Source: Daggerheart Core",
+  "contents": [
+    "text | *A description of the community's culture, values, and location.*",
+    "rule",
+    "description | Community Trait | A detailed description of a feature granted by this community.",
+    "description | Another Community Trait | The description of an additional community feature."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 3\. Subclass Card
+
+This template is for a character's subclass, providing their specific abilities and features.
+
+```json
+{
+  "count": 1,
+  "color": "#a7894b",
+  "title": "New Subclass",
+  "icon": "crown",
+  "icon_back": "crown",
+  "tags": ["Daggerheart", "Subclass"],
+  "footer": "Source: Daggerheart Core",
+  "contents": [
+    "property | Class | Fighter",
+    "text | *A description of the subclass and its role within the class.*",
+    "rule",
+    "description | Subclass Feature | A detailed description of a feature or ability gained from this subclass.",
+    "description | Another Feature | The description of another feature."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 4\. Domain Card (Ability/Spell/Grimoire)
+
+A general template for Domain cards that can be used for Abilities, Spells, or Grimoires. The `tags` and `icon` should be updated to specify the card type.
+
+```json
+{
+  "count": 1,
+  "color": "#79294e",
+  "title": "New Ability",
+  "icon": "lightning-bow",
+  "icon_back": "lightning-bow",
+  "tags": ["Daggerheart", "Domain", "Ability"],
+  "footer": "Source: Daggerheart Core",
+  "contents": [
+    "property | Domain | Chaos",
+    "property | Level | 1",
+    "rule",
+    "description | Cost | A description of the ability's cost (e.g., spending Stress).",
+    "description | Effect | A detailed description of the ability's mechanical effect.",
+    "description | Upgraded | The enhanced effect when spent with Hope."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 5\. Transformation Card
+
+This template represents a transformation that provides both a mechanical benefit and a drawback.
+
+```json
+{
+  "count": 1,
+  "color": "#800020",
+  "title": "New Transformation",
+  "icon": "rune-sword",
+  "icon_back": "rune-sword",
+  "tags": ["Daggerheart", "Transformation"],
+  "footer": "Source: Daggerheart Core",
+  "contents": [
+    "text | *A description of the transformation's theme and origin.*",
+    "rule",
+    "section | Benefits",
+    "text | **Benefit 1:** The primary mechanical advantage of the transformation.",
+    "text | **Benefit 2:** An additional benefit.",
+    "rule",
+    "section | Drawbacks",
+    "text | **Drawback 1:** A significant mechanical disadvantage of the transformation.",
+    "text | **Drawback 2:** A second, negative effect."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 6\. Adversary Card (Community Homebrew)
+
+This template is based on a community-made design and includes fields for a creature's tier, difficulty, HP, Stress, and features.
+
+```json
+{
+  "count": 1,
+  "color": "#b22222",
+  "title": "New Adversary",
+  "icon": "crossed-swords",
+  "icon_back": "crossed-swords",
+  "tags": ["Daggerheart", "Adversary", "Homebrew"],
+  "footer": "Source: Community Homebrew",
+  "contents": [
+    "property | Tier | 1",
+    "property | Difficulty | Moderate",
+    "property | Damage Die | 1d6",
+    "rule",
+    "description | Tactics | A brief description of how the adversary fights.",
+    "description | Features | **Feature Name:** The description of a special ability.",
+    "description | Feature 2 | **Feature Name 2:** The description of a second ability.",
+    "boxes | HP | 10",
+    "boxes | Stress | 6",
+    "boxes | Major Threshold | 1",
+    "boxes | Severe Threshold | 1"
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 7\. Item Card (Community Homebrew)
+
+This template is for equipment or other items, including a type, damage, and traits. It is based on community-made card designs.
+
+```json
+{
+  "count": 1,
+  "color": "#d2b48c",
+  "title": "New Item",
+  "icon": "sword",
+  "icon_back": "sword",
+  "tags": ["Daggerheart", "Item", "Homebrew"],
+  "footer": "Source: Community Homebrew",
+  "contents": [
+    "property | Item Type | Weapon",
+    "property | Damage Dice | 1d6",
+    "property | Damage Type | Physical",
+    "property | Range | Melee",
+    "rule",
+    "description | Traits | **Trait Name:** The effect of a special trait.",
+    "description | Description | A detailed description of the item."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+#### 8\. Ritual Card (Community Homebrew)
+
+A template for a ritual, which is a community-driven card type focused on narrative and a flexible approach to magic.
+
+```json
+{
+  "count": 1,
+  "color": "#5b5b5b",
+  "title": "New Ritual",
+  "icon": "pentagram-star",
+  "icon_back": "pentagram-star",
+  "tags": ["Daggerheart", "Ritual", "Homebrew"],
+  "footer": "Source: Community Homebrew",
+  "contents": [
+    "text | *A description of the ritual's purpose and its narrative implications.*",
+    "rule",
+    "property | Stress Cost | 3",
+    "property | Difficulty | Hard",
+    "property | Time | 1 hour",
+    "description | Components | Any resources or specific items required to perform the ritual.",
+    "rule",
+    "description | Effect | A description of the ritual's outcome."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
 
 ### Adding New Sections
 

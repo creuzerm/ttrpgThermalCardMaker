@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portable Printer TTRPG Card Generator</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DZVJME5GW8"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-DZVJME5GW8');
+    </script>
     <!-- Tailwind CSS with Typography Plugin -->
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <!-- DOMPurify CDN -->
@@ -3354,6 +3363,7 @@
 
         // Copy Bookmarkable Link button handler
         copyBookmarkLinkBtn.addEventListener('click', () => {
+            trackImageInteraction('copy_bookmark_link');
             const currentCard = appState.cards[appState.currentCardIndex];
             const dataToSend = {
                 card: currentCard,
@@ -3382,6 +3392,78 @@
                     showMessage('Failed to copy link. Please copy manually: ' + bookmarkLink, true);
                 });
         });
+
+        // --- Google Analytics Custom Event Tracking ---
+        function trackImageInteraction(action) {
+            if (typeof gtag !== 'function') {
+                console.warn('Google Analytics gtag function not found. Skipping event tracking.');
+                return;
+            }
+
+            const currentCard = appState.cards[appState.currentCardIndex];
+            if (!currentCard) {
+                console.warn('No current card found. Skipping event tracking.');
+                return;
+            }
+
+            const features = [];
+            if (currentCard.icon) features.push('icon');
+            if (currentCard.color && currentCard.color !== '#ffffff') features.push('color');
+            if (currentCard.tags && currentCard.tags.length > 0) features.push('tags');
+            if (currentCard.stats && Object.keys(currentCard.stats).length > 0) features.push('stats');
+            if (currentCard.isFolded) features.push('folded_card');
+            if (appState.isScrolling) features.push('scrolling_card');
+
+            // Check for section types beyond the default 'content'
+            const hasSpecialSections = currentCard.sections.some(section =>
+                section.type && section.type !== 'content'
+            );
+            if (hasSpecialSections) features.push('special_sections');
+
+
+            let printerSize = appState.thermalPaperWidth;
+            if (printerSize === 'custom') {
+                printerSize = `${appState.customWidth}in x ${appState.customLength}in`;
+            }
+
+            const eventParams = {
+                'action': action,
+                'features_used': features.join(',') || 'none',
+                'printer_size': printerSize,
+                'resolution': `${appState.thermalDpi}dpi`,
+                'image_effects': appState.printerType === 'color',
+                'bases': currentCard.isFolded,
+                'thermal_printer_enabled': appState.printerType === 'thermal',
+                'printer_used': appState.printerType,
+            };
+
+            gtag('event', 'image_interaction', eventParams);
+            console.log('Tracked image_interaction event:', eventParams);
+        }
+
+        // Add event listeners to action buttons for tracking.
+        // We're modifying the original click handlers to include the tracking call.
+        const originalDownloadPdfHandler = downloadPdfBtn.onclick;
+        downloadPdfBtn.addEventListener('click', () => trackImageInteraction('download_pdf'));
+
+        const originalSharePdfHandler = sharePdfBtn.onclick;
+        sharePdfBtn.addEventListener('click', () => trackImageInteraction('share_pdf'));
+
+        const originalDownloadImageHandler = downloadImageBtn.onclick;
+        downloadImageBtn.addEventListener('click', () => trackImageInteraction('download_image'));
+
+        const originalShareCardHandler = shareCardBtn.onclick;
+        shareCardBtn.addEventListener('click', () => trackImageInteraction('share_image'));
+
+        const originalPrintThermalHandler = printThermalBtn.onclick;
+        printThermalBtn.addEventListener('click', () => trackImageInteraction('print_thermal'));
+
+        const originalPrintColorPhotoHandler = printColorPhotoBtn.onclick;
+        printColorPhotoBtn.addEventListener('click', () => trackImageInteraction('print_color'));
+
+        const originalViewCardHandler = viewCardBtn.onclick;
+        viewCardBtn.addEventListener('click', () => trackImageInteraction('view_card'));
+
 
         async function initGeneratorView() {
             try {

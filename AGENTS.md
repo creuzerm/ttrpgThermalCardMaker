@@ -170,20 +170,23 @@ This section outlines procedures for managing the content and structure of this 
 
 ### Adding New Sections
 
-To ensure consistency, adding new sections should follow a structured process. When requested to add a new section, offer the following predefined section types to the user:
+To ensure consistency, adding new sections should follow a structured process. When requested to add a new section, offer the following predefined section types to the user. These types correspond to the formats supported by the `rpg-cards` JSON import.
 
-*   **General Content Section:** A standard section with a heading and paragraphs of text.
-    *   Format: `## Section Title` followed by text.
-*   **Numbered List Section:** A section containing a numbered list.
-    *   Format: `## Section Title` followed by `1. Item 1`, `2. Item 2`, etc.
-*   **Bulleted List Section:** A section containing a bulleted list.
-    *   Format: `## Section Title` followed by `* Item 1`, `* Item 2`, etc.
-*   **Technical Instructions Section:** A section for providing technical steps, often including code blocks.
-    *   Format: `## Section Title` with text and ` ``` ` code blocks.
-*   **Feature Requirement Section:** A section for defining a new feature. This should be added under the existing `## Feature Requirements` section if it exists.
-    *   Format: `### New Feature Title` with a description of the core functionality.
+*   **Content Section:** A standard section with an optional heading, body text (supports markdown-like syntax), and optional italicized flavor text. This is the default section type.
+*   **Property:** A simple key-value pair, displayed as "**Key:** Value".
+*   **Picture:** An image, specified by a URL and an optional height.
+*   **Horizontal Rule:** A full-width horizontal line. There are two styles:
+    *   `rule`: A standard dashed line.
+    *   `ruler`: A thin solid line.
+*   **D&D Stats Block (`dndstats`):** A formatted block for the six D&D ability scores (STR, DEX, CON, INT, WIS, CHA).
+*   **Savage Worlds Stats Block (`swstats`):** A formatted block for Savage Worlds stats (e.g., Agility, Smarts, Spirit, Pace, Parry).
+*   **Pathfinder 2e Stats Block (`p2e_stats`):** A formatted block for Pathfinder 2e stats (e.g., STR, DEX, AC, Fort, Ref, Will, HP).
+*   **Pathfinder 2e Activity (`p2e_activity`):** A formatted block for a Pathfinder 2e activity, including name, action cost, and description.
+*   **Pathfinder 2e Traits (`p2e_traits`):** A block to display a list of Pathfinder 2e traits with rarities.
+*   **Boxes:** A section with a label and a specified number of checkable boxes.
+*   **Fill:** An invisible element that takes up flexible space, useful for layout adjustments.
 
-This provides a clear template and ensures new content aligns with the existing document structure.
+When adding a section, use the appropriate type to ensure correct rendering.
 
 ### Reordering Sections
 

@@ -114,9 +114,10 @@
                 </select>
                 <button id="next-card-btn" class="font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Next</button>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New Empty Card</button>
+            <div class="grid grid-cols-3 gap-4">
+                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New Card</button>
                 <button id="open-import-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Import Cards</button>
+                <button id="delete-card-btn" class="font-bold py-2 px-4 rounded-lg hover:bg-red-700 active:scale-95 transition-all duration-300" style="background-color: #a00028; color: var(--parchment);">Delete This Card</button>
             </div>
         </div>
 
@@ -411,32 +412,7 @@
         // Global application state
         let iconManifest = {}; // To be populated from icon-lookup.json
         let appState = {
-            cards: [ // Array to hold all cards
-                {
-                    id: '',
-                    title: 'New Card',
-                    type: 'Spell',
-                    icon: '', // This will now store the Font Awesome class name or a keyword
-                    color: '#ffffff',
-                    tags: [],
-                    sections: [
-                        { heading: 'Description', body: 'This is a magical card.', flavorText: '' }
-                    ],
-                    cost: '',
-                    rarity: '',
-                    abilities: [],
-                    image: '', // This field is not directly used for display in the current preview, but kept for data integrity
-                    stats: {},
-                    footer: 'TCG.BagsOfFolding.com',
-                    isFolded: false,
-                    foldContent: {
-                        type: 'text',
-                        text: 'Folded content goes here.',
-                        imageUrl: '', // This will store the URL for the back image (e.g., from icon_back)
-                        qrCodeData: ''
-                    }
-                }
-            ],
+            cards: [ createNewCard() ],
             currentCardIndex: 0, // Index of the currently displayed card
             printerType: 'thermal', // 'thermal' or 'color'
             thermalPaperWidth: '2in',
@@ -513,6 +489,7 @@
         const nextCardBtn = document.getElementById('next-card-btn');
         const cardSelect = document.getElementById('card-select');
         const addNewCardBtn = document.getElementById('add-new-card-btn');
+        const deleteCardBtn = document.getElementById('delete-card-btn');
         const openImportModalBtn = document.getElementById('open-import-modal-btn');
 
         // Import Modal Elements
@@ -650,6 +627,20 @@
             } catch (_) {
                 return false;
             }
+        }
+
+        function createNewCard() {
+            return {
+                id: crypto.randomUUID(),
+                title: 'New Card',
+                type: 'Spell',
+                icon: '',
+                color: '#ffffff',
+                tags: [],
+                sections: [{ heading: 'Description', body: 'This is a magical card.', flavorText: '' }],
+                cost: '', rarity: '', abilities: [], image: '', stats: {}, footer: 'TCG.BagsOfFolding.com',
+                isFolded: false, foldContent: { type: 'text', text: 'Folded content goes here.', imageUrl: '', qrCodeData: '' }
+            };
         }
 
 
@@ -1344,19 +1335,8 @@
             } catch (error) {
                 console.error("Error loading state from localStorage or URL:", error);
                 // Reset to initial state on error
-                appState = {
-                    cards: [{
-                        id: '', title: 'New Card', type: 'Spell', icon: '', color: '#ffffff', tags: [],
-                        sections: [{ heading: 'Description', body: 'This is a magical card.', flavorText: '' }],
-                        cost: '', rarity: '', abilities: [], image: '', stats: {}, footer: 'TCG.BagsOfFolding.com',
-                        isFolded: false, foldContent: { type: 'text', text: 'Folded content goes here.', imageUrl: '', qrCodeData: '' }
-                    }],
-                    currentCardIndex: 0,
-                    printerType: 'thermal',
-                    thermalPaperSize: '58mm',
-                    numCopies: 1,
-                    printScope: 'current'
-                };
+                appState.cards = [createNewCard()];
+                appState.currentCardIndex = 0;
                 showMessage('Failed to load card data. Starting with a new card.', true);
             }
             updateUIFromAppState();
@@ -1900,22 +1880,34 @@
         });
 
         addNewCardBtn.addEventListener('click', () => {
-            const newCard = {
-                id: crypto.randomUUID(),
-                title: 'New Card',
-                type: 'Spell',
-                icon: '',
-                color: '#ffffff',
-                tags: [],
-                sections: [{ heading: 'Description', body: 'This is a magical card.', flavorText: '' }],
-                cost: '', rarity: '', abilities: [], image: '', stats: {}, footer: 'TCG.BagsOfFolding.com',
-                isFolded: false, foldContent: { type: 'text', text: 'Folded content goes here.', imageUrl: '', qrCodeData: '' }
-            };
+            const newCard = createNewCard();
             appState.cards.push(newCard);
             appState.currentCardIndex = appState.cards.length - 1; // Go to the new card
             updateUIFromAppState();
             saveState();
             showMessage('New empty card added!');
+        });
+
+        deleteCardBtn.addEventListener('click', () => {
+            const cardToDeleteTitle = appState.cards[appState.currentCardIndex].title || 'Untitled Card';
+            if (confirm(`Are you sure you want to delete the card "${cardToDeleteTitle}"?`)) {
+                if (appState.cards.length > 1) {
+                    appState.cards.splice(appState.currentCardIndex, 1);
+
+                    // Adjust index
+                    if (appState.currentCardIndex >= appState.cards.length) {
+                        appState.currentCardIndex = appState.cards.length - 1;
+                    }
+                } else {
+                    // This is the last card, so we replace it with a new empty one
+                    appState.cards = [createNewCard()];
+                    appState.currentCardIndex = 0;
+                }
+
+                updateUIFromAppState();
+                saveState();
+                showMessage(`Card "${cardToDeleteTitle}" deleted.`);
+            }
         });
 
         // Import Modal Listeners

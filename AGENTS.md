@@ -150,7 +150,7 @@ A feature needs to be implemented that allows users to delete a card directly fr
 
 ### "Bag" of Holding for Cards
 
-A "bag" feature should be created to allow users to save or "bag" cards for later use. This feature should function as a personal collection of cards, stored in the browser's local storage.
+A "bag" feature should be created to allow users to save or "bag" cards for later use. This feature should function as a personal collection of cards, stored in the browser's local storage as part of the Progressive Web App.
 
 **Core Functionality:**
 
@@ -167,6 +167,275 @@ A "bag" feature should be created to allow users to save or "bag" cards for late
 ## Content Management
 
 This section outlines procedures for managing the content and structure of this document and other similar documents in the project.
+
+### New Card  Templates
+
+To ensure consistency and efficiency when creating new TTRPG cards, make the following templates available to pick from. These templates define the base structure for different card types, which should be used as a starting point for a new card creation if selected.
+
+#### Template Structure
+All templates are provided in a JSON format that is compatible with the card generator. They include a default count of 1, a placeholder color, and a default icon and icon_back that should be updated to match the new card's theme.
+
+The contents array is the most critical part of the template. It uses specific string formats to define card content:
+
+property | key | value: Creates a key-value pair for stats (e.g., Casting Time | 1 action).
+
+description | key | value: Creates a key-value pair for longer text blocks.
+
+text | value: Creates a block of plain text.
+
+rule: Inserts a horizontal line.
+
+section | heading: Creates a section heading.
+
+Available Templates
+Creature: For monsters and NPCs. Default ability scores are set to 10.
+
+Item: For magical or mundane equipment.
+
+Spell: For spells and magical effects.
+
+Species: For playable races or other creature types.
+
+Background: For character backgrounds.
+
+Feat: For character feats and special abilities.
+
+Option/Feature: A general-purpose template for class features or other special rules.
+
+To create a new card:
+
+Select the appropriate JSON template for the card type.
+
+Copy the JSON object into the generator's editor.
+
+Modify the title, color, icon, tags, and contents as needed.
+
+Ensure the contents array adheres to the specified formatting to render correctly.
+
+
+Based on the structure of the provided JSON files, here are templates for the different card types you requested. The card generation system appears to use a flexible `contents` array where each string follows a specific format (e.g., `key | value` or `key | subkey | value`). These templates are designed to fit that structure.
+
+-----
+
+#### Card Structure Definitions
+
+All cards share a common base structure with specific fields for customization:
+
+  * **`count`**: The number of copies to create. This can be set to `1` by default.
+  * **`color`**: A hex code for the card's background.
+  * **`title`**: The title of the card.
+  * **`icon`**: An icon name or URL. The `index.html` file suggests you can find a full list of icons at `game-icons.net`.
+  * **`icon_back`**: The icon for the back of a folded card.
+  * **`tags`**: An array of strings for organizing and searching cards.
+  * **`footer`**: Text for the bottom of the card.
+  * **`contents`**: An array of strings that defines the main body of the card. It uses specific keywords to format content.
+      * **`property`**: Used for key-value stat blocks.
+      * **`description`**: A key-value pair for longer descriptive text.
+      * **`text`**: A block of plain text.
+      * **`rule`**: A horizontal line separator.
+  * **`isFolded`**: A boolean (`true` or `false`) to indicate a folded card.
+  * **`foldContent`**: An object containing the content for the back of a folded card, with `type` (e.g., `"text"`) and `content`.
+
+-----
+
+#### Templates
+
+##### **Creature (Monster)**
+
+This template creates a stat block with ability scores all set to `10`, as you requested. It also includes standard fields for a monster.
+
+```json
+{
+  "count": 1,
+  "color": "#e05c5c",
+  "title": "New Creature",
+  "icon": "dragon-head",
+  "icon_back": "dragon-head",
+  "tags": ["Creature", "Monster"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Size | Medium",
+    "property | Type | Aberration",
+    "property | Alignment | Lawful Evil",
+    "rule",
+    "property | Armor Class | 10",
+    "property | Hit Points | 10 (1d8 + 5)",
+    "property | Speed | 30 ft.",
+    "rule",
+    "property | STR | 10 (+0)",
+    "property | DEX | 10 (+0)",
+    "property | CON | 10 (+0)",
+    "property | INT | 10 (+0)",
+    "property | WIS | 10 (+0)",
+    "property | CHA | 10 (+0)",
+    "rule",
+    "description | Senses | passive Perception 10",
+    "description | Languages | Common",
+    "description | Challenge | 1/2 (100 XP)",
+    "rule",
+    "section | Actions",
+    "description | Multiattack | The creature makes two attacks.",
+    "description | Attack | Melee Weapon Attack: +0 to hit, reach 5 ft., one target. Hit: 1 (1d4) bludgeoning damage."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+##### **Item**
+
+A template for a magical or mundane item, including fields for its rarity and a description.
+
+```json
+{
+  "count": 1,
+  "color": "#4a6898",
+  "title": "New Item",
+  "icon": "sword",
+  "icon_back": "sword",
+  "tags": ["Item", "Magic Item"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Type | Wondrous item",
+    "property | Rarity | Common",
+    "rule",
+    "description | Description | A detailed description of the item and its appearance.",
+    "description | Effect | The magical properties or benefits of the item."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+##### **Spell**
+
+This template includes all the essential components of a spell card, such as level, school, casting time, and range.
+
+```json
+{
+  "count": 1,
+  "color": "#a7894b",
+  "title": "New Spell",
+  "icon": "magic-swirl",
+  "icon_back": "magic-swirl",
+  "tags": ["Spell", "Evocation"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Level | 1st-level evocation",
+    "property | Casting Time | 1 action",
+    "property | Range | 60 feet",
+    "property | Components | V, S, M (a pinch of sulfur)",
+    "property | Duration | Instantaneous",
+    "rule",
+    "description | Description | The spell's effect and what happens when it is cast.",
+    "description | At Higher Levels | A description of how the spell's power increases when cast using a higher-level spell slot."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+##### **Species**
+
+This template is for a playable race or species, with placeholders for ability score increases, size, and racial features, similar to the "Centaur" example found in the file.
+
+```json
+{
+  "count": 1,
+  "color": "#30432f",
+  "title": "New Species",
+  "icon": "family-tree",
+  "icon_back": "family-tree",
+  "tags": ["Species", "Race"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Ability Scores | Choose any +2; choose any other +1",
+    "property | Size | Medium",
+    "property | Speed | 30 ft.",
+    "rule",
+    "description | Creature Type | You are a Humanoid.",
+    "description | Trait Name | A detailed description of the species' trait.",
+    "description | Trait Name 2 | Another trait's description."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+##### **Background**
+
+This template is designed for a character background, detailing proficiencies and features.
+
+```json
+{
+  "count": 1,
+  "color": "#6e4a2a",
+  "title": "New Background",
+  "icon": "book-cover",
+  "icon_back": "book-cover",
+  "tags": ["Background"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Skill Proficiencies | Two of your choice",
+    "property | Tool Proficiencies | One of your choice",
+    "rule",
+    "description | Feature: Background Name | A description of the feature associated with this background.",
+    "description | Personality Traits | A suggestion for personality traits.",
+    "description | Ideals | A suggestion for ideals.",
+    "description | Bonds | A suggestion for bonds.",
+    "description | Flaws | A suggestion for flaws."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+##### **Feat**
+
+A template for a feat, which usually includes a prerequisite and a description of the benefit.
+
+```json
+{
+  "count": 1,
+  "color": "#5b5b5b",
+  "title": "New Feat",
+  "icon": "checked-shield",
+  "icon_back": "checked-shield",
+  "tags": ["Feat"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Prerequisite | None",
+    "rule",
+    "description | Benefit | A description of the feat's benefits and how it changes a character's abilities."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
+
+##### **Option/Feature**
+
+This is a general-purpose template for a character feature, class option, or other special ability.
+
+```json
+{
+  "count": 1,
+  "color": "#8f8b7f",
+  "title": "New Feature",
+  "icon": "crown",
+  "icon_back": "crown",
+  "tags": ["Feature", "Option"],
+  "footer": "Source: Custom",
+  "contents": [
+    "property | Prerequisite | Level 3",
+    "rule",
+    "description | Description | A detailed description of what the feature does.",
+    "description | Special | Additional rules or a deeper explanation of the feature's mechanics."
+  ],
+  "isFolded": false,
+  "isScrolling": false
+}
+```
 
 ### Adding New Sections
 

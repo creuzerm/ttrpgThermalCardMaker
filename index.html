@@ -2274,71 +2274,6 @@
         });
 
         // --- Bag of Holding Modal Logic ---
-        function handleLoadCardFromBag(event) {
-            const button = event.target.closest('.load-card-from-bag-btn');
-            const bagIndex = parseInt(button.dataset.bagIndex, 10);
-            const cardIndex = parseInt(button.dataset.cardIndex, 10);
-
-            const cardToLoad = appState.bags[bagIndex]?.cards[cardIndex];
-            if (cardToLoad) {
-                const cardCopy = JSON.parse(JSON.stringify(cardToLoad));
-                appState.cards.splice(appState.currentCardIndex + 1, 0, cardCopy);
-                appState.currentCardIndex++;
-
-                updateUIFromAppState();
-                saveState();
-                closeBagModal();
-                showMessage(`Card "${cardCopy.title}" loaded into the editor.`);
-            }
-        }
-
-        function handleDeleteCardFromBag(event) {
-            const button = event.target.closest('.delete-card-from-bag-btn');
-            const bagIndex = parseInt(button.dataset.bagIndex, 10);
-            const cardIndex = parseInt(button.dataset.cardIndex, 10);
-
-            const cardToDelete = appState.bags[bagIndex]?.cards[cardIndex];
-            if (cardToDelete) {
-                if (confirm(`Are you sure you want to delete the card "${cardToDelete.title}" from this bag?`)) {
-                    appState.bags[bagIndex].cards.splice(cardIndex, 1);
-                    saveState();
-                    renderCardsInBag(bagIndex);
-                    showMessage(`Card "${cardToDelete.title}" deleted from the bag.`);
-                }
-            }
-        }
-
-        function handleMoveCard(event) {
-            const select = event.target;
-            const fromBagIndex = parseInt(select.dataset.bagIndex, 10);
-            const cardIndex = parseInt(select.dataset.cardIndex, 10);
-            const toBagIndex = parseInt(select.value, 10);
-
-            if (isNaN(toBagIndex)) {
-                return;
-            }
-
-            const cardToMove = appState.bags[fromBagIndex].cards.splice(cardIndex, 1)[0];
-            appState.bags[toBagIndex].cards.push(cardToMove);
-
-            saveState();
-            showMessage(`Card moved to "${appState.bags[toBagIndex].name}".`);
-
-            renderCardsInBag(fromBagIndex);
-        }
-
-        function handleExportCardFromBag(event) {
-            const button = event.target.closest('.export-card-from-bag-btn');
-            const bagIndex = parseInt(button.dataset.bagIndex, 10);
-            const cardIndex = parseInt(button.dataset.cardIndex, 10);
-
-            const cardToExport = appState.bags[bagIndex]?.cards[cardIndex];
-            if (cardToExport) {
-                downloadJson(cardToExport, `${cardToExport.title.replace(/\s/g, '_')}.json`);
-                showMessage(`Card "${cardToExport.title}" exported.`);
-            }
-        }
-
         function renderCardsInBag(bagIndex) {
             const bag = appState.bags[bagIndex];
             const bagContentsTitle = document.getElementById('bag-contents-title');
@@ -2385,19 +2320,6 @@
                     </div>
                 `;
             }).join('');
-
-            document.querySelectorAll('.load-card-from-bag-btn').forEach(btn => {
-                btn.addEventListener('click', handleLoadCardFromBag);
-            });
-            document.querySelectorAll('.delete-card-from-bag-btn').forEach(btn => {
-                btn.addEventListener('click', handleDeleteCardFromBag);
-            });
-            document.querySelectorAll('.move-card-select').forEach(select => {
-                select.addEventListener('change', handleMoveCard);
-            });
-            document.querySelectorAll('.export-card-from-bag-btn').forEach(btn => {
-                btn.addEventListener('click', handleExportCardFromBag);
-            });
 
             lucide.createIcons();
         }
@@ -4041,6 +3963,73 @@
                 showMessage('Could not load local icons. Please check the console for details.', true);
             }
             loadState();
+
+            bagCardsContainer.addEventListener('click', (event) => {
+                const target = event.target;
+                const loadBtn = target.closest('.load-card-from-bag-btn');
+                const deleteBtn = target.closest('.delete-card-from-bag-btn');
+                const exportBtn = target.closest('.export-card-from-bag-btn');
+
+                if (loadBtn) {
+                    const bagIndex = parseInt(loadBtn.dataset.bagIndex, 10);
+                    const cardIndex = parseInt(loadBtn.dataset.cardIndex, 10);
+                    const cardToLoad = appState.bags[bagIndex]?.cards[cardIndex];
+                    if (cardToLoad) {
+                        const cardCopy = JSON.parse(JSON.stringify(cardToLoad));
+                        appState.cards.splice(appState.currentCardIndex + 1, 0, cardCopy);
+                        appState.currentCardIndex++;
+
+                        updateUIFromAppState();
+                        saveState();
+                        closeBagModal();
+                        showMessage(`Card "${cardCopy.title}" loaded into the editor.`);
+                    }
+                } else if (deleteBtn) {
+                    const bagIndex = parseInt(deleteBtn.dataset.bagIndex, 10);
+                    const cardIndex = parseInt(deleteBtn.dataset.cardIndex, 10);
+                    const cardToDelete = appState.bags[bagIndex]?.cards[cardIndex];
+                    if (cardToDelete) {
+                        if (confirm(`Are you sure you want to delete the card "${cardToDelete.title}" from this bag?`)) {
+                            appState.bags[bagIndex].cards.splice(cardIndex, 1);
+                            saveState();
+                            renderCardsInBag(bagIndex);
+                            showMessage(`Card "${cardToDelete.title}" deleted from the bag.`);
+                        }
+                    }
+                } else if (exportBtn) {
+                    const bagIndex = parseInt(exportBtn.dataset.bagIndex, 10);
+                    const cardIndex = parseInt(exportBtn.dataset.cardIndex, 10);
+                    const cardToExport = appState.bags[bagIndex]?.cards[cardIndex];
+                    if (cardToExport) {
+                        downloadJson(cardToExport, `${cardToExport.title.replace(/\s/g, '_')}.json`);
+                        showMessage(`Card "${cardToExport.title}" exported.`);
+                    }
+                }
+            });
+
+            bagCardsContainer.addEventListener('change', (event) => {
+                const target = event.target;
+                const moveSelect = target.closest('.move-card-select');
+                if (moveSelect) {
+                    const fromBagIndex = parseInt(moveSelect.dataset.bagIndex, 10);
+                    const cardIndex = parseInt(moveSelect.dataset.cardIndex, 10);
+                    const toBagIndex = parseInt(moveSelect.value, 10);
+
+                    if (isNaN(toBagIndex)) {
+                        return;
+                    }
+
+                    const cardToMove = appState.bags[fromBagIndex].cards.splice(cardIndex, 1)[0];
+                    appState.bags[toBagIndex].cards.push(cardToMove);
+
+                    saveState();
+                    showMessage(`Card moved to "${appState.bags[toBagIndex].name}".`);
+
+                    // Re-render the currently selected bag's contents
+                    const currentBagIndex = parseInt(bagSelect.value, 10);
+                    renderCardsInBag(currentBagIndex);
+                }
+            });
         }
 
         async function initCardView() {

@@ -127,6 +127,12 @@
                         <h3 class="text-xl font-semibold mb-2">Export</h3>
                         <button id="export-bag-btn" class="w-full font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Export Selected Bag</button>
                     </div>
+
+                    <!-- Load All to Editor -->
+                    <div class="p-4 rounded-lg" style="background-color: rgba(192, 192, 192, 0.2);">
+                        <h3 class="text-xl font-semibold mb-2">Load All to Editor</h3>
+                        <button id="load-all-to-editor-btn" class="w-full font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Load All to Editor</button>
+                    </div>
                 </div>
 
                 <!-- Right Column: Cards in Bag -->
@@ -415,6 +421,14 @@
         <div class="p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative backdrop-blur-sm" style="background-color: rgba(245, 245, 220, 0.8); border: 1px solid var(--burgundy);">
             <button id="close-import-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 hover:text-black text-2xl font-bold transition-all duration-300" style="color: var(--burgundy);">&times;</button>
             <h2 id="import-modal-title" class="text-3xl font-bold mb-6 text-center">Import Card Data</h2>
+
+            <div class="mb-4 p-4 rounded-lg" style="background-color: rgba(192, 192, 192, 0.2);">
+                <label for="import-destination" class="block text-sm font-medium mb-1">Import Destination</label>
+                <select id="import-destination" class="w-full p-2 rounded-lg" style="background-color: var(--parchment); border: 1px solid var(--burgundy); color: var(--burgundy);">
+                    <!-- Options will be populated by JS -->
+                </select>
+            </div>
+
             <div class="space-y-6">
                 <!-- RPG-Cards JSON File Import -->
                 <div class="border-b" style="border-color: rgba(128, 0, 32, 0.4);">
@@ -631,6 +645,7 @@
         const bagCardsContainer = document.getElementById('bag-cards-container');
         const bagCurrentCardBtn = document.getElementById('bag-current-card-btn');
         const exportBagBtn = document.getElementById('export-bag-btn');
+        const loadAllToEditorBtn = document.getElementById('load-all-to-editor-btn');
 
         // Add Section Modal Elements
         const addSectionModal = document.getElementById('add-section-modal');
@@ -1624,8 +1639,8 @@
                         const importedData = JSON.parse(event.target.result);
                         // If it's an array of cards, use all of them. Otherwise, wrap single object in array.
                         const dataToParse = Array.isArray(importedData) ? importedData : [importedData];
-                        parseAndSetCardData(dataToParse, type);
-                        showMessage('JSON imported successfully!');
+                        const destination = document.getElementById('import-destination').value;
+                        parseAndSetCardData(dataToParse, type, destination);
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
                         showMessage('Failed to parse JSON. Please check the format.', true);
@@ -1640,8 +1655,8 @@
                 const pastedData = JSON.parse(e.target.value);
                 // If it's an array of cards, use all of them. Otherwise, wrap single object in array.
                 const dataToParse = Array.isArray(pastedData) ? pastedData : [pastedData];
-                parseAndSetCardData(dataToParse, type);
-                showMessage('JSON pasted successfully!');
+                const destination = document.getElementById('import-destination').value;
+                parseAndSetCardData(dataToParse, type, destination);
             } catch (error) {
                 console.error('Error parsing JSON:', error);
                 showMessage('Failed to parse JSON. Please check the format.', true);
@@ -1676,8 +1691,26 @@
             }
         }
 
-        function parseAndSetCardData(dataArray, type) {
-            appState.cards = []; // Clear existing cards
+        function renderImportDestinationOptions() {
+            const importDestinationSelect = document.getElementById('import-destination');
+            if (!importDestinationSelect) return;
+            importDestinationSelect.innerHTML = '';
+
+            const mainOption = document.createElement('option');
+            mainOption.value = 'main';
+            mainOption.textContent = 'Main Editor (Replace Current)';
+            importDestinationSelect.appendChild(mainOption);
+
+            appState.bags.forEach((bag, index) => {
+                const bagOption = document.createElement('option');
+                bagOption.value = `bag_${index}`;
+                bagOption.textContent = `Bag: "${sanitizeHTML(bag.name)}"`;
+                importDestinationSelect.appendChild(bagOption);
+            });
+        }
+
+        function parseAndSetCardData(dataArray, type, destination = 'main') {
+            const parsedCards = [];
             dataArray.forEach(data => {
                 let newCard = {
                     id: crypto.randomUUID(),
@@ -1946,12 +1979,26 @@
                         newCard.numCopies = 1;
                     }
                 }
-                appState.cards.push(newCard);
+                parsedCards.push(newCard);
             });
 
-            appState.currentCardIndex = 0; // Always show the first card after import
-            updateUIFromAppState();
+            if (destination === 'main') {
+                appState.cards = parsedCards;
+                appState.currentCardIndex = 0;
+                showMessage(`${parsedCards.length} card(s) imported and replaced current editor cards.`);
+                updateUIFromAppState();
+            } else if (destination.startsWith('bag_')) {
+                const bagIndex = parseInt(destination.split('_')[1], 10);
+                if (!isNaN(bagIndex) && appState.bags[bagIndex]) {
+                    appState.bags[bagIndex].cards.push(...parsedCards);
+                    showMessage(`${parsedCards.length} card(s) imported into bag "${appState.bags[bagIndex].name}".`);
+                } else {
+                    showMessage('Error: Could not find the selected bag to import into.', true);
+                }
+            }
+
             saveState();
+            closeModal(); // Close the import modal
         }
 
         function populateIconSuggestions() {
@@ -2249,6 +2296,7 @@
         // Import Modal Listeners
         openImportModalBtn.addEventListener('click', () => {
             importModal.classList.remove('hidden');
+            renderImportDestinationOptions();
             closeImportModalBtn.focus(); // Move focus to a logical element inside the modal
         });
 
@@ -2301,7 +2349,9 @@
 
                 return `
                     <div class="flex items-center justify-between p-2 rounded-md mb-2" style="background-color: rgba(245, 245, 220, 0.7);">
-                        <span class="font-semibold truncate pr-2">${sanitizeHTML(card.title || 'Untitled Card')}</span>
+                        <button data-bag-index="${bagIndex}" data-card-index="${cardIndex}" class="load-card-from-bag-btn font-semibold truncate pr-2 text-left hover:underline focus:outline-none" style="background: none; border: none; padding: 0; color: inherit; cursor: pointer; max-width: 50%;">
+                            ${sanitizeHTML(card.title || 'Untitled Card')}
+                        </button>
                         <div class="flex items-center space-x-1 flex-shrink-0">
                              <select data-bag-index="${bagIndex}" data-card-index="${cardIndex}" class="move-card-select p-1 rounded-md text-xs" style="background-color: var(--silver); color: var(--burgundy); border: 1px solid var(--burgundy);" ${appState.bags.length <= 1 ? 'disabled' : ''}>
                                 <option value="">Move to...</option>
@@ -2455,6 +2505,32 @@
             } else {
                 showMessage('The selected bag is empty.', true);
             }
+        });
+
+        loadAllToEditorBtn.addEventListener('click', () => {
+            if (appState.bags.length === 0) {
+                showMessage('There are no bags to load from.', true);
+                return;
+            }
+            const selectedBagIndex = parseInt(bagSelect.value, 10);
+            if (isNaN(selectedBagIndex)) {
+                showMessage('Please select a bag.', true);
+                return;
+            }
+
+            const bag = appState.bags[selectedBagIndex];
+            if (!bag || bag.cards.length === 0) {
+                showMessage('The selected bag is empty.', true);
+                return;
+            }
+
+            const cardsToLoad = JSON.parse(JSON.stringify(bag.cards));
+            appState.cards.push(...cardsToLoad);
+
+            saveState();
+            updateUIFromAppState();
+            closeBagModal();
+            showMessage(`${cardsToLoad.length} cards from "${bag.name}" loaded into the editor.`);
         });
 
         // Accordion Logic

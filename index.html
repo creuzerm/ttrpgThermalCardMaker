@@ -1821,169 +1821,16 @@
                     newCard.icon = data.icon || '';
                     newCard.tags = (data.tags && Array.isArray(data.tags)) ? data.tags : [];
 
-                    newCard.sections = [];
-                    newCard.stats = {};
-                    newCard.type = '';
-
-                    if (data.contents && Array.isArray(data.contents)) {
-                        let inP2eTraitSection = false;
-                        let currentTraitSection = null;
-                        let currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
-
-                        function pushCurrentSection() {
-                            if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                                newCard.sections.push({ ...currentSection });
-                            }
-                            currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
-                        }
-
-                        for (let i = 0; i < data.contents.length; i++) {
-                            const line = data.contents[i];
-
-                            if (line.startsWith('subtitle | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('subtitle | '.length).split(' | ');
-                                newCard.type = {
-                                    text: parts[0] ? htmlToMarkdown(parts[0].trim()) : '',
-                                    aside: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
-                                };
-                            } else if (line.startsWith('rule')) {
-                                pushCurrentSection();
-                                newCard.sections.push({ type: 'rule' });
-                            } else if (line.startsWith('fill | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('fill | '.length).split(' | ');
-                                newCard.sections.push({ type: 'fill', weight: parseInt(parts[0], 10) || 1 });
-                            } else if (line.startsWith('text | ')) {
-                                const textGroup = [line.substring('text | '.length).trim()];
-                                while (i + 1 < data.contents.length && data.contents[i + 1].startsWith('text | ')) {
-                                    i++;
-                                    textGroup.push(data.contents[i].substring('text | '.length).trim());
-                                }
-
-                                const convertedTextGroup = textGroup.map(line => htmlToMarkdown(line));
-                                const processedText = processTextGroup(convertedTextGroup);
-
-                                if (currentSection.body) {
-                                    currentSection.body += '\n' + processedText;
-                                } else {
-                                    currentSection.body = processedText;
-                                }
-                            } else if (line.startsWith('property | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('property | '.length).split(' | ');
-                                if (parts.length >= 2) {
-                                    newCard.sections.push({ type: 'property', key: parts[0].trim(), value: htmlToMarkdown(parts[1].trim()) });
-                                }
-                            } else if (line.startsWith('dndstats | ')) {
-                                pushCurrentSection();
-                                const statKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
-                                const stats = line.substring('dndstats | '.length).split(' | ').map(s => s.trim());
-                                if (stats.length === statKeys.length) {
-                                    const statValues = {};
-                                    statKeys.forEach((key, index) => {
-                                        statValues[key] = stats[index];
-                                    });
-                                    newCard.sections.push({ type: 'dndstats', stats: statValues });
-                                }
-                            } else if (line.startsWith('description | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('description | '.length).split(' | ').map(p => p.trim());
-                                currentSection = {
-                                    type: 'content',
-                                    heading: parts.length >= 2 ? htmlToMarkdown(parts[0]) : '',
-                                    body: parts.length >= 2 ? htmlToMarkdown(parts[1]) : htmlToMarkdown(parts[0]),
-                                    flavorText: ''
-                                };
-                            } else if (line.startsWith('bullet | ')) {
-                                const bulletText = '• ' + htmlToMarkdown(line.substring('bullet | '.length).trim());
-                                if (currentSection.body) {
-                                    currentSection.body += '\n' + bulletText;
-                                } else {
-                                    currentSection.body = bulletText;
-                                }
-                            } else if (line.startsWith('picture | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('picture | '.length).split(' | ');
-                                newCard.sections.push({
-                                    type: 'picture',
-                                    url: parts[0] ? parts[0].trim() : '',
-                                    height: parts[1] ? parseInt(parts[1].trim(), 10) : 50
-                                });
-                            } else if (line.startsWith('ruler')) {
-                                pushCurrentSection();
-                                newCard.sections.push({ type: 'ruler' });
-                            } else if (line.startsWith('swstats | ')) {
-                                pushCurrentSection();
-                                const p = line.substring('swstats | '.length).split(' | ').map(s => s.trim());
-                                newCard.sections.push({
-                                    type: 'swstats',
-                                    stats: {
-                                        agility: p[0] || '', smarts: p[1] || '', spirit: p[2] || '', strength: p[3] || '', vigor: p[4] || '',
-                                        pace: p[5] || '', parry: p[6] || '', toughness: p[7] || '', loot: p[8] || ''
-                                    }
-                                });
-                            } else if (line.startsWith('p2e_stats | ')) {
-                                pushCurrentSection();
-                                const p = line.substring('p2e_stats | '.length).split(' | ').map(s => s.trim());
-                                newCard.sections.push({
-                                    type: 'p2e_stats',
-                                    stats: {
-                                        str: p[0] || '', dex: p[1] || '', con: p[2] || '', int: p[3] || '', wis: p[4] || '', cha: p[5] || '',
-                                        ac: p[6] || '', fort: p[7] || '', ref: p[8] || '', will: p[9] || '', hp: p[10] || ''
-                                    }
-                                });
-                            } else if (line.startsWith('p2e_activity | ')) {
-                                pushCurrentSection();
-                                const p = line.substring('p2e_activity | '.length).split(' | ').map(s => s.trim());
-                                newCard.sections.push({
-                                    type: 'p2e_activity',
-                                    name: htmlToMarkdown(p[0] || ''),
-                                    actions: p[1] || '',
-                                    description: htmlToMarkdown(p[2] || '')
-                                });
-                            } else if (line.startsWith('p2e_start_trait_section')) {
-                                pushCurrentSection();
-                                inP2eTraitSection = true;
-                                currentTraitSection = { type: 'p2e_traits', traits: [] };
-                            } else if (line.startsWith('p2e_end_trait_section')) {
-                                if (currentTraitSection && currentTraitSection.traits.length > 0) {
-                                    newCard.sections.push(currentTraitSection);
-                                }
-                                inP2eTraitSection = false;
-                                currentTraitSection = null;
-                            } else if (line.startsWith('p2e_trait | ')) {
-                                if (inP2eTraitSection) {
-                                    const parts = line.substring('p2e_trait | '.length).split(' | ');
-                                    currentTraitSection.traits.push({
-                                        rarity: parts[0] ? parts[0].trim().toLowerCase() : 'common',
-                                        text: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
-                                    });
-                                }
-                            } else if (line.startsWith('section | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('section | '.length).split(' | ');
-                                currentSection.heading = parts[0] ? htmlToMarkdown(parts[0].trim()) : '';
-                                currentSection.headingAside = parts[1] ? htmlToMarkdown(parts[1].trim()) : '';
-                            } else if (line.startsWith('boxes | ')) {
-                                pushCurrentSection();
-                                const parts = line.substring('boxes | '.length).split(' | ');
-                                newCard.sections.push({
-                                    type: 'boxes',
-                                    count: parts[0] ? parseInt(parts[0].trim(), 10) : 1,
-                                    size: parts[1] ? parseFloat(parts[1].trim()) : 1.0,
-                                    text: parts[2] ? htmlToMarkdown(parts[2].trim()) : ''
-                                });
-                            }
-                        }
-                        pushCurrentSection();
-                    }
+                    const parsedContents = parseRpgCardContents(data);
+                    Object.assign(newCard, parsedContents);
 
                     if (newCard.sections.length === 0) {
                         newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });
                     }
 
-                    newCard.footer = htmlToMarkdown(data.footer || newCard.footer);
+                    if (data.hasOwnProperty('footer')) {
+                        newCard.footer = htmlToMarkdown(data.footer);
+                    }
 
                     newCard.isFolded = typeof data.isFolded === 'boolean' ? data.isFolded : false;
                     newCard.foldContent = (data.foldContent && typeof data.foldContent === 'object') ? data.foldContent : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
@@ -2361,34 +2208,24 @@
 
         // --- Template Selection Modal Logic ---
 
-        function parseTemplateToCard(data) {
-            // This function is a simplified version of the 'rpg-cards' parser from parseAndSetCardData
-            // It takes a single template object and returns a card object ready for the app state.
-            let newCard = createNewCard(); // Start with a default card structure
-
-            newCard.title = htmlToMarkdown(data.title || 'New Card');
-            newCard.color = data.color || '#ffffff';
-            newCard.icon = data.icon || '';
-            newCard.tags = (data.tags && Array.isArray(data.tags)) ? [...data.tags] : [];
-            if (data.hasOwnProperty('footer')) {
-                newCard.footer = htmlToMarkdown(data.footer);
-            }
-
-            newCard.sections = [];
-            newCard.stats = {};
-            newCard.type = '';
+        function parseRpgCardContents(data) {
+            const cardFragment = {
+                sections: [],
+                stats: {},
+                type: ''
+            };
 
             if (data.contents && Array.isArray(data.contents)) {
                 let inP2eTraitSection = false;
                 let currentTraitSection = null;
                 let currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
 
-                function pushCurrentSection() {
+                const pushCurrentSection = () => {
                     if (currentSection.body || currentSection.heading || currentSection.flavorText) {
-                        newCard.sections.push({ ...currentSection });
+                        cardFragment.sections.push({ ...currentSection });
                     }
                     currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
-                }
+                };
 
                 for (let i = 0; i < data.contents.length; i++) {
                     const line = data.contents[i];
@@ -2396,27 +2233,25 @@
                     if (line.startsWith('subtitle | ')) {
                         pushCurrentSection();
                         const parts = line.substring('subtitle | '.length).split(' | ');
-                        newCard.type = {
+                        cardFragment.type = {
                             text: parts[0] ? htmlToMarkdown(parts[0].trim()) : '',
                             aside: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
                         };
                     } else if (line.startsWith('rule')) {
                         pushCurrentSection();
-                        newCard.sections.push({ type: 'rule' });
+                        cardFragment.sections.push({ type: 'rule' });
                     } else if (line.startsWith('fill | ')) {
                         pushCurrentSection();
                         const parts = line.substring('fill | '.length).split(' | ');
-                        newCard.sections.push({ type: 'fill', weight: parseInt(parts[0], 10) || 1 });
+                        cardFragment.sections.push({ type: 'fill', weight: parseInt(parts[0], 10) || 1 });
                     } else if (line.startsWith('text | ')) {
                         const textGroup = [line.substring('text | '.length).trim()];
                         while (i + 1 < data.contents.length && data.contents[i + 1].startsWith('text | ')) {
                             i++;
                             textGroup.push(data.contents[i].substring('text | '.length).trim());
                         }
-
-                        const convertedTextGroup = textGroup.map(line => htmlToMarkdown(line));
+                        const convertedTextGroup = textGroup.map(l => htmlToMarkdown(l));
                         const processedText = processTextGroup(convertedTextGroup);
-
                         if (currentSection.body) {
                             currentSection.body += '\n' + processedText;
                         } else {
@@ -2426,7 +2261,7 @@
                         pushCurrentSection();
                         const parts = line.substring('property | '.length).split(' | ');
                         if (parts.length >= 2) {
-                            newCard.sections.push({ type: 'property', key: parts[0].trim(), value: htmlToMarkdown(parts[1].trim()) });
+                            cardFragment.sections.push({ type: 'property', key: parts[0].trim(), value: htmlToMarkdown(parts[1].trim()) });
                         }
                     } else if (line.startsWith('dndstats | ')) {
                         pushCurrentSection();
@@ -2437,7 +2272,7 @@
                             statKeys.forEach((key, index) => {
                                 statValues[key] = stats[index];
                             });
-                            newCard.sections.push({ type: 'dndstats', stats: statValues });
+                            cardFragment.sections.push({ type: 'dndstats', stats: statValues });
                         }
                     } else if (line.startsWith('description | ')) {
                         pushCurrentSection();
@@ -2458,18 +2293,18 @@
                     } else if (line.startsWith('picture | ')) {
                         pushCurrentSection();
                         const parts = line.substring('picture | '.length).split(' | ');
-                        newCard.sections.push({
+                        cardFragment.sections.push({
                             type: 'picture',
                             url: parts[0] ? parts[0].trim() : '',
                             height: parts[1] ? parseInt(parts[1].trim(), 10) : 50
                         });
                     } else if (line.startsWith('ruler')) {
                         pushCurrentSection();
-                        newCard.sections.push({ type: 'ruler' });
+                        cardFragment.sections.push({ type: 'ruler' });
                     } else if (line.startsWith('swstats | ')) {
                         pushCurrentSection();
                         const p = line.substring('swstats | '.length).split(' | ').map(s => s.trim());
-                        newCard.sections.push({
+                        cardFragment.sections.push({
                             type: 'swstats',
                             stats: {
                                 agility: p[0] || '', smarts: p[1] || '', spirit: p[2] || '', strength: p[3] || '', vigor: p[4] || '',
@@ -2479,7 +2314,7 @@
                     } else if (line.startsWith('p2e_stats | ')) {
                         pushCurrentSection();
                         const p = line.substring('p2e_stats | '.length).split(' | ').map(s => s.trim());
-                        newCard.sections.push({
+                        cardFragment.sections.push({
                             type: 'p2e_stats',
                             stats: {
                                 str: p[0] || '', dex: p[1] || '', con: p[2] || '', int: p[3] || '', wis: p[4] || '', cha: p[5] || '',
@@ -2489,7 +2324,7 @@
                     } else if (line.startsWith('p2e_activity | ')) {
                         pushCurrentSection();
                         const p = line.substring('p2e_activity | '.length).split(' | ').map(s => s.trim());
-                        newCard.sections.push({
+                        cardFragment.sections.push({
                             type: 'p2e_activity',
                             name: htmlToMarkdown(p[0] || ''),
                             actions: p[1] || '',
@@ -2501,7 +2336,7 @@
                         currentTraitSection = { type: 'p2e_traits', traits: [] };
                     } else if (line.startsWith('p2e_end_trait_section')) {
                         if (currentTraitSection && currentTraitSection.traits.length > 0) {
-                            newCard.sections.push(currentTraitSection);
+                            cardFragment.sections.push(currentTraitSection);
                         }
                         inP2eTraitSection = false;
                         currentTraitSection = null;
@@ -2521,7 +2356,7 @@
                     } else if (line.startsWith('boxes | ')) {
                         pushCurrentSection();
                         const parts = line.substring('boxes | '.length).split(' | ');
-                        newCard.sections.push({
+                        cardFragment.sections.push({
                             type: 'boxes',
                             count: parts[0] ? parseInt(parts[0].trim(), 10) : 1,
                             size: parts[1] ? parseFloat(parts[1].trim()) : 1.0,
@@ -2531,6 +2366,25 @@
                 }
                 pushCurrentSection();
             }
+
+            return cardFragment;
+        }
+
+        function parseTemplateToCard(data) {
+            // This function is a simplified version of the 'rpg-cards' parser from parseAndSetCardData
+            // It takes a single template object and returns a card object ready for the app state.
+            let newCard = createNewCard(); // Start with a default card structure
+
+            newCard.title = htmlToMarkdown(data.title || 'New Card');
+            newCard.color = data.color || '#ffffff';
+            newCard.icon = data.icon || '';
+            newCard.tags = (data.tags && Array.isArray(data.tags)) ? [...data.tags] : [];
+            if (data.hasOwnProperty('footer')) {
+                newCard.footer = htmlToMarkdown(data.footer);
+            }
+
+            const parsedContents = parseRpgCardContents(data);
+            Object.assign(newCard, parsedContents);
 
             if (newCard.sections.length === 0) {
                 newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });

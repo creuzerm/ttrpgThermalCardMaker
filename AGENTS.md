@@ -163,3 +163,28 @@ A "bag" feature should be created to allow users to save or "bag" cards for late
 *   **Export Functionality:**
     *   Users should be able to export a single card from a bag into the `rpg-cards` JSON format.
     *   Users should be able to export an entire "bag" (all cards within it) as a single JSON file in the `rpg-cards` format.
+
+## Content Management
+
+This section outlines procedures for managing the content and structure of this document and other similar documents in the project.
+
+### Adding New Sections
+
+To ensure consistency, adding new sections should follow a structured process. When requested to add a new section, offer the following predefined section types to the user:
+
+*   **General Content Section:** A standard section with a heading and paragraphs of text.
+    *   Format: `## Section Title` followed by text.
+*   **Numbered List Section:** A section containing a numbered list.
+    *   Format: `## Section Title` followed by `1. Item 1`, `2. Item 2`, etc.
+*   **Bulleted List Section:** A section containing a bulleted list.
+    *   Format: `## Section Title` followed by `* Item 1`, `* Item 2`, etc.
+*   **Technical Instructions Section:** A section for providing technical steps, often including code blocks.
+    *   Format: `## Section Title` with text and ` ``` ` code blocks.
+*   **Feature Requirement Section:** A section for defining a new feature. This should be added under the existing `## Feature Requirements` section if it exists.
+    *   Format: `### New Feature Title` with a description of the core functionality.
+
+This provides a clear template and ensures new content aligns with the existing document structure.
+
+### Reordering Sections
+
+The order of the top-level (`##`) sections in this document can be adjusted to better prioritize information or improve logical flow. To reorder sections, simply state the desired new order of the section titles.

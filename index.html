@@ -89,8 +89,8 @@
     <div id="bag-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="bag-modal-title">
         <div class="p-8 rounded-2xl shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto relative backdrop-blur-sm" style="background-color: rgba(245, 245, 220, 0.8); border: 1px solid var(--burgundy);">
             <button id="close-bag-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 hover:text-black text-2xl font-bold transition-all duration-300" style="color: var(--burgundy);">&times;</button>
-            <h2 id="bag-modal-title" class="text-3xl font-bold mb-6 text-center">Bag of Holding</h2>
-
+            <h2 id="bag-modal-title" class="text-3xl font-bold mb-6 text-center">Bag of <del>H</del><em>F</em>olding</h2>
+            <p>Cards saved here are saved on your device for later use. You can have several bags for different charectors or games or other organization.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Left Column: Bag Actions -->
                 <div class="flex flex-col space-y-4">
@@ -181,7 +181,7 @@
             <div class="grid grid-cols-4 gap-4">
                 <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New</button>
                 <button id="open-import-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Import</button>
-                <button id="open-bag-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Bags</button>
+                <button id="open-bag-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Bag-o-Cards</button>
                 <button id="delete-card-btn" class="font-bold py-2 px-4 rounded-lg hover:bg-red-700 active:scale-95 transition-all duration-300" style="background-color: #a00028; color: var(--parchment);">Delete Card</button>
             </div>
         </div>

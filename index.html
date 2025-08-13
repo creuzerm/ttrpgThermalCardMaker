@@ -560,6 +560,7 @@
     <script>
         // Global application state
         let iconManifest = {}; // To be populated from icon-lookup.json
+        let cardTemplates = {}; // To be populated from templates.json
         let appState = {
             cards: [ createNewCard() ],
             currentCardIndex: 0, // Index of the currently displayed card
@@ -578,72 +579,6 @@
             rememberedIcons: []
         };
 
-    const cardTemplates = {
-        "D&D": [
-            {
-                title: "Creature",
-                json: { "count": 1, "color": "#e05c5c", "title": "New Creature", "icon": "dragon-head", "icon_back": "dragon-head", "tags": ["Creature", "Monster"], "footer": "Source: Custom", "contents": [ "property | Size | Medium", "property | Type | Aberration", "property | Alignment | Lawful Evil", "rule", "property | Armor Class | 10", "property | Hit Points | 10 (1d8 + 5)", "property | Speed | 30 ft.", "rule", "property | STR | 10 (+0)", "property | DEX | 10 (+0)", "property | CON | 10 (+0)", "property | INT | 10 (+0)", "property | WIS | 10 (+0)", "property | CHA | 10 (+0)", "rule", "description | Senses | passive Perception 10", "description | Languages | Common", "description | Challenge | 1/2 (100 XP)", "rule", "section | Actions", "description | Multiattack | The creature makes two attacks.", "description | Attack | Melee Weapon Attack: +0 to hit, reach 5 ft., one target. Hit: 1 (1d4) bludgeoning damage." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Item",
-                json: { "count": 1, "color": "#4a6898", "title": "New Item", "icon": "sword", "icon_back": "sword", "tags": ["Item", "Magic Item"], "footer": "Source: Custom", "contents": [ "property | Type | Wondrous item", "property | Rarity | Common", "rule", "description | Description | A detailed description of the item and its appearance.", "description | Effect | The magical properties or benefits of the item." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Spell",
-                json: { "count": 1, "color": "#a7894b", "title": "New Spell", "icon": "magic-swirl", "icon_back": "magic-swirl", "tags": ["Spell", "Evocation"], "footer": "Source: Custom", "contents": [ "property | Level | 1st-level evocation", "property | Casting Time | 1 action", "property | Range | 60 feet", "property | Components | V, S, M (a pinch of sulfur)", "property | Duration | Instantaneous", "rule", "description | Description | The spell's effect and what happens when it is cast.", "description | At Higher Levels | A description of how the spell's power increases when cast using a higher-level spell slot." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Species",
-                json: { "count": 1, "color": "#30432f", "title": "New Species", "icon": "family-tree", "icon_back": "family-tree", "tags": ["Species", "Race"], "footer": "Source: Custom", "contents": [ "property | Ability Scores | Choose any +2; choose any other +1", "property | Size | Medium", "property | Speed | 30 ft.", "rule", "description | Creature Type | You are a Humanoid.", "description | Trait Name | A detailed description of the species' trait.", "description | Trait Name 2 | Another trait's description." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Background",
-                json: { "count": 1, "color": "#6e4a2a", "title": "New Background", "icon": "book-cover", "icon_back": "book-cover", "tags": ["Background"], "footer": "Source: Custom", "contents": [ "property | Skill Proficiencies | Two of your choice", "property | Tool Proficiencies | One of your choice", "rule", "description | Feature: Background Name | A description of the feature associated with this background.", "description | Personality Traits | A suggestion for personality traits.", "description | Ideals | A suggestion for ideals.", "description | Bonds | A suggestion for bonds.", "description | Flaws | A suggestion for flaws." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Feat",
-                json: { "count": 1, "color": "#5b5b5b", "title": "New Feat", "icon": "checked-shield", "icon_back": "checked-shield", "tags": ["Feat"], "footer": "Source: Custom", "contents": [ "property | Prerequisite | None", "rule", "description | Benefit | A description of the feat's benefits and how it changes a character's abilities." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Feature",
-                json: { "count": 1, "color": "#8f8b7f", "title": "New Feature", "icon": "crown", "icon_back": "crown", "tags": ["Feature", "Option"], "footer": "Source: Custom", "contents": [ "property | Prerequisite | Level 3", "rule", "description | Description | A detailed description of what the feature does.", "description | Special | Additional rules or a deeper explanation of the feature's mechanics." ], "isFolded": false, "isScrolling": false }
-            }
-        ],
-        "Daggerheart": [
-            {
-                title: "Ancestry",
-                json: { "count": 1, "color": "#4a6898", "title": "New Ancestry", "icon": "family-tree", "icon_back": "family-tree", "tags": ["Daggerheart", "Ancestry"], "footer": "Source: Daggerheart Core", "contents": [ "text | *A description of the ancestry's lore and place in the world.*", "rule", "description | Feature Name | A detailed description of an ancestry trait.", "description | Second Feature | A description of a second ancestry trait." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Community",
-                json: { "count": 1, "color": "#30432f", "title": "New Community", "icon": "village", "icon_back": "village", "tags": ["Daggerheart", "Community"], "footer": "Source: Daggerheart Core", "contents": [ "text | *A description of the community's culture, values, and location.*", "rule", "description | Community Trait | A detailed description of a feature granted by this community.", "description | Another Community Trait | The description of an additional community feature." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Subclass",
-                json: { "count": 1, "color": "#a7894b", "title": "New Subclass", "icon": "crown", "icon_back": "crown", "tags": ["Daggerheart", "Subclass"], "footer": "Source: Daggerheart Core", "contents": [ "property | Class | Fighter", "text | *A description of the subclass and its role within the class.*", "rule", "description | Subclass Feature | A detailed description of a feature or ability gained from this subclass.", "description | Another Feature | The description of another feature." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Domain",
-                json: { "count": 1, "color": "#79294e", "title": "New Ability", "icon": "lightning-bow", "icon_back": "lightning-bow", "tags": ["Daggerheart", "Domain", "Ability"], "footer": "Source: Daggerheart Core", "contents": [ "property | Domain | Chaos", "property | Level | 1", "rule", "description | Cost | A description of the ability's cost (e.g., spending Stress).", "description | Effect | A detailed description of the ability's mechanical effect.", "description | Upgraded | The enhanced effect when spent with Hope." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Transformation",
-                json: { "count": 1, "color": "#800020", "title": "New Transformation", "icon": "rune-sword", "icon_back": "rune-sword", "tags": ["Daggerheart", "Transformation"], "footer": "Source: Daggerheart Core", "contents": [ "text | *A description of the transformation's theme and origin.*", "rule", "section | Benefits", "text | **Benefit 1:** The primary mechanical advantage of the transformation.", "text | **Benefit 2:** An additional benefit.", "rule", "section | Drawbacks", "text | **Drawback 1:** A significant mechanical disadvantage of the transformation.", "text | **Drawback 2:** A second, negative effect." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Adversary",
-                json: { "count": 1, "color": "#b22222", "title": "New Adversary", "icon": "crossed-swords", "icon_back": "crossed-swords", "tags": ["Daggerheart", "Adversary", "Homebrew"], "footer": "Source: Community Homebrew", "contents": [ "property | Tier | 1", "property | Difficulty | Moderate", "property | Damage Die | 1d6", "rule", "description | Tactics | A brief description of how the adversary fights.", "description | Features | **Feature Name:** The description of a special ability.", "description | Feature 2 | **Feature Name 2:** The description of a second ability.", "boxes | HP | 10", "boxes | Stress | 6", "boxes | Major Threshold | 1", "boxes | Severe Threshold | 1" ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Item",
-                json: { "count": 1, "color": "#d2b48c", "title": "New Item", "icon": "sword", "icon_back": "sword", "tags": ["Daggerheart", "Item", "Homebrew"], "footer": "Source: Community Homebrew", "contents": [ "property | Item Type | Weapon", "property | Damage Dice | 1d6", "property | Damage Type | Physical", "property | Range | Melee", "rule", "description | Traits | **Trait Name:** The effect of a special trait.", "description | Description | A detailed description of the item." ], "isFolded": false, "isScrolling": false }
-            },
-            {
-                title: "Ritual",
-                json: { "count": 1, "color": "#5b5b5b", "title": "New Ritual", "icon": "pentagram-star", "icon_back": "pentagram-star", "tags": ["Daggerheart", "Ritual", "Homebrew"], "footer": "Source: Community Homebrew", "contents": [ "text | *A description of the ritual's purpose and its narrative implications.*", "rule", "property | Stress Cost | 3", "property | Difficulty | Hard", "property | Time | 1 hour", "description | Components | Any resources or specific items required to perform the ritual.", "rule", "description | Effect | A description of the ritual's outcome." ], "isFolded": false, "isScrolling": false }
-            }
-        ]
-    };
 
         const MAX_SHARE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
         let pdfShareBlob = null; // To hold the generated PDF blob for the two-click share process
@@ -4224,6 +4159,20 @@
         viewCardBtn.addEventListener('click', () => trackImageInteraction('view_card'));
 
 
+        async function loadTemplates() {
+            try {
+                const response = await fetch('./templates.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                cardTemplates = await response.json();
+                console.log('Card templates loaded successfully.');
+            } catch (error) {
+                console.error('Could not load card templates:', error);
+                showMessage('Could not load card templates. Please check the console for details.', true);
+            }
+        }
+
         async function initGeneratorView() {
             try {
                 const response = await fetch('./icon-lookup.json');
@@ -4236,6 +4185,7 @@
                 console.error('Could not load icon manifest:', error);
                 showMessage('Could not load local icons. Please check the console for details.', true);
             }
+            await loadTemplates();
             loadState();
 
             bagCardsContainer.addEventListener('click', (event) => {

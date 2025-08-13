@@ -401,6 +401,64 @@
         </div>
     </div>
 
+    <!-- Add Section Modal -->
+    <div id="add-section-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="add-section-modal-title">
+        <div class="p-8 rounded-2xl shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto relative backdrop-blur-sm" style="background-color: rgba(245, 245, 220, 0.8); border: 1px solid var(--burgundy);">
+            <button id="close-add-section-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 hover:text-black text-2xl font-bold transition-all duration-300" style="color: var(--burgundy);">&times;</button>
+            <h2 id="add-section-modal-title" class="text-3xl font-bold mb-6 text-center">Add a New Section</h2>
+            <div id="add-section-options" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button data-section-type="content" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Text Content</strong>
+                    <p class="text-sm opacity-80">A block with a heading, body text, and flavor text.</p>
+                </button>
+                <button data-section-type="property" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Property</strong>
+                    <p class="text-sm opacity-80">A single key-value pair, like "Armor Class: 15".</p>
+                </button>
+                <button data-section-type="picture" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Picture</strong>
+                    <p class="text-sm opacity-80">An image from a URL.</p>
+                </button>
+                <button data-section-type="rule" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Horizontal Rule (Dashed)</strong>
+                    <p class="text-sm opacity-80">A dashed line to separate content.</p>
+                </button>
+                <button data-section-type="ruler" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Horizontal Rule (Solid)</strong>
+                    <p class="text-sm opacity-80">A thin, solid line to separate content.</p>
+                </button>
+                <button data-section-type="dndstats" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">D&D Stats Block</strong>
+                    <p class="text-sm opacity-80">The six standard D&D ability scores.</p>
+                </button>
+                <button data-section-type="swstats" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Savage Worlds Stats</strong>
+                    <p class="text-sm opacity-80">A block for Savage Worlds attributes and stats.</p>
+                </button>
+                <button data-section-type="p2e_stats" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Pathfinder 2e Stats</strong>
+                    <p class="text-sm opacity-80">A block for common Pathfinder 2e statistics.</p>
+                </button>
+                <button data-section-type="p2e_activity" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Pathfinder 2e Activity</strong>
+                    <p class="text-sm opacity-80">A formatted block for actions and activities.</p>
+                </button>
+                <button data-section-type="p2e_traits" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Pathfinder 2e Traits</strong>
+                    <p class="text-sm opacity-80">A section to list creature traits.</p>
+                </button>
+                <button data-section-type="boxes" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Checkboxes</strong>
+                    <p class="text-sm opacity-80">A line of checkable boxes with a label.</p>
+                </button>
+                <button data-section-type="fill" class="add-section-option-btn text-left p-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">
+                    <strong class="font-bold text-lg">Flexible Space (Fill)</strong>
+                    <p class="text-sm opacity-80">An invisible element to push content down.</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="card-view" class="hidden">
         <!-- This area is populated by the initCardView function -->
     </div>
@@ -501,6 +559,11 @@
         const accordion5eToolsContent = document.getElementById('accordion-5e-tools-content');
         const accordionGenericJsonHeading = document.getElementById('accordion-generic-json-heading');
         const accordionGenericJsonContent = document.getElementById('accordion-generic-json-content');
+
+        // Add Section Modal Elements
+        const addSectionModal = document.getElementById('add-section-modal');
+        const closeAddSectionModalBtn = document.getElementById('close-add-section-modal-btn');
+        const addSectionOptions = document.getElementById('add-section-options');
 
         // Print Scope Radio Buttons
         const printScopeRadios = document.querySelectorAll('input[name="printScope"]');
@@ -1738,9 +1801,78 @@
             saveState();
         });
 
-        // Add Section button
+        // Add Section button - now opens modal
         addSectionBtn.addEventListener('click', () => {
-            appState.cards[appState.currentCardIndex].sections.push({ heading: '', body: '', flavorText: '' });
+            addSectionModal.classList.remove('hidden');
+        });
+
+        // Add Section Modal Listeners
+        closeAddSectionModalBtn.addEventListener('click', () => {
+            addSectionModal.classList.add('hidden');
+        });
+
+        addSectionModal.addEventListener('click', (e) => {
+            if (e.target === addSectionModal) {
+                addSectionModal.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !addSectionModal.classList.contains('hidden')) {
+                addSectionModal.classList.add('hidden');
+            }
+        });
+
+        addSectionOptions.addEventListener('click', (e) => {
+            const button = e.target.closest('.add-section-option-btn');
+            if (!button) return;
+
+            const sectionType = button.dataset.sectionType;
+            let newSection;
+
+            switch (sectionType) {
+                case 'content':
+                    newSection = { type: 'content', heading: 'New Section', body: '', flavorText: '' };
+                    break;
+                case 'property':
+                    newSection = { type: 'property', key: 'New Property', value: '' };
+                    break;
+                case 'picture':
+                    newSection = { type: 'picture', url: '', height: 50 };
+                    break;
+                case 'rule':
+                    newSection = { type: 'rule' };
+                    break;
+                case 'ruler':
+                    newSection = { type: 'ruler' };
+                    break;
+                case 'dndstats':
+                    newSection = { type: 'dndstats', stats: { STR: '10', DEX: '10', CON: '10', INT: '10', WIS: '10', CHA: '10' } };
+                    break;
+                case 'swstats':
+                    newSection = { type: 'swstats', stats: { agility: 'd6', smarts: 'd6', spirit: 'd6', strength: 'd6', vigor: 'd6', pace: '6', parry: '5', toughness: '5', loot: '' } };
+                    break;
+                case 'p2e_stats':
+                    newSection = { type: 'p2e_stats', stats: { str: '+0', dex: '+0', con: '+0', int: '+0', wis: '+0', cha: '+0', ac: '15', fort: '+5', ref: '+5', will: '+5', hp: '20' } };
+                    break;
+                case 'p2e_activity':
+                    newSection = { type: 'p2e_activity', name: 'New Activity', actions: '1', description: '' };
+                    break;
+                case 'p2e_traits':
+                    newSection = { type: 'p2e_traits', traits: [{ rarity: 'common', text: 'trait' }] };
+                    break;
+                case 'boxes':
+                    newSection = { type: 'boxes', count: 3, size: 1.0, text: 'Usage' };
+                    break;
+                case 'fill':
+                    newSection = { type: 'fill', weight: 1 };
+                    break;
+                default:
+                    return; // Do nothing if type is unknown
+            }
+
+            appState.cards[appState.currentCardIndex].sections.push(newSection);
+            addSectionModal.classList.add('hidden'); // Close modal
             renderSections();
             saveState();
         });

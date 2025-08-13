@@ -163,3 +163,33 @@ A "bag" feature should be created to allow users to save or "bag" cards for late
 *   **Export Functionality:**
     *   Users should be able to export a single card from a bag into the `rpg-cards` JSON format.
     *   Users should be able to export an entire "bag" (all cards within it) as a single JSON file in the `rpg-cards` format.
+
+## Content Management
+
+This section outlines procedures for managing the content and structure of this document and other similar documents in the project.
+
+### Adding New Sections
+
+To ensure consistency, adding new sections should follow a structured process. When requested to add a new section, offer the following predefined section types to the user. These types correspond to the formats supported by the `rpg-cards` JSON import.
+
+*   **Content Section:** A standard section with an optional heading, body text (supports markdown-like syntax), and optional italicized flavor text. This is the default section type.
+*   **Property:** A simple key-value pair, displayed as "**Key:** Value".
+*   **Picture:** An image, specified by a URL and an optional height.
+*   **Horizontal Rule:** A full-width horizontal line. There are two styles:
+    *   `rule`: A standard dashed line.
+    *   `ruler`: A thin solid line.
+*   **D&D Stats Block (`dndstats`):** A formatted block for the six D&D ability scores (STR, DEX, CON, INT, WIS, CHA).
+*   **Savage Worlds Stats Block (`swstats`):** A formatted block for Savage Worlds stats (e.g., Agility, Smarts, Spirit, Pace, Parry).
+*   **Pathfinder 2e Stats Block (`p2e_stats`):** A formatted block for Pathfinder 2e stats (e.g., STR, DEX, AC, Fort, Ref, Will, HP).
+*   **Pathfinder 2e Activity (`p2e_activity`):** A formatted block for a Pathfinder 2e activity, including name, action cost, and description.
+*   **Pathfinder 2e Traits (`p2e_traits`):** A block to display a list of Pathfinder 2e traits with rarities.
+*   **Boxes:** A section with a label and a specified number of checkable boxes.
+*   **Fill:** An invisible element that takes up flexible space, useful for layout adjustments.
+
+When adding a section, use the appropriate type to ensure correct rendering.
+
+### Reordering Card Content Sections
+
+The order of the content sections within a card can be adjusted. These are the blocks that appear in the main content area of the card, such as text sections, property lines, stat blocks, and pictures.
+
+To reorder these sections, you can specify the desired new order. For example, you can list the current section headings or types and describe the order you want them to be in.

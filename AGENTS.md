@@ -141,3 +141,25 @@ npm run build:css
 This will compile the Tailwind CSS and output the minified CSS to `style.css`.
 
 **Important:** Do not edit `style.css` directly. All CSS changes should be made in `src/style.css`.
+
+## Feature Requirements
+
+### Card Deletion
+
+A feature needs to be implemented that allows users to delete a card directly from the "Navigate Cards" section. This action should be intuitive and provide a confirmation step to prevent accidental deletions.
+
+### "Bag" of Holding for Cards
+
+A "bag" feature should be created to allow users to save or "bag" cards for later use. This feature should function as a personal collection of cards, stored in the browser's local storage.
+
+**Core Functionality:**
+
+*   **Bagging a Card:** Users should be able to "bag" a card, which saves it to their collection.
+*   **Named Bags:** The collection should be organized into named "bags," which function like folders, allowing for better organization of saved cards.
+*   **Bag Management UI:** A dedicated pop-up or interface, similar to the existing "import" functionality, should be created for managing the bags.
+*   **Card Actions within Bags:** Inside the bag management UI, users should be able to:
+    *   Delete a card from a bag.
+    *   Move a card from one bag to another.
+*   **Export Functionality:**
+    *   Users should be able to export a single card from a bag into the `rpg-cards` JSON format.
+    *   Users should be able to export an entire "bag" (all cards within it) as a single JSON file in the `rpg-cards` format.

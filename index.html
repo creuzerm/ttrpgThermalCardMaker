@@ -114,9 +114,10 @@
                 </select>
                 <button id="next-card-btn" class="font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Next</button>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New Empty Card</button>
+            <div class="grid grid-cols-3 gap-4">
+                <button id="add-new-card-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Add New Card</button>
                 <button id="open-import-modal-btn" class="font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Import Cards</button>
+                <button id="delete-card-btn" class="font-bold py-2 px-4 rounded-lg hover:bg-red-700 active:scale-95 transition-all duration-300" style="background-color: #a00028; color: var(--parchment);">Delete This Card</button>
             </div>
         </div>
 
@@ -513,6 +514,7 @@
         const nextCardBtn = document.getElementById('next-card-btn');
         const cardSelect = document.getElementById('card-select');
         const addNewCardBtn = document.getElementById('add-new-card-btn');
+        const deleteCardBtn = document.getElementById('delete-card-btn');
         const openImportModalBtn = document.getElementById('open-import-modal-btn');
 
         // Import Modal Elements
@@ -1916,6 +1918,38 @@
             updateUIFromAppState();
             saveState();
             showMessage('New empty card added!');
+        });
+
+        deleteCardBtn.addEventListener('click', () => {
+            const cardToDeleteTitle = appState.cards[appState.currentCardIndex].title || 'Untitled Card';
+            if (confirm(`Are you sure you want to delete the card "${cardToDeleteTitle}"?`)) {
+                if (appState.cards.length > 1) {
+                    appState.cards.splice(appState.currentCardIndex, 1);
+
+                    // Adjust index
+                    if (appState.currentCardIndex >= appState.cards.length) {
+                        appState.currentCardIndex = appState.cards.length - 1;
+                    }
+                } else {
+                    // This is the last card, so we replace it with a new empty one
+                    appState.cards = [{
+                        id: crypto.randomUUID(),
+                        title: 'New Card',
+                        type: 'Spell',
+                        icon: '',
+                        color: '#ffffff',
+                        tags: [],
+                        sections: [{ heading: 'Description', body: 'This is a magical card.', flavorText: '' }],
+                        cost: '', rarity: '', abilities: [], image: '', stats: {}, footer: 'TCG.BagsOfFolding.com',
+                        isFolded: false, foldContent: { type: 'text', text: 'Folded content goes here.', imageUrl: '', qrCodeData: '' }
+                    }];
+                    appState.currentCardIndex = 0;
+                }
+
+                updateUIFromAppState();
+                saveState();
+                showMessage(`Card "${cardToDeleteTitle}" deleted.`);
+            }
         });
 
         // Import Modal Listeners

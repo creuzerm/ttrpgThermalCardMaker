@@ -474,6 +474,24 @@
         </div>
     </div>
 
+    <!-- Template Selection Modal -->
+    <div id="template-selection-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="template-selection-modal-title">
+        <div class="p-8 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col relative backdrop-blur-sm" style="background-color: rgba(245, 245, 220, 0.8); border: 1px solid var(--burgundy);">
+            <button id="close-template-selection-modal-btn" type="button" aria-label="Close" class="absolute top-4 right-4 hover:text-black text-2xl font-bold transition-all duration-300" style="color: var(--burgundy);">&times;</button>
+            <h2 id="template-selection-modal-title" class="text-3xl font-bold mb-6 text-center flex-shrink-0">Create New Card</h2>
+
+            <div class="mb-6 flex-shrink-0">
+                 <button id="create-blank-card-btn" class="w-full font-bold py-3 px-6 rounded-lg shadow-md ease-in-out transform hover:brightness-110 active:scale-95 transition-all duration-300" style="background-color: var(--burgundy); color: var(--parchment);">Create Blank Card</button>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4 text-center flex-shrink-0">Or create from a template:</h3>
+
+            <div id="template-accordion-container" class="space-y-2 overflow-y-auto">
+                <!-- Accordion items will be populated by JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Add Section Modal -->
     <div id="add-section-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="add-section-modal-title">
         <div class="p-8 rounded-2xl shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto relative backdrop-blur-sm" style="background-color: rgba(245, 245, 220, 0.8); border: 1px solid var(--burgundy);">
@@ -559,6 +577,73 @@
             isScrolling: false, // New property for scrolling card option
             rememberedIcons: []
         };
+
+    const cardTemplates = {
+        "D&D": [
+            {
+                title: "Creature",
+                json: { "count": 1, "color": "#e05c5c", "title": "New Creature", "icon": "dragon-head", "icon_back": "dragon-head", "tags": ["Creature", "Monster"], "footer": "Source: Custom", "contents": [ "property | Size | Medium", "property | Type | Aberration", "property | Alignment | Lawful Evil", "rule", "property | Armor Class | 10", "property | Hit Points | 10 (1d8 + 5)", "property | Speed | 30 ft.", "rule", "property | STR | 10 (+0)", "property | DEX | 10 (+0)", "property | CON | 10 (+0)", "property | INT | 10 (+0)", "property | WIS | 10 (+0)", "property | CHA | 10 (+0)", "rule", "description | Senses | passive Perception 10", "description | Languages | Common", "description | Challenge | 1/2 (100 XP)", "rule", "section | Actions", "description | Multiattack | The creature makes two attacks.", "description | Attack | Melee Weapon Attack: +0 to hit, reach 5 ft., one target. Hit: 1 (1d4) bludgeoning damage." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Item",
+                json: { "count": 1, "color": "#4a6898", "title": "New Item", "icon": "sword", "icon_back": "sword", "tags": ["Item", "Magic Item"], "footer": "Source: Custom", "contents": [ "property | Type | Wondrous item", "property | Rarity | Common", "rule", "description | Description | A detailed description of the item and its appearance.", "description | Effect | The magical properties or benefits of the item." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Spell",
+                json: { "count": 1, "color": "#a7894b", "title": "New Spell", "icon": "magic-swirl", "icon_back": "magic-swirl", "tags": ["Spell", "Evocation"], "footer": "Source: Custom", "contents": [ "property | Level | 1st-level evocation", "property | Casting Time | 1 action", "property | Range | 60 feet", "property | Components | V, S, M (a pinch of sulfur)", "property | Duration | Instantaneous", "rule", "description | Description | The spell's effect and what happens when it is cast.", "description | At Higher Levels | A description of how the spell's power increases when cast using a higher-level spell slot." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Species",
+                json: { "count": 1, "color": "#30432f", "title": "New Species", "icon": "family-tree", "icon_back": "family-tree", "tags": ["Species", "Race"], "footer": "Source: Custom", "contents": [ "property | Ability Scores | Choose any +2; choose any other +1", "property | Size | Medium", "property | Speed | 30 ft.", "rule", "description | Creature Type | You are a Humanoid.", "description | Trait Name | A detailed description of the species' trait.", "description | Trait Name 2 | Another trait's description." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Background",
+                json: { "count": 1, "color": "#6e4a2a", "title": "New Background", "icon": "book-cover", "icon_back": "book-cover", "tags": ["Background"], "footer": "Source: Custom", "contents": [ "property | Skill Proficiencies | Two of your choice", "property | Tool Proficiencies | One of your choice", "rule", "description | Feature: Background Name | A description of the feature associated with this background.", "description | Personality Traits | A suggestion for personality traits.", "description | Ideals | A suggestion for ideals.", "description | Bonds | A suggestion for bonds.", "description | Flaws | A suggestion for flaws." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Feat",
+                json: { "count": 1, "color": "#5b5b5b", "title": "New Feat", "icon": "checked-shield", "icon_back": "checked-shield", "tags": ["Feat"], "footer": "Source: Custom", "contents": [ "property | Prerequisite | None", "rule", "description | Benefit | A description of the feat's benefits and how it changes a character's abilities." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Feature",
+                json: { "count": 1, "color": "#8f8b7f", "title": "New Feature", "icon": "crown", "icon_back": "crown", "tags": ["Feature", "Option"], "footer": "Source: Custom", "contents": [ "property | Prerequisite | Level 3", "rule", "description | Description | A detailed description of what the feature does.", "description | Special | Additional rules or a deeper explanation of the feature's mechanics." ], "isFolded": false, "isScrolling": false }
+            }
+        ],
+        "Daggerheart": [
+            {
+                title: "Ancestry",
+                json: { "count": 1, "color": "#4a6898", "title": "New Ancestry", "icon": "family-tree", "icon_back": "family-tree", "tags": ["Daggerheart", "Ancestry"], "footer": "Source: Daggerheart Core", "contents": [ "text | *A description of the ancestry's lore and place in the world.*", "rule", "description | Feature Name | A detailed description of an ancestry trait.", "description | Second Feature | A description of a second ancestry trait." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Community",
+                json: { "count": 1, "color": "#30432f", "title": "New Community", "icon": "village", "icon_back": "village", "tags": ["Daggerheart", "Community"], "footer": "Source: Daggerheart Core", "contents": [ "text | *A description of the community's culture, values, and location.*", "rule", "description | Community Trait | A detailed description of a feature granted by this community.", "description | Another Community Trait | The description of an additional community feature." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Subclass",
+                json: { "count": 1, "color": "#a7894b", "title": "New Subclass", "icon": "crown", "icon_back": "crown", "tags": ["Daggerheart", "Subclass"], "footer": "Source: Daggerheart Core", "contents": [ "property | Class | Fighter", "text | *A description of the subclass and its role within the class.*", "rule", "description | Subclass Feature | A detailed description of a feature or ability gained from this subclass.", "description | Another Feature | The description of another feature." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Domain",
+                json: { "count": 1, "color": "#79294e", "title": "New Ability", "icon": "lightning-bow", "icon_back": "lightning-bow", "tags": ["Daggerheart", "Domain", "Ability"], "footer": "Source: Daggerheart Core", "contents": [ "property | Domain | Chaos", "property | Level | 1", "rule", "description | Cost | A description of the ability's cost (e.g., spending Stress).", "description | Effect | A detailed description of the ability's mechanical effect.", "description | Upgraded | The enhanced effect when spent with Hope." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Transformation",
+                json: { "count": 1, "color": "#800020", "title": "New Transformation", "icon": "rune-sword", "icon_back": "rune-sword", "tags": ["Daggerheart", "Transformation"], "footer": "Source: Daggerheart Core", "contents": [ "text | *A description of the transformation's theme and origin.*", "rule", "section | Benefits", "text | **Benefit 1:** The primary mechanical advantage of the transformation.", "text | **Benefit 2:** An additional benefit.", "rule", "section | Drawbacks", "text | **Drawback 1:** A significant mechanical disadvantage of the transformation.", "text | **Drawback 2:** A second, negative effect." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Adversary",
+                json: { "count": 1, "color": "#b22222", "title": "New Adversary", "icon": "crossed-swords", "icon_back": "crossed-swords", "tags": ["Daggerheart", "Adversary", "Homebrew"], "footer": "Source: Community Homebrew", "contents": [ "property | Tier | 1", "property | Difficulty | Moderate", "property | Damage Die | 1d6", "rule", "description | Tactics | A brief description of how the adversary fights.", "description | Features | **Feature Name:** The description of a special ability.", "description | Feature 2 | **Feature Name 2:** The description of a second ability.", "boxes | HP | 10", "boxes | Stress | 6", "boxes | Major Threshold | 1", "boxes | Severe Threshold | 1" ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Item",
+                json: { "count": 1, "color": "#d2b48c", "title": "New Item", "icon": "sword", "icon_back": "sword", "tags": ["Daggerheart", "Item", "Homebrew"], "footer": "Source: Community Homebrew", "contents": [ "property | Item Type | Weapon", "property | Damage Dice | 1d6", "property | Damage Type | Physical", "property | Range | Melee", "rule", "description | Traits | **Trait Name:** The effect of a special trait.", "description | Description | A detailed description of the item." ], "isFolded": false, "isScrolling": false }
+            },
+            {
+                title: "Ritual",
+                json: { "count": 1, "color": "#5b5b5b", "title": "New Ritual", "icon": "pentagram-star", "icon_back": "pentagram-star", "tags": ["Daggerheart", "Ritual", "Homebrew"], "footer": "Source: Community Homebrew", "contents": [ "text | *A description of the ritual's purpose and its narrative implications.*", "rule", "property | Stress Cost | 3", "property | Difficulty | Hard", "property | Time | 1 hour", "description | Components | Any resources or specific items required to perform the ritual.", "rule", "description | Effect | A description of the ritual's outcome." ], "isFolded": false, "isScrolling": false }
+            }
+        ]
+    };
 
         const MAX_SHARE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
         let pdfShareBlob = null; // To hold the generated PDF blob for the two-click share process
@@ -651,6 +736,12 @@
         const addSectionModal = document.getElementById('add-section-modal');
         const closeAddSectionModalBtn = document.getElementById('close-add-section-modal-btn');
         const addSectionOptions = document.getElementById('add-section-options');
+
+        // Template Selection Modal Elements
+        const templateSelectionModal = document.getElementById('template-selection-modal');
+        const closeTemplateSelectionModalBtn = document.getElementById('close-template-selection-modal-btn');
+        const createBlankCardBtn = document.getElementById('create-blank-card-btn');
+        const templateAccordionContainer = document.getElementById('template-accordion-container');
 
         // Print Scope Radio Buttons
         const printScopeRadios = document.querySelectorAll('input[name="printScope"]');
@@ -2263,12 +2354,263 @@
         });
 
         addNewCardBtn.addEventListener('click', () => {
+            templateSelectionModal.classList.remove('hidden');
+            populateTemplateModal();
+            closeTemplateSelectionModalBtn.focus();
+        });
+
+        // --- Template Selection Modal Logic ---
+
+        function parseTemplateToCard(data) {
+            // This function is a simplified version of the 'rpg-cards' parser from parseAndSetCardData
+            // It takes a single template object and returns a card object ready for the app state.
+            let newCard = createNewCard(); // Start with a default card structure
+
+            newCard.title = htmlToMarkdown(data.title || 'New Card');
+            newCard.color = data.color || '#ffffff';
+            newCard.icon = data.icon || '';
+            newCard.tags = (data.tags && Array.isArray(data.tags)) ? [...data.tags] : [];
+            newCard.footer = htmlToMarkdown(data.footer || '');
+
+            newCard.sections = [];
+            newCard.stats = {};
+            newCard.type = '';
+
+            if (data.contents && Array.isArray(data.contents)) {
+                let inP2eTraitSection = false;
+                let currentTraitSection = null;
+                let currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
+
+                function pushCurrentSection() {
+                    if (currentSection.body || currentSection.heading || currentSection.flavorText) {
+                        newCard.sections.push({ ...currentSection });
+                    }
+                    currentSection = { type: 'content', heading: '', body: '', flavorText: '' };
+                }
+
+                for (let i = 0; i < data.contents.length; i++) {
+                    const line = data.contents[i];
+
+                    if (line.startsWith('subtitle | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('subtitle | '.length).split(' | ');
+                        newCard.type = {
+                            text: parts[0] ? htmlToMarkdown(parts[0].trim()) : '',
+                            aside: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
+                        };
+                    } else if (line.startsWith('rule')) {
+                        pushCurrentSection();
+                        newCard.sections.push({ type: 'rule' });
+                    } else if (line.startsWith('fill | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('fill | '.length).split(' | ');
+                        newCard.sections.push({ type: 'fill', weight: parseInt(parts[0], 10) || 1 });
+                    } else if (line.startsWith('text | ')) {
+                        const textGroup = [line.substring('text | '.length).trim()];
+                        while (i + 1 < data.contents.length && data.contents[i + 1].startsWith('text | ')) {
+                            i++;
+                            textGroup.push(data.contents[i].substring('text | '.length).trim());
+                        }
+
+                        const convertedTextGroup = textGroup.map(line => htmlToMarkdown(line));
+                        const processedText = processTextGroup(convertedTextGroup);
+
+                        if (currentSection.body) {
+                            currentSection.body += '\n' + processedText;
+                        } else {
+                            currentSection.body = processedText;
+                        }
+                    } else if (line.startsWith('property | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('property | '.length).split(' | ');
+                        if (parts.length >= 2) {
+                            newCard.sections.push({ type: 'property', key: parts[0].trim(), value: htmlToMarkdown(parts[1].trim()) });
+                        }
+                    } else if (line.startsWith('dndstats | ')) {
+                        pushCurrentSection();
+                        const statKeys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+                        const stats = line.substring('dndstats | '.length).split(' | ').map(s => s.trim());
+                        if (stats.length === statKeys.length) {
+                            const statValues = {};
+                            statKeys.forEach((key, index) => {
+                                statValues[key] = stats[index];
+                            });
+                            newCard.sections.push({ type: 'dndstats', stats: statValues });
+                        }
+                    } else if (line.startsWith('description | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('description | '.length).split(' | ').map(p => p.trim());
+                        currentSection = {
+                            type: 'content',
+                            heading: parts.length >= 2 ? htmlToMarkdown(parts[0]) : '',
+                            body: parts.length >= 2 ? htmlToMarkdown(parts[1]) : htmlToMarkdown(parts[0]),
+                            flavorText: ''
+                        };
+                    } else if (line.startsWith('bullet | ')) {
+                        const bulletText = '• ' + htmlToMarkdown(line.substring('bullet | '.length).trim());
+                        if (currentSection.body) {
+                            currentSection.body += '\n' + bulletText;
+                        } else {
+                            currentSection.body = bulletText;
+                        }
+                    } else if (line.startsWith('picture | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('picture | '.length).split(' | ');
+                        newCard.sections.push({
+                            type: 'picture',
+                            url: parts[0] ? parts[0].trim() : '',
+                            height: parts[1] ? parseInt(parts[1].trim(), 10) : 50
+                        });
+                    } else if (line.startsWith('ruler')) {
+                        pushCurrentSection();
+                        newCard.sections.push({ type: 'ruler' });
+                    } else if (line.startsWith('swstats | ')) {
+                        pushCurrentSection();
+                        const p = line.substring('swstats | '.length).split(' | ').map(s => s.trim());
+                        newCard.sections.push({
+                            type: 'swstats',
+                            stats: {
+                                agility: p[0] || '', smarts: p[1] || '', spirit: p[2] || '', strength: p[3] || '', vigor: p[4] || '',
+                                pace: p[5] || '', parry: p[6] || '', toughness: p[7] || '', loot: p[8] || ''
+                            }
+                        });
+                    } else if (line.startsWith('p2e_stats | ')) {
+                        pushCurrentSection();
+                        const p = line.substring('p2e_stats | '.length).split(' | ').map(s => s.trim());
+                        newCard.sections.push({
+                            type: 'p2e_stats',
+                            stats: {
+                                str: p[0] || '', dex: p[1] || '', con: p[2] || '', int: p[3] || '', wis: p[4] || '', cha: p[5] || '',
+                                ac: p[6] || '', fort: p[7] || '', ref: p[8] || '', will: p[9] || '', hp: p[10] || ''
+                            }
+                        });
+                    } else if (line.startsWith('p2e_activity | ')) {
+                        pushCurrentSection();
+                        const p = line.substring('p2e_activity | '.length).split(' | ').map(s => s.trim());
+                        newCard.sections.push({
+                            type: 'p2e_activity',
+                            name: htmlToMarkdown(p[0] || ''),
+                            actions: p[1] || '',
+                            description: htmlToMarkdown(p[2] || '')
+                        });
+                    } else if (line.startsWith('p2e_start_trait_section')) {
+                        pushCurrentSection();
+                        inP2eTraitSection = true;
+                        currentTraitSection = { type: 'p2e_traits', traits: [] };
+                    } else if (line.startsWith('p2e_end_trait_section')) {
+                        if (currentTraitSection && currentTraitSection.traits.length > 0) {
+                            newCard.sections.push(currentTraitSection);
+                        }
+                        inP2eTraitSection = false;
+                        currentTraitSection = null;
+                    } else if (line.startsWith('p2e_trait | ')) {
+                        if (inP2eTraitSection) {
+                            const parts = line.substring('p2e_trait | '.length).split(' | ');
+                            currentTraitSection.traits.push({
+                                rarity: parts[0] ? parts[0].trim().toLowerCase() : 'common',
+                                text: parts[1] ? htmlToMarkdown(parts[1].trim()) : ''
+                            });
+                        }
+                    } else if (line.startsWith('section | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('section | '.length).split(' | ');
+                        currentSection.heading = parts[0] ? htmlToMarkdown(parts[0].trim()) : '';
+                        currentSection.headingAside = parts[1] ? htmlToMarkdown(parts[1].trim()) : '';
+                    } else if (line.startsWith('boxes | ')) {
+                        pushCurrentSection();
+                        const parts = line.substring('boxes | '.length).split(' | ');
+                        newCard.sections.push({
+                            type: 'boxes',
+                            count: parts[0] ? parseInt(parts[0].trim(), 10) : 1,
+                            size: parts[1] ? parseFloat(parts[1].trim()) : 1.0,
+                            text: parts[2] ? htmlToMarkdown(parts[2].trim()) : ''
+                        });
+                    }
+                }
+                pushCurrentSection();
+            }
+
+            if (newCard.sections.length === 0) {
+                newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });
+            }
+
+            newCard.isFolded = typeof data.isFolded === 'boolean' ? data.isFolded : false;
+            newCard.foldContent = (data.foldContent && typeof data.foldContent === 'object') ? JSON.parse(JSON.stringify(data.foldContent)) : { type: 'text', text: '', imageUrl: '', qrCodeData: '' };
+
+            return newCard;
+        }
+
+        function populateTemplateModal() {
+            templateAccordionContainer.innerHTML = '';
+            Object.keys(cardTemplates).forEach(system => {
+                const systemDiv = document.createElement('div');
+                systemDiv.className = 'border-b';
+                systemDiv.style.borderColor = 'rgba(128, 0, 32, 0.4)';
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'w-full flex justify-between items-center py-4 text-left text-lg font-semibold transition-all duration-300';
+                button.setAttribute('aria-expanded', 'false');
+                button.innerHTML = `
+                    <span>${system}</span>
+                    <i data-lucide="chevron-down" class="transition-transform duration-300" aria-hidden="true"></i>
+                `;
+
+                const content = document.createElement('div');
+                content.className = 'hidden pt-2 pb-4 grid grid-cols-2 sm:grid-cols-3 gap-2';
+
+                cardTemplates[system].forEach(template => {
+                    const templateButton = document.createElement('button');
+                    templateButton.className = 'template-btn font-bold py-2 px-4 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-300';
+                    templateButton.style.backgroundColor = 'var(--burgundy)';
+                    templateButton.style.color = 'var(--parchment)';
+                    templateButton.textContent = template.title;
+                    templateButton.addEventListener('click', () => {
+                        const newCard = parseTemplateToCard(template.json);
+                        appState.cards.push(newCard);
+                        appState.currentCardIndex = appState.cards.length - 1;
+                        updateUIFromAppState();
+                        saveState();
+                        templateSelectionModal.classList.add('hidden');
+                        showMessage('Card created from template!');
+                    });
+                    content.appendChild(templateButton);
+                });
+
+                systemDiv.appendChild(button);
+                systemDiv.appendChild(content);
+                templateAccordionContainer.appendChild(systemDiv);
+
+                setupAccordion(button, content);
+            });
+            lucide.createIcons();
+        }
+
+        // Event listeners for the new modal
+        closeTemplateSelectionModalBtn.addEventListener('click', () => {
+            templateSelectionModal.classList.add('hidden');
+        });
+
+        templateSelectionModal.addEventListener('click', (e) => {
+            if (e.target === templateSelectionModal) {
+                templateSelectionModal.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !templateSelectionModal.classList.contains('hidden')) {
+                templateSelectionModal.classList.add('hidden');
+            }
+        });
+
+        createBlankCardBtn.addEventListener('click', () => {
             const newCard = createNewCard();
             appState.cards.push(newCard);
-            appState.currentCardIndex = appState.cards.length - 1; // Go to the new card
+            appState.currentCardIndex = appState.cards.length - 1;
             updateUIFromAppState();
             saveState();
-            showMessage('New empty card added!');
+            templateSelectionModal.classList.add('hidden');
+            showMessage('New blank card added!');
         });
 
         deleteCardBtn.addEventListener('click', () => {

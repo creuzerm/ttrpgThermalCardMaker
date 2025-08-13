@@ -2370,7 +2370,9 @@
             newCard.color = data.color || '#ffffff';
             newCard.icon = data.icon || '';
             newCard.tags = (data.tags && Array.isArray(data.tags)) ? [...data.tags] : [];
-            newCard.footer = htmlToMarkdown(data.footer || '');
+            if (data.hasOwnProperty('footer')) {
+                newCard.footer = htmlToMarkdown(data.footer);
+            }
 
             newCard.sections = [];
             newCard.stats = {};

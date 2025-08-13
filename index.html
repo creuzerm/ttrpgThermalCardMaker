@@ -25,6 +25,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- jsPDF-AutoTable CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <!-- pako.js for compression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <!-- Cinzel & Lora Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -689,6 +691,54 @@
                 return true;
             } catch (_) {
                 return false;
+            }
+        }
+
+        // --- Data Compression & Decompression for URL Sharing ---
+        function compressDataForUrl(data) {
+            try {
+                const jsonString = JSON.stringify(data);
+                // pako.deflate returns a Uint8Array. We need to convert it to a binary string for btoa.
+                const compressed = pako.deflate(jsonString);
+                const binaryString = String.fromCharCode.apply(null, compressed);
+                // Encode to Base64 and make it URL-safe
+                return btoa(binaryString)
+                    .replace(/\+/g, '-') // Replace + with -
+                    .replace(/\//g, '_') // Replace / with _
+                    .replace(/=+$/, '');  // Remove trailing =
+            } catch (error) {
+                console.error('Compression failed:', error);
+                showMessage('Could not generate compressed link.', true);
+                return null;
+            }
+        }
+
+        function decompressDataFromUrl(base64String) {
+            try {
+                // Pad the string and replace URL-safe characters
+                let paddedString = base64String.replace(/-/g, '+').replace(/_/g, '/');
+                while (paddedString.length % 4) {
+                    paddedString += '=';
+                }
+                const binaryString = atob(paddedString);
+                const compressed = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    compressed[i] = binaryString.charCodeAt(i);
+                }
+
+                const jsonString = pako.inflate(compressed, { to: 'string' });
+                return JSON.parse(jsonString);
+            } catch (error) {
+                console.error('Decompression failed:', error);
+                // Fallback to old method for backward compatibility
+                try {
+                    const decodedString = decodeURIComponent(atob(base64String));
+                    return JSON.parse(decodedString);
+                } catch (fallbackError) {
+                    console.error('Fallback decoding also failed:', fallbackError);
+                    showMessage('Could not read data from URL. It may be corrupted.', true);
+                    return null;
+                }
             }
         }
 
@@ -1392,11 +1442,11 @@
                 const cardDataParam = urlParams.get('data') || urlParams.get('cardData');
 
                 if (cardDataParam) {
-                    const decodedString = decodeURIComponent(atob(cardDataParam));
-                    const decodedData = JSON.parse(decodedString);
+                    const decodedData = decompressDataFromUrl(cardDataParam);
 
-                    // Correctly unpack the data from the URL
-                    if (decodedData.card) {
+                    if (decodedData) {
+                        // Correctly unpack the data from the URL
+                        if (decodedData.card) {
                         appState.cards = [decodedData.card];
                     } else {
                         // Fallback for old format or direct card data
@@ -2407,8 +2457,8 @@
                     numCopies: appState.numCopies
                 }
             };
-            const jsonString = JSON.stringify(dataToSend);
-            const encodedData = btoa(encodeURIComponent(jsonString));
+            const encodedData = compressDataForUrl(dataToSend);
+            if (!encodedData) return; // Stop if compression fails
             const url = `index.html?view=card&data=${encodedData}`;
             window.open(url, '_blank');
         }
@@ -3520,8 +3570,9 @@
                     numCopies: appState.numCopies
                 }
             };
-            const jsonString = JSON.stringify(dataToSend);
-            const encodedData = btoa(encodeURIComponent(jsonString));
+            const encodedData = compressDataForUrl(dataToSend);
+
+            if (!encodedData) return; // Stop if compression failed
 
             const currentUrl = new URL(window.location.href);
             // Clear existing params to create a clean link for the editor view
@@ -3658,8 +3709,11 @@
             }
 
             try {
-                const decodedString = decodeURIComponent(atob(dataParam));
-                const decodedData = JSON.parse(decodedString);
+                const decodedData = decompressDataFromUrl(dataParam);
+
+                if (!decodedData) {
+                    throw new Error("Failed to decompress card data from URL.");
+                }
 
                 const card = decodedData.card || decodedData;
                 const settings = decodedData.settings || {

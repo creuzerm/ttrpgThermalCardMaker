@@ -670,6 +670,51 @@
             }, 5000);
         }
 
+        function trackImageInteraction(action) {
+            if (typeof gtag !== 'function') {
+                console.warn('gtag is not defined. Google Analytics event not sent.');
+                return;
+            }
+
+            const currentCard = appState.cards[appState.currentCardIndex];
+            if (!currentCard) {
+                console.warn('No current card found. Google Analytics event not sent.');
+                return;
+            }
+
+            const featuresUsed = [];
+            if (currentCard.isFolded) featuresUsed.push('folded');
+            if (appState.isScrolling) featuresUsed.push('scrolling');
+            if (currentCard.icon) featuresUsed.push('icon');
+            if (currentCard.stats && Object.keys(currentCard.stats).length > 0) featuresUsed.push('stats');
+            if (currentCard.sections && Array.isArray(currentCard.sections)) {
+                const sectionTypes = new Set(currentCard.sections.map(s => s.type || 'content').filter(Boolean));
+                featuresUsed.push(...sectionTypes);
+            }
+            if (currentCard.foldContent && currentCard.foldContent.type === 'qrCode' && currentCard.foldContent.qrCodeData) {
+                featuresUsed.push('qr_code_back');
+            }
+            if (currentCard.foldContent && currentCard.foldContent.type === 'imageUrl' && currentCard.foldContent.imageUrl) {
+                featuresUsed.push('image_back');
+            }
+            if (currentCard.foldContent && currentCard.foldContent.type === 'backgroundImageUrl' && currentCard.foldContent.imageUrl) {
+                featuresUsed.push('background_image_back');
+            }
+
+
+            const eventParams = {
+                action: action,
+                features_used: [...new Set(featuresUsed)].join(','), // Ensure unique features
+                printer_size: appState.thermalPaperWidth,
+                resolution: `${appState.thermalDpi}dpi`,
+                thermal_printer_enabled: appState.printerType === 'thermal',
+                printer_used: appState.printerType
+            };
+
+            gtag('event', 'image_interaction', eventParams);
+            console.log('Fired image_interaction event:', eventParams);
+        }
+
         // Function to determine if a string is a URL
         function isURL(str) {
             try {
@@ -2259,6 +2304,7 @@
 
         // View Card button handler
         viewCardBtn.addEventListener('click', () => {
+            trackImageInteraction('view_card');
             showMessage('Opening card view...');
             const cardToView = appState.cards[appState.currentCardIndex];
             openCardView(cardToView);
@@ -2266,6 +2312,7 @@
 
         // Event listener for the thermal print button
         printThermalBtn.addEventListener('click', async () => {
+            trackImageInteraction('print_thermal');
             // This function replaces the old method of using a pre-generated href.
             // It now dynamically creates the HTML content and constructs the special
             // print URL on the fly, as requested.
@@ -2326,6 +2373,7 @@
 
         // Print Color Photo button handler
         printColorPhotoBtn.addEventListener('click', async () => {
+            trackImageInteraction('print_color');
             // This button's primary function is to share with a printer app.
             const dummyFile = new File(["dummy"], "dummy.png", { type: "image/png" });
             if (!navigator.share || !navigator.canShare({ files: [dummyFile] })) {
@@ -3191,6 +3239,7 @@
         }
 
         downloadImageBtn.addEventListener('click', async () => {
+            trackImageInteraction('download_png');
             showMessage('Generating image(s) for download...');
             const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
             const originalCardIndex = appState.currentCardIndex;
@@ -3217,6 +3266,7 @@
 
         // Download PDF button handler
         downloadPdfBtn.addEventListener('click', async () => {
+            trackImageInteraction('download_pdf');
             showMessage('Generating PDF for download...');
             try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
@@ -3244,6 +3294,7 @@
 
         // Share PDF button handler
         sharePdfBtn.addEventListener('click', async () => {
+            trackImageInteraction('share_pdf');
             // --- Second Click Logic ---
             if (pdfShareBlob) {
                 try {
@@ -3317,6 +3368,7 @@
 
         // Share Card button handler
         shareCardBtn.addEventListener('click', async () => {
+            trackImageInteraction('share_png');
             const dummyFile = new File(["dummy"], "dummy.png", { type: "image/png" });
             if (!navigator.share || !navigator.canShare({ files: [dummyFile] })) {
                 showMessage('Web Share API for files not supported on this device/browser. Please download the image and share manually.', true);
@@ -3354,6 +3406,7 @@
 
         // Copy Bookmarkable Link button handler
         copyBookmarkLinkBtn.addEventListener('click', () => {
+            trackImageInteraction('copy_bookmark_link');
             const currentCard = appState.cards[appState.currentCardIndex];
             const dataToSend = {
                 card: currentCard,
@@ -3382,90 +3435,3 @@
                     showMessage('Failed to copy link. Please copy manually: ' + bookmarkLink, true);
                 });
         });
-
-        async function initGeneratorView() {
-            try {
-                const response = await fetch('./icon-lookup.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                iconManifest = await response.json();
-                console.log('Icon manifest loaded successfully.');
-            } catch (error) {
-                console.error('Could not load icon manifest:', error);
-                showMessage('Could not load local icons. Please check the console for details.', true);
-            }
-            loadState();
-        }
-
-        async function initCardView() {
-            // Clean up the UI for a print-only view
-            const mainView = document.getElementById('main-generator-view');
-            if (mainView) mainView.remove();
-            const cardView = document.getElementById('card-view');
-            document.body.style.backgroundColor = '#ffffff';
-            document.body.style.padding = '0';
-            document.body.style.margin = '0';
-            cardView.classList.remove('hidden');
-            cardView.innerHTML = '<div id="card-render-area"></div>';
-
-
-            // Fetch the icon manifest, which is necessary for rendering the card
-            try {
-                const response = await fetch('./icon-lookup.json');
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                iconManifest = await response.json();
-            } catch (error) {
-                console.error('Could not load icon manifest:', error);
-                document.body.innerHTML = '<p>Error: Could not load icon manifest.</p>';
-                return;
-            }
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const dataParam = urlParams.get('data') || urlParams.get('cardData');
-            if (!dataParam) {
-                document.body.innerHTML = '<p>Error: No card data provided in URL.</p>';
-                return;
-            }
-
-            try {
-                const decodedString = decodeURIComponent(atob(dataParam));
-                const decodedData = JSON.parse(decodedString);
-
-                const card = decodedData.card || decodedData;
-                const settings = decodedData.settings || {
-                    thermalPaperSize: urlParams.get('thermalPaperSize') || '58mm',
-                    thermalDpi: parseInt(urlParams.get('thermalDpi'), 10) || 203,
-                    numCopies: parseInt(urlParams.get('numCopies'), 10) || 1
-                };
-
-                appState.thermalPaperSize = settings.thermalPaperSize;
-                appState.thermalDpi = settings.thermalDpi;
-
-                const cardRenderArea = document.getElementById('card-render-area');
-                cardRenderArea.innerHTML = await generateThermalHtmlForCard(card);
-
-            } catch (error) {
-                console.error('Error processing card view data:', error);
-                document.body.innerHTML = `<p>Error: Could not read card data. ${error.message}</p>`;
-            }
-        }
-
-        // Initial load and render
-        window.addEventListener('load', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const viewMode = urlParams.get('view');
-
-            if (viewMode === 'card') {
-                await initCardView();
-            } else {
-                // This handles both normal page loads and bookmarked links with data
-                await initGeneratorView();
-            }
-        });
-    </script>
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-</html>

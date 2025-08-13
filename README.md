@@ -59,7 +59,8 @@ The "Navigate Cards" section helps you manage multiple card entries:
 
 *   **Previous / Next Buttons:** Cycle through the loaded cards.
 *   **Card Select Dropdown:** Choose a specific card by its title from the list.
-*   **Add New Empty Card:** Create a blank card to start a new design.
+*   **Add New Card:** Create a blank card to start a new design.
+*   **Delete This Card:** Deletes the currently selected card from the application. A confirmation prompt will appear to prevent accidental deletion.
 
 ### 4. Importing Card Data
 

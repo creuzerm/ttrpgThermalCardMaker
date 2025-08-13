@@ -144,6 +144,39 @@ This will compile the Tailwind CSS and output the minified CSS to `style.css`.
 
 ## Feature Requirements
 
+AI Coding Tool Specification
+
+This section outlines the requirements for an AI coding tool tasked with generating or modifying code for the **Portable Printer TTRPG Card Generator**. The goal is to ensure all generated code is robust, well-documented, and consistent with the project's established standards.
+
+### 1. Code Generation & Style
+
+* **Language & Frameworks:** The tool must exclusively generate **HTML, CSS, and JavaScript**. It should use **Tailwind CSS** for all styling and layout. The code must be self-contained and ready to run as a single file, typically within the `index.html` structure.
+* **Structure:** Code should be modular and clearly separated by function. Complex logic should be broken into smaller, well-named functions.
+* **Documentation:** All generated code must be extensively commented. The purpose of each function, the logic within loops, and any complex algorithms should be explained clearly in **HTML comments (`<!-- ... -->`) and JavaScript comments (`// ...`)**.
+* **Visuals & Aesthetics:** Generated UI components should adhere to the **"Dragon's Hoard" visual style**. Use the specified color palette and fonts. Buttons and interactive elements should be styled with rounded corners and appropriate visual cues (e.g., shadows, subtle gradients).
+
+### 2. Functional Requirements & Constraints
+
+* **Self-Contained:** All code must be complete and self-contained within the provided immersive code block. Do not rely on external scripts or files unless they are already included via a CDN in the project's `index.html` file (e.g., `tailwindcss`, `marked.js`, `html2canvas`).
+* **User Interaction:** Code should be responsive to user input and provide clear feedback. Avoid using native browser alerts (`alert()`, `confirm()`); instead, use a custom-styled message box or modal.
+* **Data Handling:** Any data handling or persistence logic should be clearly documented and, if necessary, designed to work with the existing URL-based data transfer mechanism (Base64 encoding/decoding).
+* **Robustness:** Implement error handling using `try...catch` blocks where appropriate. The code should gracefully handle unexpected input or missing data without crashing.
+* **Compressed URL Sharing:** When creating or reading a shareable URL or the HTML Preview "Open Card in New Tab", the AI tool **must** follow this process to compress and decompress the card's JSON data:
+  1. **To Generate a URL:** Compress the JSON string using a library like `pako.deflate`, then convert the resulting binary data to a Base64 string for inclusion in the URL.
+  2. **To Read a URL:** When a user loads a share URL, first decode the Base64 string, then decompress the data using a library like `pako.inflate` before parsing the JSON back into a usable object.
+
+### 3. Special-Use Block Types
+
+When generating content for the card generator, the AI should be aware of the following block types and their intended use, as defined by the existing `AGENTS.md` file:
+
+* **Text (`text`):** A standard text block that supports Markdown.
+* **Property Line (`property`):** A single line with a label and a value (e.g., "HP: 20").
+* **Horizontal Rule (`rule`, `ruler`):** A full-width line for visual separation.
+* **D&D Stats Block (`dndstats`):** A formatted block for the six D&D ability scores.
+* **Boxes (`boxes`):** A labeled section with checkable boxes.
+
+The AI should prioritize using these defined blocks to maintain consistency when generating card content.
+
 ### Card Deletion
 
 A feature needs to be implemented that allows users to delete a card directly from the "Navigate Cards" section. This action should be intuitive and provide a confirmation step to prevent accidental deletions.

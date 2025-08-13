@@ -585,6 +585,9 @@
     <div id="message-display" class="hidden fixed top-5 right-5 p-4 rounded-lg shadow-lg z-[60]"></div>
 
     <script>
+        // Configure marked.js to generate header IDs
+        marked.use({ headerIds: true });
+
         // Global application state
         let iconManifest = {}; // To be populated from icon-lookup.json
         let cardTemplates = {}; // To be populated from templates.json

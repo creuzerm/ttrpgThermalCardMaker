@@ -2864,31 +2864,42 @@
             const dpi = appState.thermalDpi;
             const widthPx = getPixelWidth(appState.thermalPaperWidth, dpi);
 
-            let iconRenderHtml = '';
+            let iconHtml = '';
             if (card.icon && (!card.isContinuation || isScrolling)) {
+                const iconStyle = `width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%); flex-shrink: 0;`;
                 if (iconManifest[card.icon]) {
                     const iconUrl = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                    iconHtml = `<img src="${sanitizeHTML(iconUrl)}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                    iconHtml = `<img src="${sanitizeHTML(card.icon)}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
-                    iconRenderHtml = `<i data-lucide="${sanitizeHTML(card.icon)}" style="position: absolute; color: black; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; stroke-width: 1.5;"></i>`;
+                    iconHtml = `<i data-lucide="${sanitizeHTML(card.icon)}" style="color: black; ${iconStyle} stroke-width: 1.5;"></i>`;
                 }
             }
 
             const containerHeight = isScrolling ? 'auto' : `${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px`;
             const containerStyle = isScrolling
-                ? `position: relative; width: ${widthPx}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column; border-bottom: 1px dashed #ccc; margin-bottom: 10px;`
-                : `position: relative; width: ${widthPx}px; height: ${containerHeight}; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;`;
+                ? `position: relative; width: ${widthPx}px; font-family: 'Lora', serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column; border-bottom: 1px dashed #ccc; margin-bottom: 10px;`
+                : `position: relative; width: ${widthPx}px; height: ${containerHeight}; font-family: 'Lora', serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; flex-direction: column;`;
 
             const contentAreaStyle = isScrolling ? "overflow: visible;" : "flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start;";
 
             let htmlContent = `
                 <div style="${containerStyle}">
-                    ${iconRenderHtml}
-                    <div>
-                        ${card.title ? `<h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>` : ''}
-                        ${(!card.isContinuation || isScrolling) && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex-grow: 1;">
+                            ${card.title ? `<h1 style="font-family: 'Cinzel', serif; text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2; padding-right: ${iconHtml ? toPx(ICON_SIZE_IN, dpi) : 0}px;">${sanitizeHTML(card.title || '')}</h1>` : ''}
+                            ${(!card.isContinuation || isScrolling) && card.type ?
+                                (typeof card.type === 'object' && card.type !== null ?
+                                    `<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">
+                                        <span>${sanitizeHTML(card.type.text || '')}</span>
+                                        <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;">${sanitizeHTML(card.type.aside || '')}</span>
+                                    </div>` :
+                                    `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>`
+                                )
+                            : ''}
+                        </div>
+                        ${iconHtml ? `<div style="flex-shrink: 0;">${iconHtml}</div>` : ''}
                     </div>
 
                     ${(!card.isContinuation || isScrolling) && (card.stats && Object.keys(card.stats).length > 0) ? `
@@ -2954,7 +2965,7 @@
                                     const headingAsideStyle = `font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;`;
                                     const headingHtml = section.heading ? `
                                         <div style="display: flex; justify-content: space-between; align-items: baseline; ${headingStyle}">
-                                            <h2 style="margin:0; padding:0;">${sanitizeHTML(section.heading)}</h2>
+                                            <h2 style="margin:0; padding:0; font-family: 'Cinzel', serif;">${sanitizeHTML(section.heading)}</h2>
                                             ${section.headingAside ? `<span style="${headingAsideStyle}">${sanitizeHTML(section.headingAside)}</span>` : ''}
                                         </div>
                                     ` : '';
@@ -3230,7 +3241,7 @@
             }
 
             return `
-                <div style="width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Inter', sans-serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center; transform: rotate(180deg);">
+                <div style="width: ${widthPx}px; height: ${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}px; font-family: 'Lora', serif; padding: ${toPx(PADDING_IN, dpi)}px; box-sizing: border-box; color: #000; background-color: #fff; display: flex; justify-content: center; align-items: center; transform: rotate(180deg);">
                     ${backContentHtml}
                 </div>
             `;

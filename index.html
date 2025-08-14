@@ -2945,7 +2945,15 @@
                     ${iconRenderHtml}
                     <div>
                         ${card.title ? `<h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>` : ''}
-                        ${(!card.isContinuation || isScrolling) && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                        ${(!card.isContinuation || isScrolling) && card.type ?
+                        (typeof card.type === 'object' ?
+                            `<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">
+                                <span>${sanitizeHTML(card.type.text || '')}</span>
+                                <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;">${sanitizeHTML(card.type.aside || '')}</span>
+                            </div>` :
+                            `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>`
+                        )
+                    : ''}
                     </div>
 
                     ${(!card.isContinuation || isScrolling) && (card.stats && Object.keys(card.stats).length > 0) ? `
@@ -3031,7 +3039,15 @@
                         ${(!card.isContinuation || isScrolling) && (card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
                             <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>` : ''}
 
-                        ${(!card.isContinuation || isScrolling) && card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
+                        ${(!card.isContinuation || isScrolling) && card.type ?
+                        (typeof card.type === 'object' ?
+                            `<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">
+                                <span>${sanitizeHTML(card.type.text || '')}</span>
+                                <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;">${sanitizeHTML(card.type.aside || '')}</span>
+                            </div>` :
+                            `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>`
+                        )
+                    : ''}
                     </div>
                 </div>
             `;

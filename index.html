@@ -2860,7 +2860,6 @@
         }
 
         async function generateCardHtml(card, options = { isScrolling: false }) {
-            console.log(`[Debug] generateCardHtml for card: "${card.title}", icon: "${card.icon}"`);
             const { isScrolling } = options;
             const dpi = appState.thermalDpi;
             const widthPx = getPixelWidth(appState.thermalPaperWidth, dpi);
@@ -2869,14 +2868,15 @@
             if (card.icon && (!card.isContinuation || isScrolling)) {
                 const iconStyle = `width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%); flex-shrink: 0;`;
                 if (iconManifest[card.icon]) {
-                    const iconUrl = iconManifest[card.icon];
-                    console.log(`[Debug] Found icon in manifest. URL: ${iconUrl}`);
+                    let iconUrl = iconManifest[card.icon];
+                    // Convert relative URLs to absolute ones for html2canvas
+                    if (iconUrl.startsWith('./') || iconUrl.startsWith('game-icons')) {
+                        iconUrl = new URL(iconUrl, window.location.href).href;
+                    }
                     iconHtml = `<img src="${iconUrl}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    console.log(`[Debug] Icon is a URL: ${card.icon}`);
                     iconHtml = `<img src="${card.icon}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
-                    console.log(`[Debug] Icon is a lucide icon: ${card.icon}`);
                     iconHtml = `<i data-lucide="${sanitizeHTML(card.icon)}" style="color: black; ${iconStyle} stroke-width: 1.5;"></i>`;
                 }
             }
@@ -3014,7 +3014,6 @@
                     </div>
                 `;
             }
-            console.log('[Debug] Generated Card HTML for PDF:', htmlContent);
             return htmlContent;
         }
 
@@ -3153,8 +3152,6 @@
             // --- Front of Card ---
             const frontContainer = document.createElement('div');
             const frontHtml = await generateThermalHtmlForCard(card);
-            console.log(`[Debug] Generating PAGINATED PDF page for card: "${card.title}". HTML to be rendered:`);
-            console.log(frontHtml);
             frontContainer.innerHTML = frontHtml;
             tempContainer.appendChild(frontContainer);
 
@@ -3237,8 +3234,11 @@
                 } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                     backContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
                 } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
-                    const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
+                    let backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                    if (backImgUrl.startsWith('./') || backImgUrl.startsWith('game-icons')) {
+                        backImgUrl = new URL(backImgUrl, window.location.href).href;
+                    }
+                    foldContentHtml = `<img src="${backImgUrl}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
                 } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
                     const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
                     const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);
@@ -3370,9 +3370,6 @@
                     fullHtml += await generateScrollingHtmlForCard(card);
                 }
                 fullHtml += '</div>';
-
-                console.log('[Debug] Generating SCROLLING PDF. Full HTML to be rendered:');
-                console.log(fullHtml);
 
                 const tempContainer = document.createElement('div');
                 tempContainer.style.position = 'absolute';
@@ -3664,7 +3661,7 @@
             };
             const encodedData = compressDataForUrl(dataToSend);
 
-            if (!encodedData) return; // Stop if compression failed
+            if (!encodedData) return; // Stop if compression fails
 
             const currentUrl = new URL(window.location.href);
             // Clear existing params to create a clean link for the editor view

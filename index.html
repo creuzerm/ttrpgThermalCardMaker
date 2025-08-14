@@ -746,7 +746,7 @@
                     throw new Error(`Failed to load README.md: ${response.statusText}`);
                 }
                 const markdown = await response.text();
-                const dirtyHtml = marked(markdown);
+                const dirtyHtml = marked.parse(markdown);
                 const cleanHtml = DOMPurify.sanitize(dirtyHtml, { ADD_ATTR: ['id'] });
                 aboutModalContent.innerHTML = cleanHtml;
                 isReadmeLoaded = true; // Mark as loaded

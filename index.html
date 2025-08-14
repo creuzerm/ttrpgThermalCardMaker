@@ -2866,11 +2866,29 @@
 
             let iconRenderHtml = '';
             if (card.icon && (!card.isContinuation || isScrolling)) {
+                let iconUrl = null;
                 if (iconManifest[card.icon]) {
-                    const iconUrl = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                    iconUrl = new URL(iconManifest[card.icon], window.location.href).href;
                 } else if (isURL(card.icon)) {
-                    iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                    iconUrl = card.icon;
+                }
+
+                if (iconUrl) {
+                    try {
+                        const img = await loadImage(iconUrl);
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        ctx.drawImage(img, 0, 0);
+                        const dataUrl = canvas.toDataURL('image/png');
+                        iconRenderHtml = `<img src="${dataUrl}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" />`;
+                    } catch (e) {
+                        console.error(`Failed to load icon for html2canvas: ${iconUrl}`, e);
+                        if (!isURL(card.icon)) {
+                             iconRenderHtml = `<i data-lucide="${sanitizeHTML(card.icon)}" style="position: absolute; color: black; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; stroke-width: 1.5;"></i>`;
+                        }
+                    }
                 } else {
                     iconRenderHtml = `<i data-lucide="${sanitizeHTML(card.icon)}" style="position: absolute; color: black; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; stroke-width: 1.5;"></i>`;
                 }
@@ -3214,17 +3232,38 @@
             let backContentHtml = '';
 
             if (card.foldContent) {
-                if (card.foldContent.type === 'backgroundImageUrl' && card.foldContent.imageUrl) {
-                    backContentHtml = `<img src="${sanitizeHTML(card.foldContent.imageUrl)}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BG+IMG';" />`;
-                } else if (card.foldContent.type === 'text' && card.foldContent.text) {
-                    backContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
-                } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
-                    const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
-                } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
+                const { type, imageUrl, text, qrCodeData } = card.foldContent;
+
+                if ((type === 'imageUrl' || type === 'backgroundImageUrl') && imageUrl) {
+                    let finalImageUrl = iconManifest[imageUrl] || imageUrl;
+                    if (!isURL(finalImageUrl)) {
+                        finalImageUrl = new URL(finalImageUrl, window.location.href).href;
+                    }
+
+                    try {
+                        const img = await loadImage(finalImageUrl);
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        ctx.drawImage(img, 0, 0);
+                        const dataUrl = canvas.toDataURL('image/png');
+
+                        const style = type === 'backgroundImageUrl'
+                            ? `width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%);`
+                            : `width: 100%; object-fit: contain; filter: grayscale(100%);`;
+
+                        backContentHtml = `<img src="${dataUrl}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="${style}" />`;
+                    } catch (e) {
+                        console.error(`Failed to load back image: ${finalImageUrl}`, e);
+                        backContentHtml = ''; // Fail silently
+                    }
+                } else if (type === 'text' && text) {
+                    backContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(text)}</p>`;
+                } else if (type === 'qrCode' && qrCodeData) {
                     const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
                     const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);
-                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(card.foldContent.qrCodeData)}`;
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrCodeData)}`;
                     backContentHtml = `<img src="${qrUrl}" width="${qrSize}" height="${qrSize}" style="display: block; margin: 0 auto; max-width: ${qrMaxSize}px; height: auto;" onerror="this.src='https://placehold.co/80x80/000/FFF?text=QR';" />`;
                 }
             }
@@ -3432,7 +3471,7 @@
             if (card.icon) {
                 let iconUrl = null;
                 if (card.icon in iconManifest) {
-                    iconUrl = iconManifest[card.icon];
+                    iconUrl = new URL(iconManifest[card.icon], window.location.href).href;
                 } else if (isURL(card.icon)) {
                     iconUrl = card.icon;
                 }

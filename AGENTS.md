@@ -93,6 +93,42 @@ To display a 400px wide version of the image at `/images/FirstDraftFolded.jpg`, 
 *   `quality`: A value between 1 and 100. `75` is a good starting point.
 *   `fit`: `scale-down` is useful to ensure the image fits within the specified dimensions without being cropped.
 
+### PDF and Image Generation with html2canvas
+
+When generating canvases from HTML for PDFs or images, especially with the `html2canvas` library, there are critical best practices to follow to ensure images are rendered reliably.
+
+*   **Problem:** The `html2canvas` library can fail to render images correctly if it has to fetch them from a URL (e.g., `<img src="https://...">`). This is due to the library's internal image loader having timing and cross-origin issues, which can result in missing images or black boxes in the final output.
+
+*   **Solution:** To guarantee reliable image rendering, you **must** pre-load all images and embed them as `dataURL`s directly into the HTML *before* passing that HTML to `html2canvas`.
+
+*   **Required Process:**
+    1.  Resolve the image path to an absolute URL if necessary.
+    2.  Use the `loadImage(url)` helper function to load the image into a browser `Image` object.
+    3.  Create a temporary `<canvas>` element.
+    4.  Draw the loaded `Image` object onto the canvas.
+    5.  Generate a `dataURL` from the canvas (e.g., `canvas.toDataURL('image/png')`).
+    6.  Use this `dataURL` as the `src` for the `<img>` tag in the HTML that will be rendered.
+
+**Example:**
+
+```javascript
+// Incorrect (unreliable):
+const unreliableHtml = `<img src="https://example.com/my-image.png">`;
+// This may fail inside html2canvas.
+
+// Correct (reliable):
+const imageUrl = 'https://example.com/my-image.png';
+const img = await loadImage(imageUrl); // Pre-load the image
+const canvas = document.createElement('canvas');
+canvas.width = img.naturalWidth;
+canvas.height = img.naturalHeight;
+canvas.getContext('2d').drawImage(img, 0, 0);
+const dataUrl = canvas.toDataURL('image/png'); // Convert to dataURL
+
+const reliableHtml = `<img src="${dataUrl}">`; // Embed the dataURL
+// This will now render reliably in html2canvas.
+```
+
 ## SEO
 
 ### Meta Descriptions

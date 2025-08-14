@@ -2868,7 +2868,8 @@
             if (card.icon && (!card.isContinuation || isScrolling)) {
                 if (iconManifest[card.icon]) {
                     const iconUrl = iconManifest[card.icon];
-                    iconRenderHtml = `<img src="${sanitizeHTML(iconUrl)}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                    const absoluteIconUrl = new URL(iconUrl, window.location.href).href;
+                    iconRenderHtml = `<img src="${absoluteIconUrl}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
                     iconRenderHtml = `<img src="${sanitizeHTML(card.icon)}" style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px; width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
@@ -3219,8 +3220,9 @@
                 } else if (card.foldContent.type === 'text' && card.foldContent.text) {
                     backContentHtml = `<p style="font-size: ${ptToPx(FONT_SIZE_FOLD_TEXT_PT, dpi)}px; text-align: center; margin: 0; line-height: 1.4;">${formatText(card.foldContent.text)}</p>`;
                 } else if (card.foldContent.type === 'imageUrl' && card.foldContent.imageUrl) {
-                    const backImgUrl = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
-                    backContentHtml = `<img src="${sanitizeHTML(backImgUrl)}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
+                    const backImgUrlValue = iconManifest[card.foldContent.imageUrl] || card.foldContent.imageUrl;
+                    const absoluteBackImgUrl = new URL(backImgUrlValue, window.location.href).href;
+                    backContentHtml = `<img src="${absoluteBackImgUrl}" width="${widthPx}" height="${toPx(widthPx / dpi * CARD_HEIGHT_RATIO, dpi)}" style="width: 100%; object-fit: contain; filter: grayscale(100%);" onerror="this.src='https://placehold.co/100x100/000/FFF?text=BACK+IMG';" />`;
                 } else if (card.foldContent.type === 'qrCode' && card.foldContent.qrCodeData) {
                     const qrSize = toPx(QR_CODE_SIZE_IN, dpi);
                     const qrMaxSize = toPx(QR_CODE_MAX_SIZE_IN, dpi);

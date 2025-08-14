@@ -1715,6 +1715,43 @@
             populateIconSuggestions();
         }
 
+        const normalizeType = (rawType) => {
+            if (typeof rawType === 'object' && rawType !== null) {
+                if ('text' in rawType || 'aside' in rawType) {
+                    return {
+                        text: String(rawType.text || ''),
+                        aside: String(rawType.aside || '')
+                    };
+                }
+                return String(rawType);
+            }
+            return String(rawType || '');
+        };
+
+        const normalizeTags = (rawTags) => {
+            if (Array.isArray(rawTags)) return rawTags.map(tag => String(tag));
+            if (typeof rawTags === 'string') return rawTags.split(',').map(tag => tag.trim());
+            return [];
+        };
+
+        const normalizeStats = (rawStats) => {
+            if (typeof rawStats !== 'object' || rawStats === null) return {};
+            const stats = {};
+            Object.entries(rawStats).forEach(([key, value]) => {
+                stats[String(key)] = String(value);
+            });
+            return stats;
+        };
+
+        const normalizeSections = (rawSections) => {
+            if (!Array.isArray(rawSections)) return [];
+            return rawSections.map(sec => ({
+                heading: String(sec.heading || ''),
+                body: String(sec.body || ''),
+                flavorText: String(sec.flavorText || '')
+            }));
+        };
+
         // JSON Import Handlers
         rpgCardsJsonFile.addEventListener('change', (e) => handleJsonImport(e, 'rpg-cards'));
         eToolsJsonPaste.addEventListener('input', (e) => handleJsonPaste(e, '5e-tools'));
@@ -1822,6 +1859,7 @@
 
                     const parsedContents = parseRpgCardContents(data);
                     Object.assign(newCard, parsedContents);
+                    newCard.type = normalizeType(newCard.type);
 
                     if (newCard.sections.length === 0) {
                         newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });
@@ -1886,11 +1924,12 @@
 
                     // Apply markdown conversion to known text fields
                     newCard.title = htmlToMarkdown(newCard.title);
+                    newCard.type = normalizeType(newCard.type);
                     if (typeof newCard.type === 'string') {
-                         newCard.type = htmlToMarkdown(newCard.type);
+                        newCard.type = htmlToMarkdown(newCard.type);
                     } else if (typeof newCard.type === 'object' && newCard.type !== null) {
-                        newCard.type.text = htmlToMarkdown(newCard.type.text);
-                        newCard.type.aside = htmlToMarkdown(newCard.type.aside);
+                        newCard.type.text = htmlToMarkdown(newCard.type.text || '');
+                        newCard.type.aside = htmlToMarkdown(newCard.type.aside || '');
                     }
                     newCard.footer = htmlToMarkdown(newCard.footer);
 

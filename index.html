@@ -1326,7 +1326,7 @@
                     const iconPath = iconManifest[card.icon];
                     iconHtml = `<img src="${iconPath}" alt="${sanitizeHTML(card.icon)}" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    iconHtml = `<img src="${sanitizeHTML(card.icon)}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
+                    iconHtml = `<img src="${card.icon}" alt="Card Icon" style="position: absolute; top: 0.125in; right: 0.125in; width: 0.25in; height: 0.25in; object-fit: contain;" class="${printerType === 'thermal' ? 'filter grayscale' : ''}" onerror="this.src='https://placehold.co/48x48/${printerType === 'thermal' ? '000/FFF' : 'E0E0E0/888'}?text=IMG';" />`;
                 } else {
                     // Fallback to lucide icon
                     const iconName = sanitizeHTML(card.icon);
@@ -2869,9 +2869,9 @@
                 const iconStyle = `width: ${toPx(ICON_SIZE_IN, dpi)}px; height: ${toPx(ICON_SIZE_IN, dpi)}px; object-fit: contain; filter: grayscale(100%); flex-shrink: 0;`;
                 if (iconManifest[card.icon]) {
                     const iconUrl = iconManifest[card.icon];
-                    iconHtml = `<img src="${sanitizeHTML(iconUrl)}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
+                    iconHtml = `<img src="${iconUrl}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=ICON';" />`;
                 } else if (isURL(card.icon)) {
-                    iconHtml = `<img src="${sanitizeHTML(card.icon)}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
+                    iconHtml = `<img src="${card.icon}" style="${iconStyle}" onerror="this.src='https://placehold.co/60x60/000/FFF?text=IMG';" />`;
                 } else {
                     iconHtml = `<i data-lucide="${sanitizeHTML(card.icon)}" style="color: black; ${iconStyle} stroke-width: 1.5;"></i>`;
                 }

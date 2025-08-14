@@ -2887,8 +2887,8 @@
             let htmlContent = `
                 <div style="${containerStyle}">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="flex-grow: 1;">
-                            ${card.title ? `<h1 style="font-family: 'Cinzel', serif; text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2; padding-right: ${iconHtml ? toPx(ICON_SIZE_IN, dpi) : 0}px;">${sanitizeHTML(card.title || '')}</h1>` : ''}
+                        <div style="flex-grow: 1; padding-right: ${iconHtml ? toPx(ICON_SIZE_IN + 0.1, dpi) : 0}px;">
+                            ${card.title ? `<h1 style="font-family: 'Cinzel', serif; text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>` : ''}
                             ${(!card.isContinuation || isScrolling) && card.type ?
                                 (typeof card.type === 'object' && card.type !== null ?
                                     `<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">
@@ -2899,7 +2899,7 @@
                                 )
                             : ''}
                         </div>
-                        ${iconHtml ? `<div style="flex-shrink: 0;">${iconHtml}</div>` : ''}
+                        ${iconHtml ? `<div style="position: absolute; top: ${toPx(ICON_OFFSET_IN, dpi)}px; right: ${toPx(ICON_OFFSET_IN, dpi)}px;">${iconHtml}</div>` : ''}
                     </div>
 
                     ${(!card.isContinuation || isScrolling) && (card.stats && Object.keys(card.stats).length > 0) ? `

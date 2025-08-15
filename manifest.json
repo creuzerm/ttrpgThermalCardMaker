@@ -1,6 +1,8 @@
 {
   "name": "Portable Printer TTRPG Card Generator",
   "short_name": "TTRPG Cards",
+  "description": "Create, print, and share custom TTRPG cards for thermal or color photo printers. Perfect for GMs and players who need physical game aids on the fly.",
+  "scope": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f5dc",
@@ -9,12 +11,14 @@
     {
       "src": "https://bagsoffolding.com/cdn-cgi/image/width=192,height=192,format=auto/images/BagOfFolding.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "https://bagsoffolding.com/cdn-cgi/image/width=512,height=512,format=auto/images/BagOfFolding.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

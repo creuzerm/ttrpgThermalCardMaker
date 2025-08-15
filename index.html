@@ -1715,6 +1715,43 @@
             populateIconSuggestions();
         }
 
+        const normalizeType = (rawType) => {
+            if (typeof rawType === 'object' && rawType !== null) {
+                if ('text' in rawType || 'aside' in rawType) {
+                    return {
+                        text: String(rawType.text || ''),
+                        aside: String(rawType.aside || '')
+                    };
+                }
+                return String(rawType);
+            }
+            return String(rawType || '');
+        };
+
+        const normalizeTags = (rawTags) => {
+            if (Array.isArray(rawTags)) return rawTags.map(tag => String(tag));
+            if (typeof rawTags === 'string') return rawTags.split(',').map(tag => tag.trim());
+            return [];
+        };
+
+        const normalizeStats = (rawStats) => {
+            if (typeof rawStats !== 'object' || rawStats === null) return {};
+            const stats = {};
+            Object.entries(rawStats).forEach(([key, value]) => {
+                stats[String(key)] = String(value);
+            });
+            return stats;
+        };
+
+        const normalizeSections = (rawSections) => {
+            if (!Array.isArray(rawSections)) return [];
+            return rawSections.map(sec => ({
+                heading: String(sec.heading || ''),
+                body: String(sec.body || ''),
+                flavorText: String(sec.flavorText || '')
+            }));
+        };
+
         // JSON Import Handlers
         rpgCardsJsonFile.addEventListener('change', (e) => handleJsonImport(e, 'rpg-cards'));
         eToolsJsonPaste.addEventListener('input', (e) => handleJsonPaste(e, '5e-tools'));
@@ -1822,6 +1859,7 @@
 
                     const parsedContents = parseRpgCardContents(data);
                     Object.assign(newCard, parsedContents);
+                    newCard.type = normalizeType(newCard.type);
 
                     if (newCard.sections.length === 0) {
                         newCard.sections.push({ heading: 'Description', body: '', flavorText: '' });
@@ -1886,11 +1924,12 @@
 
                     // Apply markdown conversion to known text fields
                     newCard.title = htmlToMarkdown(newCard.title);
+                    newCard.type = normalizeType(newCard.type);
                     if (typeof newCard.type === 'string') {
-                         newCard.type = htmlToMarkdown(newCard.type);
+                        newCard.type = htmlToMarkdown(newCard.type);
                     } else if (typeof newCard.type === 'object' && newCard.type !== null) {
-                        newCard.type.text = htmlToMarkdown(newCard.type.text);
-                        newCard.type.aside = htmlToMarkdown(newCard.type.aside);
+                        newCard.type.text = htmlToMarkdown(newCard.type.text || '');
+                        newCard.type.aside = htmlToMarkdown(newCard.type.aside || '');
                     }
                     newCard.footer = htmlToMarkdown(newCard.footer);
 
@@ -2906,7 +2945,15 @@
                     ${iconRenderHtml}
                     <div>
                         ${card.title ? `<h1 style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TITLE_PT, dpi)}px; margin-bottom: ${toPx(TITLE_MARGIN_BOTTOM_IN, dpi)}px; line-height: 1.2;">${sanitizeHTML(card.title || '')}</h1>` : ''}
-                        ${(!card.isContinuation || isScrolling) && card.type ? `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>` : ''}
+                        ${(!card.isContinuation || isScrolling) && card.type ?
+                        (typeof card.type === 'object' ?
+                            `<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">
+                                <span>${sanitizeHTML(card.type.text || '')}</span>
+                                <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;">${sanitizeHTML(card.type.aside || '')}</span>
+                            </div>` :
+                            `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>`
+                        )
+                    : ''}
                     </div>
 
                     ${(!card.isContinuation || isScrolling) && (card.stats && Object.keys(card.stats).length > 0) ? `
@@ -2992,7 +3039,15 @@
                         ${(!card.isContinuation || isScrolling) && (card.tags && Array.isArray(card.tags) && card.tags.length > 0) ? `
                             <p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(TAGS_MARGIN_TOP_IN, dpi)}px; border-top: 1px dashed #999; padding-top: ${toPx(TAGS_PADDING_TOP_IN, dpi)}px;">Tags: ${sanitizeHTML(card.tags.join(', '))}</p>` : ''}
 
-                        ${(!card.isContinuation || isScrolling) && card.footer ? `<p style="font-size: ${ptToPx(FONT_SIZE_TAGS_FOOTER_PT, dpi)}px; text-align: center; margin-top: ${toPx(FOOTER_MARGIN_TOP_IN, dpi)}px;">${sanitizeHTML(card.footer || '')}</p>` : ''}
+                        ${(!card.isContinuation || isScrolling) && card.type ?
+                        (typeof card.type === 'object' ?
+                            `<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">
+                                <span>${sanitizeHTML(card.type.text || '')}</span>
+                                <span style="font-size: ${ptToPx(FONT_SIZE_BODY_PT, dpi)}px; font-weight: 300;">${sanitizeHTML(card.type.aside || '')}</span>
+                            </div>` :
+                            `<p style="text-align: center; font-size: ${ptToPx(FONT_SIZE_TYPE_PT, dpi)}px; margin-bottom: ${toPx(TYPE_MARGIN_BOTTOM_IN, dpi)}px;">${sanitizeHTML(card.type)}</p>`
+                        )
+                    : ''}
                     </div>
                 </div>
             `;

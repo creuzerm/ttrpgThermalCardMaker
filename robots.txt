@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://PortablePrinterTTRPGCardGenerator.bagsoffolding.com/sitemap.xml

@@ -12,6 +12,16 @@ The core advantage of this tool is its ability to create play cards or readily d
 
 Whether you're a Game Master needing to generate monster stats on the fly or a player wanting a physical copy of a new spell, this generator is designed for rapid, in-the-moment creation of all your tabletop gaming needs.
 
+### Quality Cards
+This tool's goal isn't intended to be eyestunning gorgious cards, rather a quick and functional cards on demand. There are other tools avalable which will produce much nicer looking cards. If you need better looking cards, try one of the following.
+
+https://rpg-cards.vercel.app/ - great for DnD 5e cards. Duplex printing cards that look great.
+
+https://cardcreator.daggerheart.com/ Daggerheart's own card creator. 
+
+https://www.daggerheartbrews.com/ A homebrew card creator with stunning results.
+
+
 ## Features
 
 *   **Custom Card Creation:** Design your own TTRPG cards with titles, types, icons, stats, and multiple content sections.

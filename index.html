@@ -845,6 +845,13 @@
                 setTimeout(() => {
                     jumpToHeaderByText(topicText, 'h3');
                 }, 100);
+                return; // Exit early after handling help link
+            }
+
+            // Consolidate external link tracking here
+            const externalLink = e.target.closest('a[target="_blank"]');
+            if (externalLink) {
+                trackEvent('click_external_link', { url: externalLink.href });
             }
         });
 
@@ -860,14 +867,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !aboutModal.classList.contains('hidden')) {
                 hideAboutModal();
-            }
-        });
-
-        // Track external link clicks
-        document.addEventListener('click', (e) => {
-            const link = e.target.closest('a[target="_blank"]');
-            if (link) {
-                trackEvent('click_external_link', { url: link.href });
             }
         });
 
@@ -4351,12 +4350,6 @@
         }
 
         async function initGeneratorView() {
-            // --- Session Summary Analytics Event ---
-            const card_count = appState.cards.length;
-            const bag_count = appState.bags.length;
-            const total_cards_in_bags = appState.bags.reduce((total, bag) => total + bag.cards.length, 0);
-            trackEvent('session_summary', { card_count, bag_count, total_cards_in_bags });
-
             try {
                 const response = await fetch('./icon-lookup.json');
                 if (!response.ok) {
@@ -4370,6 +4363,13 @@
             }
             await loadTemplates();
             loadState();
+
+            // --- Session Summary Analytics Event ---
+            // This is called after loadState() to ensure the user's actual data is tracked.
+            const card_count = appState.cards.length;
+            const bag_count = appState.bags.length;
+            const total_cards_in_bags = appState.bags.reduce((total, bag) => total + bag.cards.length, 0);
+            trackEvent('session_summary', { card_count, bag_count, total_cards_in_bags });
 
             bagCardsContainer.addEventListener('click', (event) => {
                 const target = event.target;

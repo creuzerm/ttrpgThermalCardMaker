@@ -783,6 +783,7 @@
         });
 
         const showAboutModal = async () => {
+            trackEvent('open_about_page');
             menuDropdown.classList.add('hidden'); // Close dropdown
             aboutModal.classList.remove('hidden');
             if (isReadmeLoaded) {
@@ -838,11 +839,19 @@
                 const topicText = helpLink.dataset.helpText;
                 if (!topicText) return;
 
+                trackEvent('click_help_link', { topic: topicText });
                 await showAboutModal();
 
                 setTimeout(() => {
                     jumpToHeaderByText(topicText, 'h3');
                 }, 100);
+                return; // Exit early after handling help link
+            }
+
+            // Consolidate external link tracking here
+            const externalLink = e.target.closest('a[target="_blank"]');
+            if (externalLink) {
+                trackEvent('click_external_link', { url: externalLink.href });
             }
         });
 
@@ -860,7 +869,6 @@
                 hideAboutModal();
             }
         });
-
 
         // Utility functions (defined first to ensure availability)
         function sanitizeHTML(text) {
@@ -1886,6 +1894,7 @@
         }
 
         function parseAndSetCardData(dataArray, type, destination = 'main') {
+            trackEvent('import_cards', { import_source: type, card_count: dataArray.length });
             const parsedCards = [];
             dataArray.forEach(data => {
                 let newCard = {
@@ -2172,6 +2181,7 @@
                 // Uncheck scrolling if folded is checked
                 appState.isScrolling = false;
                 isScrollingCheckbox.checked = false;
+                trackEvent('use_folded_card');
             }
 
             toggleFoldContentOptions();
@@ -2189,6 +2199,7 @@
                 appState.cards[appState.currentCardIndex].isFolded = false;
                 isFoldedCheckbox.checked = false;
                 toggleFoldContentOptions();
+                trackEvent('use_continuous_card');
             }
             updateCardPreview();
             saveState();
@@ -2512,6 +2523,7 @@
                         const newCard = parseTemplateToCard(template.json);
                         appState.cards.push(newCard);
                         appState.currentCardIndex = appState.cards.length - 1;
+                        trackEvent('add_card_from_template', { template_name: template.title });
                         updateUIFromAppState();
                         saveState();
                         templateSelectionModal.classList.add('hidden');
@@ -2550,6 +2562,7 @@
             const newCard = createNewCard();
             appState.cards.push(newCard);
             appState.currentCardIndex = appState.cards.length - 1;
+            trackEvent('add_new_card');
             updateUIFromAppState();
             saveState();
             templateSelectionModal.classList.add('hidden');
@@ -2571,7 +2584,7 @@
                     appState.cards = [createNewCard()];
                     appState.currentCardIndex = 0;
                 }
-
+                trackEvent('delete_card');
                 updateUIFromAppState();
                 saveState();
                 showMessage(`Card "${cardToDeleteTitle}" deleted.`);
@@ -2719,6 +2732,7 @@
                     return;
                 }
                 appState.bags.push({ name: newBagName, cards: [] });
+                trackEvent('create_bag');
                 saveState();
                 renderBagUI();
                 bagSelect.value = appState.bags.length - 1;
@@ -2756,6 +2770,7 @@
             }
 
             appState.bags[selectedBagIndex].cards.push(cardCopy);
+            trackEvent('collect_card_to_bag');
             saveState();
             showMessage(`Card "${cardCopy.title}" added to "${appState.bags[selectedBagIndex].name}".`);
             renderCardsInBag(selectedBagIndex);
@@ -3147,6 +3162,7 @@
 
         // View Card button handler
         viewCardBtn.addEventListener('click', () => {
+            trackEvent('open_card_in_new_tab');
             showMessage('Opening card view...');
             const cardToView = appState.cards[appState.currentCardIndex];
             openCardView(cardToView);
@@ -4100,6 +4116,7 @@
         }
 
         downloadImageBtn.addEventListener('click', async () => {
+            trackEvent('download_file', getPrinterSettingsForAnalytics());
             showMessage('Generating image(s) for download...');
             const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
             const originalCardIndex = appState.currentCardIndex;
@@ -4126,6 +4143,7 @@
 
         // Download PDF button handler
         downloadPdfBtn.addEventListener('click', async () => {
+            trackEvent('download_file', getPrinterSettingsForAnalytics());
             showMessage('Generating PDF for download...');
             try {
                 const cardsToProcess = appState.printScope === 'all' ? appState.cards : [appState.cards[appState.currentCardIndex]];
@@ -4165,6 +4183,7 @@
                         title: `TTRPG Cards`,
                         text: `Here are the TTRPG cards I made.`,
                     });
+                    trackEvent('share_pdf', getPrinterSettingsForAnalytics());
                     showMessage('PDF shared successfully!');
                 } catch (error) {
                     if (error.name !== 'AbortError') {
@@ -4263,7 +4282,7 @@
 
         // Copy Bookmarkable Link button handler
         copyBookmarkLinkBtn.addEventListener('click', () => {
-            trackImageInteraction('copy_bookmark_link');
+            trackEvent('copy_bookmark_link');
             const currentCard = appState.cards[appState.currentCardIndex];
             const dataToSend = {
                 card: currentCard,
@@ -4295,76 +4314,26 @@
         });
 
         // --- Google Analytics Custom Event Tracking ---
-        function trackImageInteraction(action) {
-            if (typeof gtag !== 'function') {
-                console.warn('Google Analytics gtag function not found. Skipping event tracking.');
-                return;
-            }
-
-            const currentCard = appState.cards[appState.currentCardIndex];
-            if (!currentCard) {
-                console.warn('No current card found. Skipping event tracking.');
-                return;
-            }
-
-            const features = [];
-            if (currentCard.icon) features.push('icon');
-            if (currentCard.color && currentCard.color !== '#ffffff') features.push('color');
-            if (currentCard.tags && currentCard.tags.length > 0) features.push('tags');
-            if (currentCard.stats && Object.keys(currentCard.stats).length > 0) features.push('stats');
-            if (currentCard.isFolded) features.push('folded_card');
-            if (appState.isScrolling) features.push('scrolling_card');
-
-            // Check for section types beyond the default 'content'
-            const hasSpecialSections = currentCard.sections.some(section =>
-                section.type && section.type !== 'content'
-            );
-            if (hasSpecialSections) features.push('special_sections');
-
-
-            let printerSize = appState.thermalPaperWidth;
-            if (printerSize === 'custom') {
-                printerSize = `${appState.customWidth}in x ${appState.customLength}in`;
-            }
-
-            const eventParams = {
-                'action': action,
-                'features_used': features.join(',') || 'none',
-                'printer_size': printerSize,
-                'resolution': `${appState.thermalDpi}dpi`,
-                'image_effects': appState.printerType === 'color',
-                'bases': currentCard.isFolded,
-                'thermal_printer_enabled': appState.printerType === 'thermal',
-                'printer_used': appState.printerType,
+        function getPrinterSettingsForAnalytics() {
+            const { cardWidth, cardHeight } = getCardDimensionsInInches();
+            return {
+                paper_width: appState.thermalPaperWidth,
+                dpi: appState.thermalDpi,
+                card_size: appState.thermalPaperWidth === 'custom' ? `${cardWidth}x${cardHeight}` : appState.standardSize,
+                num_copies: appState.numCopies,
+                include_corner_dots: appState.includeCornerDots,
+                output_format: appState.outputFormat
             };
-
-            gtag('event', 'image_interaction', eventParams);
-            console.log('Tracked image_interaction event:', eventParams);
         }
 
-        // Add event listeners to action buttons for tracking.
-        // We're modifying the original click handlers to include the tracking call.
-        const originalDownloadPdfHandler = downloadPdfBtn.onclick;
-        downloadPdfBtn.addEventListener('click', () => trackImageInteraction('download_pdf'));
-
-        const originalSharePdfHandler = sharePdfBtn.onclick;
-        sharePdfBtn.addEventListener('click', () => trackImageInteraction('share_pdf'));
-
-        const originalDownloadImageHandler = downloadImageBtn.onclick;
-        downloadImageBtn.addEventListener('click', () => trackImageInteraction('download_image'));
-
-        const originalShareCardHandler = shareCardBtn.onclick;
-        shareCardBtn.addEventListener('click', () => trackImageInteraction('share_image'));
-
-        const originalPrintThermalHandler = printThermalBtn.onclick;
-        printThermalBtn.addEventListener('click', () => trackImageInteraction('print_thermal'));
-
-        const originalPrintColorPhotoHandler = printColorPhotoBtn.onclick;
-        printColorPhotoBtn.addEventListener('click', () => trackImageInteraction('print_color'));
-
-        const originalViewCardHandler = viewCardBtn.onclick;
-        viewCardBtn.addEventListener('click', () => trackImageInteraction('view_card'));
-
+        function trackEvent(eventName, params = {}) {
+            if (typeof gtag !== 'function') {
+                console.warn(`Google Analytics not found. Skipping event: ${eventName}`);
+                return;
+            }
+            gtag('event', eventName, params);
+            console.log(`Tracked GA event: ${eventName}`, params);
+        }
 
         async function loadTemplates() {
             try {
@@ -4394,6 +4363,13 @@
             }
             await loadTemplates();
             loadState();
+
+            // --- Session Summary Analytics Event ---
+            // This is called after loadState() to ensure the user's actual data is tracked.
+            const card_count = appState.cards.length;
+            const bag_count = appState.bags.length;
+            const total_cards_in_bags = appState.bags.reduce((total, bag) => total + bag.cards.length, 0);
+            trackEvent('session_summary', { card_count, bag_count, total_cards_in_bags });
 
             bagCardsContainer.addEventListener('click', (event) => {
                 const target = event.target;
